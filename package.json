@@ -1,0 +1,22 @@
+{
+    "name": "anonymex-test",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "dev": "tsc --watch",
+        "build": "tsc",
+        "start": "node dist/index.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "apriltag": "^2.0.3",
+        "pdfkit": "^0.17.2",
+        "typescript": "^5.9.3"
+    },
+    "devDependencies": {
+        "@types/pdfkit": "^0.17.3"
+    }
+}

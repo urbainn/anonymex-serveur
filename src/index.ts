@@ -1,8 +1,4 @@
 import { genererBordereau } from "./generation/bordereau/genererBordereau";
+import { pdfToCanvas, pdfToCanvas_WIP } from "./lecture/preparation/conversion/pdfToCanvas";
 
-genererBordereau({
-    format: 'A4',
-    longueurCodeAnonymat: 4,
-    longueurCodeEpreuve: 2,
-    version: 1
-});
+pdfToCanvas_WIP('./bordereau_scan.pdf');

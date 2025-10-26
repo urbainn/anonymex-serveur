@@ -1,6 +1,7 @@
 import { AprilTagFamily } from 'apriltag'
 import tagConfigFamille from 'apriltag/families/standard41h12.json'
 import { mmToPoints } from '../../utils/pdfUtils';
+import { ErreurAprilTag } from '../generationErreurs';
 
 /**
  * Génère sur le document entré les 4 AprilTags aux coins.
@@ -28,7 +29,7 @@ export function genererAprilTags(doc: PDFKit.PDFDocument, tailleMm: number, marg
     const margeQuietZone = 4 * tailleDePixel; // Marge "quiet zone" autour du tag
 
     for (let i of coins ?? [0, 1, 2, 3]) {
-        if (i < 0 && i > 3) throw Error("Liste des coins invalide : coin en dehors de la plage autorisée [0;3]")
+        if (i < 0 || i > 3) throw new ErreurAprilTag("Coin en dehors de la plage autorisée (0..3)");
 
         // Sous forme de tableau de pixels (b=black,w=white,x=transparent) formant le tag
         const tagPixels = famille.render(tagIds[i]!);

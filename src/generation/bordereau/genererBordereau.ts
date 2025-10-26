@@ -1,6 +1,8 @@
 import PDFDocument from 'pdfkit';
 import { createWriteStream } from 'fs';
 import { genererAprilTags } from './genererAprilTags';
+import { ErreurBase } from '../../core/ErreurBase';
+import { ErreurAprilTag } from '../generationErreurs';
 
 export interface BordereauAnonProprietes {
     format: 'A4' | 'A5';
@@ -12,7 +14,7 @@ export interface BordereauAnonProprietes {
     version: 1;
 }
 
-export default function genererBordereau(proprietes: BordereauAnonProprietes): boolean {
+export function genererBordereau(proprietes: BordereauAnonProprietes): boolean {
 
     const doc = new PDFDocument({
         size: proprietes.format
@@ -20,7 +22,11 @@ export default function genererBordereau(proprietes: BordereauAnonProprietes): b
 
     doc.pipe(createWriteStream('bordereau_test.pdf'));
 
-    genererAprilTags(doc, 10, 25);
+    try {
+        genererAprilTags(doc, 10, 25);
+    } catch (error) {
+        throw ErreurAprilTag.assigner(error);
+    }
 
     doc.end();
     console.log('Bordereau généré.');

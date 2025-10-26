@@ -1,4 +1,4 @@
-import genererBordereau from "./generation/bordereau/genererBordereau";
+import { genererBordereau } from "./generation/bordereau/genererBordereau";
 
 genererBordereau({
     format: 'A4',

@@ -1,8 +1,9 @@
 import PDFDocument from 'pdfkit';
 import { createWriteStream } from 'fs';
 import { genererAprilTags } from './genererAprilTags';
-import { ErreurBase } from '../../core/ErreurBase';
 import { ErreurAprilTag } from '../generationErreurs';
+import { logInfo, styles } from '../../utils/logger';
+import { CadreEtudiantBenchmarkModule } from './modules/cadre-etudiant/CadreEtudiantBenchmarkModule';
 
 export interface BordereauAnonProprietes {
     format: 'A4' | 'A5';
@@ -16,6 +17,9 @@ export interface BordereauAnonProprietes {
 
 export function genererBordereau(proprietes: BordereauAnonProprietes): boolean {
 
+    logInfo('genererBordereau', 'Génération d\'un bordereau..');
+    const debutMs = Date.now();
+
     const doc = new PDFDocument({
         size: proprietes.format
     });
@@ -23,13 +27,15 @@ export function genererBordereau(proprietes: BordereauAnonProprietes): boolean {
     doc.pipe(createWriteStream('bordereau_test.pdf'));
 
     try {
-        genererAprilTags(doc, 10, 25);
+        genererAprilTags(doc, 10, 10);
     } catch (error) {
         throw ErreurAprilTag.assigner(error);
     }
 
+    new CadreEtudiantBenchmarkModule().generer(doc);
+
     doc.end();
-    console.log('Bordereau généré.');
+    logInfo('genererBordereau', 'Bordereau généré avec succès. ' + styles.dim + `(en ${Date.now() - debutMs} ms)`);
 
     // note, l'objectif sera de renvoyer un stream via http (pipé dans la response) contenant le pdf généré, sans stockage local
     // pour l'instant on utilise le stockage local pour le développement

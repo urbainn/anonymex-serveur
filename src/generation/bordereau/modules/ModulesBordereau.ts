@@ -1,7 +1,7 @@
 import type PDFDocument from 'pdfkit';
 
 /** Element du layout (zone de lecture) */
-type LayoutPosition = {
+export type LayoutPosition = {
     x: number;
     y: number;
     largeur: number;

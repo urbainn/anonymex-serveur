@@ -1,4 +1,3 @@
-import { Canvas, createCanvas } from "canvas";
 import { getDocument, OPS, PDFDocumentProxy } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { ErreurConversion, ErreurPdfIncompatible } from "../../lectureErreurs";
 
@@ -24,7 +23,7 @@ export async function pdfToCanvas_WIP(pdfPath: string) {
  * @param pdf 
  * @param pageNum 
  */
-export async function pdfToBuffer(pdf: PDFDocumentProxy, pageNum: number): Promise<Uint8ClampedArray> {
+export async function pdfToBuffer(pdf: PDFDocumentProxy, pageNum: number): Promise<ImageData> {
 
     if (pageNum < 1 || pageNum > pdf.numPages) {
         throw new ErreurConversion('Numéro de page invalide pour le PDF fourni.');
@@ -46,7 +45,7 @@ export async function pdfToBuffer(pdf: PDFDocumentProxy, pageNum: number): Promi
             const { width, height, data: imgData } = imgObj;
             if (!(imgData instanceof Uint8ClampedArray) || typeof width !== 'number' || typeof height !== 'number') continue;
 
-            // Image la plus grande ?
+            // Est l'image la plus grande ?
             const imgAire = width * height;
             if (imgAire > largestImgAire) {
                 largestImgAire = imgAire;
@@ -65,5 +64,5 @@ export async function pdfToBuffer(pdf: PDFDocumentProxy, pageNum: number): Promi
         throw new ErreurPdfIncompatible('L\'image extraite du PDF est dans un format incompatible.');
     }
 
-    return imgObj.data;
+    return imgObj;
 }

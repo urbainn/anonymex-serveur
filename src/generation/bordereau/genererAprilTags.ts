@@ -15,6 +15,7 @@ export function genererAprilTags(doc: PDFKit.PDFDocument, tailleMm: number, marg
     const famille = new AprilTagFamily(tagConfigFamille);
     const taille = mmToPoints(tailleMm);
     const margeInterne = mmToPoints(margeInterneMm);
+    const rembourrage = 0.1; // Afin d'éviter les petits espacements entre les pixels lors de certains rendus PDF
 
     const tagIds = [10, 11, 12, 13];
 
@@ -46,7 +47,12 @@ export function genererAprilTags(doc: PDFKit.PDFDocument, tailleMm: number, marg
             for (let y = 0; y < tagPixels.length; y++) {
                 if (tagPixels[x]![y] === 'b') {
                     // Rempli avec un gris à 80% : économie d'encre
-                    doc.rect(tagX + x * tailleDePixel, tagY + y * tailleDePixel, tailleDePixel, tailleDePixel).fill('#333333');
+                    doc.rect(
+                        /* x */ tagX + x * tailleDePixel - rembourrage,
+                        /* y */ tagY + y * tailleDePixel - rembourrage,
+                        /* w */ tailleDePixel + 2 * rembourrage,
+                        /* h */ tailleDePixel + 2 * rembourrage
+                    ).fill('#333333');
                 }
             }
         }

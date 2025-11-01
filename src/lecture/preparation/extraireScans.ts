@@ -1,19 +1,20 @@
 import { ErreurDocumentSource } from '../lectureErreurs';
 import { logInfo, styles } from '../../utils/logger';
-import { getDocument } from 'pdfjs-dist';
+import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { pdfToBuffer } from './conversion/pdfToBuffer';
 
-type DocumentSource = { data: Buffer; encoding: string; mimeType: string };
+export type DocumentSource = { data: Uint8Array; encoding: string; mimeType: string };
+export type ScanData = Pick<ImageData, 'width' | 'height'> & { channels: 1 | 3 | 4; data: Uint8Array | Uint8ClampedArray; };
 
 /**
  * Extrait le/les scan(s) d'un document source prêts à la lecture.
  * @param doc Le document source à traiter : PDF, image ou archive de pdf/images.
- * @param scanExtrait Callback appelé pour chaque scan extrait, avec un buffer image 3 canaux.
+ * @param onScanExtrait Callback appelé pour chaque scan extrait, avec un buffer image 3 canaux.
  */
-export async function extraireScans(doc: DocumentSource, scanExtrait: (scan: ImageData) => void): Promise<void> {
+export async function extraireScans(doc: DocumentSource, onScanExtrait: (scan: ScanData) => void): Promise<void> {
 
     logInfo('extraireScans', 'Extraction des scans du document source. ' + styles.dim
-        + '(format ' + styles.fg.cyan + doc.mimeType + styles.reset + styles.dim + ')');
+        + '(format ' + styles.fg.cyan + doc.mimeType + styles.fg.white + ')');
 
     // Convertir le document source en scans prêts à la lecture
     switch (doc.mimeType) {
@@ -24,8 +25,8 @@ export async function extraireScans(doc: DocumentSource, scanExtrait: (scan: Ima
 
             // Charger et faire un rendu de chaque page
             for (let pageNum = 1; pageNum <= nbPages; pageNum++) {
-                logInfo('extraireScans', `Extraction du scan de la page ${pageNum} / ${nbPages} du PDF source.`);
-                scanExtrait(await pdfToBuffer(pdf, pageNum));
+                logInfo('extraireScans', `Extraction du scan de la page ${styles.fg.cyan}${pageNum}${styles.fg.white}/${nbPages} du PDF source.`);
+                onScanExtrait(await pdfToBuffer(pdf, pageNum));
             }
             break;
 

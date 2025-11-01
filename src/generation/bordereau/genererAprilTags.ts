@@ -17,7 +17,7 @@ export function genererAprilTags(doc: PDFKit.PDFDocument, tailleMm: number, marg
     const margeInterne = mmToPoints(margeInterneMm);
     const rembourrage = 0.1; // Afin d'éviter les petits espacements entre les pixels lors de certains rendus PDF
 
-    const tagIds = [10, 11, 12, 13];
+    const tagIds = [10, 11, 12, 13]; // HG, HD, BG, BD
 
     const positions = [
         { x: margeInterne, y: margeInterne },

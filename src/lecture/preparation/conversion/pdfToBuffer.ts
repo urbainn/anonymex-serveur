@@ -1,5 +1,6 @@
 import { getDocument, OPS, PDFDocumentProxy } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { ErreurConversion, ErreurPdfIncompatible } from "../../lectureErreurs";
+import { ScanData } from "../extraireScans";
 
 /**
  * (à utiliser dans le parent plutot que dans ce fichier -> TODO)
@@ -23,7 +24,7 @@ export async function pdfToCanvas_WIP(pdfPath: string) {
  * @param pdf 
  * @param pageNum 
  */
-export async function pdfToBuffer(pdf: PDFDocumentProxy, pageNum: number): Promise<ImageData> {
+export async function pdfToBuffer(pdf: PDFDocumentProxy, pageNum: number): Promise<ScanData> {
 
     if (pageNum < 1 || pageNum > pdf.numPages) {
         throw new ErreurConversion('Numéro de page invalide pour le PDF fourni.');
@@ -43,7 +44,9 @@ export async function pdfToBuffer(pdf: PDFDocumentProxy, pageNum: number): Promi
             const imgName = args[0] as string;
             const imgObj = page.objs.get(imgName) as NodeJS.Dict<unknown>;
             const { width, height, data: imgData } = imgObj;
-            if (!(imgData instanceof Uint8ClampedArray) || typeof width !== 'number' || typeof height !== 'number') continue;
+
+            if (!((imgData instanceof Uint8ClampedArray) || (imgData instanceof Uint8Array)) // image est un buffer?
+                || typeof width !== 'number' || typeof height !== 'number') continue; // format incompatible
 
             // Est l'image la plus grande ?
             const imgAire = width * height;
@@ -59,10 +62,39 @@ export async function pdfToBuffer(pdf: PDFDocumentProxy, pageNum: number): Promi
     }
 
     // Récupérer l'image la plus grande et convertir en image valide
-    const imgObj = page.objs.get(largestImgNom) as ImageData;
-    if (!imgObj || !(imgObj.data instanceof Uint8ClampedArray)) {
+    const imgObj = page.objs.get(largestImgNom);
+
+    if (!imgObj) {
         throw new ErreurPdfIncompatible('L\'image extraite du PDF est dans un format incompatible.');
     }
 
-    return imgObj;
+    // 'kind' indique le format des données, 1 = greyscale sur 1 canal, 2 = RGB sur 3 canaux, 3 = RGBA sur 4 canaux
+    const canaux = imgObj.kind === 1 ? 1 : imgObj.kind === 2 ? 3 : 4;
+
+    // Si l'image est de type 1, alors les données sont sûrement packées (1 bit par pixel).
+    // Sharp ne sait pas lire ce format; on décompacte donc en niveaux de gris 8 bits.
+    let data: Uint8Array | Uint8ClampedArray;
+    if (imgObj.kind === 1) {
+        // Décompactage des données 1bpp en 8bpp
+        const imgData = imgObj.data as Uint8Array;
+        data = new Uint8ClampedArray(imgObj.width * imgObj.height);
+        for (let i = 0; i < imgData.length; i++) {
+            const byte = imgData[i]!;
+            for (let bit = 0; bit < 8; bit++) {
+                const pixel = (byte >> (7 - bit)) & 1;
+                data[i * 8 + bit] = pixel * 255; // 1bpp -> 8bpp
+            }
+        }
+    } else {
+        data = imgObj.data;
+    }
+
+    const scanData: ScanData = {
+        width: imgObj.width,
+        height: imgObj.height,
+        channels: canaux,
+        data: data
+    };
+
+    return scanData;
 }

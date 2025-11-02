@@ -31,7 +31,7 @@ export async function detecterAprilTags(scan: ScanData): Promise<void> {
         imgGris[i * 3 + 2] = gris;
     }*/
 
-    if (scan.channels === 1) return;
+    if (scan.channels !== 1) return;
 
     let imageBuilder = sharp(scan.data, {
         raw: {
@@ -39,7 +39,7 @@ export async function detecterAprilTags(scan: ScanData): Promise<void> {
             height: scan.height,
             channels: scan.channels
         }
-    }).grayscale();
+    }).grayscale(); // léger flou pour réduire le bruit
 
     if (flip) {
         transforms.push("flip-vertical", "rotate-cw-90");
@@ -50,11 +50,11 @@ export async function detecterAprilTags(scan: ScanData): Promise<void> {
         .raw()
         .toBuffer({ resolveWithObject: true });
 
-    await debugImageDisque(scan.data, scan.width, scan.height, 3, 'debug_scan_gris.png');
+    await debugImageDisque(imgGris.data, imgGris.info.width, imgGris.info.height, 1, 'debug/debug_scan_gris.png');
 
     const aprilTag = new AprilTag(FAMILIES.TAGSTANDARD41H12, {
         quadDecimate: 1.0, // Aucun downscaling
-        quadSigma: 0.0,    // Aucun flou, image déjà nette
+        quadSigma: 1.0,    // Aucun flou, image déjà nette
         refineEdges: true,
         decodeSharpening: 0.25,
         // todo: nb de threads?
@@ -74,12 +74,7 @@ export async function detecterAprilTags(scan: ScanData): Promise<void> {
 
     console.log(JSON.stringify(correctedDetections, null, 2));
 
-    await debugAprilDetections({
-        data: scan.data,
-        width: scan.width,
-        height: scan.height,
-        channels: Math.max(1, Math.round(scan.data.length / (scan.width * scan.height)))
-    }, correctedDetections);
+    await debugAprilDetections(scan, correctedDetections);
 
 }
 

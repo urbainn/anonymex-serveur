@@ -3,6 +3,8 @@ import tagConfigFamille from 'apriltag/families/standard41h12.json'
 import { mmToPoints } from '../../utils/pdfUtils';
 import { ErreurAprilTag } from '../generationErreurs';
 
+export const APRILTAGS_IDS = [10, 11, 12, 13]; // HG, HD, BG, BD
+
 /**
  * Génère sur le document entré les 4 AprilTags aux coins.
  * @param doc Document PDFKit (modifié en place)
@@ -16,8 +18,6 @@ export function genererAprilTags(doc: PDFKit.PDFDocument, tailleMm: number, marg
     const taille = mmToPoints(tailleMm);
     const margeInterne = mmToPoints(margeInterneMm);
     const rembourrage = 0.1; // Afin d'éviter les petits espacements entre les pixels lors de certains rendus PDF
-
-    const tagIds = [10, 11, 12, 13]; // HG, HD, BG, BD
 
     const positions = [
         { x: margeInterne, y: margeInterne },
@@ -33,7 +33,7 @@ export function genererAprilTags(doc: PDFKit.PDFDocument, tailleMm: number, marg
         if (i < 0 || i > 3) throw new ErreurAprilTag("Coin en dehors de la plage autorisée (0..3)");
 
         // Sous forme de tableau de pixels (b=black,w=white,x=transparent) formant le tag
-        const tagPixels = famille.render(tagIds[i]!);
+        const tagPixels = famille.render(APRILTAGS_IDS[i]!);
 
         // --- DESSIN DU TAG ---
         const tagX = positions[i]!.x;

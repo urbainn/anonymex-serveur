@@ -8,8 +8,8 @@ export function lireBordereau(chemin: string): void {
     const buffer = readFileSync(chemin);
     const uint8 = new Uint8Array(buffer);
 
-    extraireScans({ data: uint8, encoding: 'buffer', mimeType: 'application/pdf' }, async (scan: ScanData) => {
-        await preparerScan(scan);
+    extraireScans({ data: uint8, encoding: 'buffer', mimeType: 'image/jpeg' }, async (scan: ScanData, data: Uint8ClampedArray | Uint8Array) => {
+        await preparerScan(scan, data);
     });
 
 }

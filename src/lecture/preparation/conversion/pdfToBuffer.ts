@@ -1,21 +1,9 @@
-import { getDocument, OPS, PDFDocumentProxy } from "pdfjs-dist/legacy/build/pdf.mjs";
+import { OPS, PDFDocumentProxy } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { ErreurConversion, ErreurPdfIncompatible } from "../../lectureErreurs";
 import { ScanData } from "../extraireScans";
-
-/**
- * (à utiliser dans le parent plutot que dans ce fichier -> TODO)
- * @param pdfPath 
- */
-export async function pdfToCanvas_WIP(pdfPath: string) {
-    // Charger le document PDF
-    const pdf = await getDocument(pdfPath).promise;
-    const nbPages = pdf.numPages;
-
-    // Charger et faire un rendu de chaque page
-    for (let pageNum = 1; pageNum <= nbPages; pageNum++) {
-        await pdfToBuffer(pdf, pageNum);
-    }
-}
+import { StatistiquesDebug } from "../../../core/debug/StatistiquesDebug";
+import { EtapeLecture } from "../../../core/debug/EtapesDeTraitementDicts";
+import { LecturePipelineDebug } from "../../../core/debug/LecturePipelineDebug";
 
 /**
  * Extrait les images d'un scan PDF et renvoit un tableau d'octets GREYSCALE prêt à la lecture.\
@@ -24,11 +12,13 @@ export async function pdfToCanvas_WIP(pdfPath: string) {
  * @param pdf 
  * @param pageNum 
  */
-export async function pdfToBuffer(pdf: PDFDocumentProxy, pageNum: number): Promise<ScanData> {
+export async function pdfToBuffer(pdf: PDFDocumentProxy, pageNum: number): Promise<[ScanData, Uint8ClampedArray | Uint8Array]> {
 
     if (pageNum < 1 || pageNum > pdf.numPages) {
         throw new ErreurConversion('Numéro de page invalide pour le PDF fourni.');
     }
+
+    const debutMs = Date.now();
 
     // Basé sur https://github.com/bangbang93/node-pdf-extract-image/blob/master/src/index.ts par bangbang93
     const page = await pdf.getPage(pageNum);
@@ -93,8 +83,13 @@ export async function pdfToBuffer(pdf: PDFDocumentProxy, pageNum: number): Promi
         width: imgObj.width,
         height: imgObj.height,
         channels: canaux,
-        data: data
+        debug: pageNum === 1,
+        raw: true
     };
 
-    return scanData;
+    // Statistiques & outils de débuggage
+    StatistiquesDebug.ajouterTempsExecution(EtapeLecture.EXTRACTION_SCAN, Date.now() - debutMs);
+    if (scanData.debug) LecturePipelineDebug.enregistrerImageDebugRaw(EtapeLecture.EXTRACTION_SCAN, data, scanData.width, scanData.height, scanData.channels);
+
+    return [scanData, data];
 }

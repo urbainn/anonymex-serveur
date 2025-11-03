@@ -1,15 +1,20 @@
 import sharp from "sharp";
 import type { AprilTagDetection } from "@monumental-works/apriltag-node";
-import { debugImageDisque, debugAprilDetections } from "../../utils/debugImageUtils";
 import { ScanData } from "./extraireScans";
+import { visualiserTagDetection } from "../../core/debug/visualiseurs/visualiserTagDetection";
+import { StatistiquesDebug } from "../../core/debug/StatistiquesDebug";
+import { EtapeLecture } from "../../core/debug/EtapesDeTraitementDicts";
+import { ErreurDetectionAprilTags } from "../lectureErreurs";
 
 type CoordinateTransform = "flip-vertical" | "rotate-cw-90";
 
 /**
  * Détecte les april tags dans le scan fourni et retourne leurs positions (point central, angle).
- * @param scan ImageData du scan en 3 canaux (RGB).
+ * @param scan 
  */
-export async function detecterAprilTags(scan: ScanData): Promise<void> {
+export async function detecterAprilTags(scan: ScanData, imageSharp: sharp.Sharp): Promise<AprilTagDetection[]> {
+
+    const tempsDebut = Date.now();
 
     // probleme d'import avec CJS / ESM, on utilise un import dynamique -> A REGLER (todo)
     const apriltagModule = await import("@monumental-works/apriltag-node");
@@ -21,36 +26,16 @@ export async function detecterAprilTags(scan: ScanData): Promise<void> {
     const flip = true;
     const transforms: CoordinateTransform[] = [];
 
-    // Transformer le scan en niveaux de gris pour la détection
-    /*const imgGris = new Uint8Array(scan.width * scan.height * 3);
-    for (let i = 0; i < scan.width * scan.height; i++) {
-        // (R + G + B) / 3
-        const gris = Math.round((scan.data[i * 3]! + scan.data[i * 3 + 1]! + scan.data[i * 3 + 2]!) / 3);
-        imgGris[i * 3] = gris;
-        imgGris[i * 3 + 1] = gris;
-        imgGris[i * 3 + 2] = gris;
-    }*/
-
-    if (scan.channels !== 1) return;
-
-    let imageBuilder = sharp(scan.data, {
-        raw: {
-            width: scan.width,
-            height: scan.height,
-            channels: scan.channels
-        }
-    }).grayscale(); // léger flou pour réduire le bruit
+    const imageDetec = imageSharp.clone().grayscale();
 
     if (flip) {
         transforms.push("flip-vertical", "rotate-cw-90");
-        imageBuilder = imageBuilder.flip().rotate(90);
+        imageDetec.flip().rotate(90);
     }
 
-    const imgGris = await imageBuilder
+    const imgGris = await imageDetec
         .raw()
         .toBuffer({ resolveWithObject: true });
-
-    await debugImageDisque(imgGris.data, imgGris.info.width, imgGris.info.height, 1, 'debug/debug_scan_gris.png');
 
     const aprilTag = new AprilTag(FAMILIES.TAGSTANDARD41H12, {
         quadDecimate: 1.0, // Aucun downscaling
@@ -72,9 +57,17 @@ export async function detecterAprilTags(scan: ScanData): Promise<void> {
         corners: detection.corners.map((corner) => remapPoint(corner))
     }));
 
-    console.log(JSON.stringify(correctedDetections, null, 2));
+    // Enregistrer le temps d'exécution
+    StatistiquesDebug.ajouterTempsExecution(EtapeLecture.DETECTION_APRIL_TAGS, Date.now() - tempsDebut);
 
-    await debugAprilDetections(scan, correctedDetections);
+    // Visualiser les détections
+    if (scan.debug) await visualiserTagDetection(imageSharp, correctedDetections);
+
+    if (correctedDetections.length <= 2) {
+        throw new ErreurDetectionAprilTags("Nombre d'april tags insuffisant pour aligner correctement le scan.");
+    }
+
+    return correctedDetections;
 
 }
 

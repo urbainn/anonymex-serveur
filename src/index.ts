@@ -1,3 +1,3 @@
 import { lireBordereau } from "./lecture/lireBordereau";
 
-lireBordereau('moi.pdf');
+lireBordereau('debug/img/test_orientation.jpg');

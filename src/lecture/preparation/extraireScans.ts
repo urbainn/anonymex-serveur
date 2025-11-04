@@ -37,7 +37,6 @@ export async function extraireScans(doc: DocumentSource, onScanExtrait: (scan: S
             // Traiter l'image unique
             logInfo('extraireScans', `Extraction du scan de l'image source.`);
             const scan = await imgToBuffer(doc);
-            console.log('taille attendue:' + scan.width * scan.height * scan.channels, 'taille buffer: ' + doc.data.length);
             onScanExtrait(scan, doc.data);
             break;
 

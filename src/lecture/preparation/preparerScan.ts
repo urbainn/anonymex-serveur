@@ -3,6 +3,8 @@ import { detecterAprilTags } from "./detecterAprilTags";
 import { ScanData } from "./extraireScans";
 import { obtenirOrientation } from "./obtenirOrientation";
 import { ErreurDetectionAprilTags } from "../lectureErreurs";
+import { realignerCorrigerScan } from "./realignerCorrigerScan";
+import { remapperDetections } from "./remapperDetections";
 
 /**
  * Prépare et ajuste le scan (découpage, rotation, ...).
@@ -28,7 +30,17 @@ export async function preparerScan(scanProps: ScanData, buffer: Uint8ClampedArra
         .catch((err) => { throw ErreurDetectionAprilTags.assigner(err) });
 
     // Orienter correctement le document
-    const orientation = obtenirOrientation(scanProps, detections);
+    const { orientation, ordreTags } = obtenirOrientation(scanProps, detections);
+    scan.rotate(orientation);
+
+    // Remapper les détections d'april tags en fonction de la rotation appliquée
+    const detectionsRemap = remapperDetections(detections, orientation, scanProps.width, scanProps.height);
+
+    await realignerCorrigerScan(scan, ordreTags, detectionsRemap, {
+        tailleTagsMm: 10,
+        margeTagsMm: 10,
+        format: 'A4'
+    });
 
     return true;
 

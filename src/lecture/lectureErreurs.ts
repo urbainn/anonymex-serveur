@@ -14,3 +14,6 @@ export class ErreurAlignement extends ErreurLecture { }
 
 // Erreurs de lecture des April Tags
 export class ErreurDetectionAprilTags extends ErreurLecture { }
+
+// Erreurs de realignement/correction du scan
+export class ErreurRealignement extends ErreurLecture { }

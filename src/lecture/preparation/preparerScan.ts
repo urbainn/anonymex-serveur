@@ -1,4 +1,4 @@
-import sharp from "sharp";
+import sharp, { Sharp } from "sharp";
 import { detecterAprilTags } from "./detecterAprilTags";
 import { ScanData } from "./extraireScans";
 import { obtenirOrientation } from "./obtenirOrientation";
@@ -11,7 +11,7 @@ import { remapperDetections } from "./remapperDetections";
  * @param scanProps Propriétés brutes du scan.
  * @param buffer Buffer de l'image brute.
  */
-export async function preparerScan(scanProps: ScanData, buffer: Uint8ClampedArray | Uint8Array): Promise<boolean> {
+export async function preparerScan(scanProps: ScanData, buffer: Uint8ClampedArray | Uint8Array): Promise<Sharp> {
 
     // Transformer l'image dans un format lisible par les outils de traitement d'images
     const scan = scanProps.raw ? sharp(buffer, {
@@ -36,12 +36,13 @@ export async function preparerScan(scanProps: ScanData, buffer: Uint8ClampedArra
     // Remapper les détections d'april tags en fonction de la rotation appliquée
     const detectionsRemap = remapperDetections(detections, orientation, scanProps.width, scanProps.height);
 
-    await realignerCorrigerScan(scan, ordreTags, detectionsRemap, {
+    // Scan prêt : réaligner et corriger le scan
+    const scanPret = await realignerCorrigerScan(scan, ordreTags, detectionsRemap, {
         tailleTagsMm: 10,
         margeTagsMm: 10,
         format: 'A4'
     });
 
-    return true;
+    return scanPret;
 
 }

@@ -1,10 +1,10 @@
 import { AprilTagDetection } from "@monumental-works/apriltag-node";
 import sharp from "sharp";
-import cvPret, { Mat } from "@techstark/opencv-js";
 import { ErreurRealignement } from "../lectureErreurs";
 import { visualiserGeometrieAncrage } from "../../core/debug/visualiseurs/visualiserGeometrieAncrage";
 import { visualiserRegionsOfInterests } from "../../core/debug/visualiseurs/visualiserRegionsOfInterests";
 import { CadreEtudiantBenchmarkModule } from "../../generation/bordereau/modules/cadre-etudiant/CadreEtudiantBenchmarkModule";
+import { OpenCvInstance } from "../../core/services/OpenCvInstance";
 
 type Pt = [number, number];
 
@@ -24,7 +24,7 @@ export async function realignerCorrigerScan(image: sharp.Sharp, ordreTags: (numb
     const { tailleTagsMm, margeTagsMm, format } = options;
     const { formatWidth, formatHeight } = dimensionsFormats[format];
 
-    const cv = await cvPret;
+    const cv = await OpenCvInstance.getInstance();
 
     // sharp -> matrice opencv
     const { data, info } = await image.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
@@ -121,6 +121,9 @@ export async function realignerCorrigerScan(image: sharp.Sharp, ordreTags: (numb
         srcMat.delete();
         dstMat.delete();
         H.delete();
+    } else if (srcPts.length === 3) {
+        // TODO: affine ou estimation du 4e point et homographie
+        throw new ErreurRealignement(`Transformation affine pas encore implémentée. Les 4 coins doivent être visibles.`);
     }
 
     // On transforme l'image en instance sharp
@@ -136,11 +139,10 @@ export async function realignerCorrigerScan(image: sharp.Sharp, ordreTags: (numb
     dstMatImg.delete();
 
     //TODO: a gérer proprement
-    imageOut.toFile('./debug/output.png');
     const roisGroupes = [new CadreEtudiantBenchmarkModule('ABCDEFGHIJKLMNOPQRSTUVWXYZ').getLayoutPositions().lettresCodeAnonymat]
     visualiserRegionsOfInterests(imageOut, roisGroupes);
 
-    return image;
+    return imageOut;
 }
 
 /**

@@ -17,7 +17,6 @@ export async function visualiserGeometrieAncrage(image: sharp.Sharp, ptsAncrageS
         ctx.fillStyle = estSource ? 'red' : 'green';
         ctx.strokeStyle = estSource ? 'red' : 'green';
 
-        console.log("Groupe de points d'ancrage:", groupe);
         for (const pt of groupe) {
             if (pt) {
                 ctx.beginPath();
@@ -43,7 +42,7 @@ export async function visualiserGeometrieAncrage(image: sharp.Sharp, ptsAncrageS
     ctx.fillStyle = 'red';
     ctx.fillText("[X] Géométrie source", 20, 30);
     ctx.fillStyle = 'green';
-    ctx.fillText("[X] Géométrie modèle", canvas.width - ctx.measureText("[X] Géométrie modèle").width - 20, 30);
+    ctx.fillText("Géométrie modèle [X]", canvas.width - ctx.measureText("Géométrie modèle [X]").width - 20, 30);
 
     // Enregistrer l'image
     await LecturePipelineDebug.enregistrerImageDebug(EtapeLecture.CALCULER_GEOMETRIE_ANCRAGE, canvas.toBuffer('image/jpeg'));

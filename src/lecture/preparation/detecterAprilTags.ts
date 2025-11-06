@@ -5,6 +5,7 @@ import { visualiserTagDetection } from "../../core/debug/visualiseurs/visualiser
 import { StatistiquesDebug } from "../../core/debug/StatistiquesDebug";
 import { EtapeLecture } from "../../core/debug/EtapesDeTraitementDicts";
 import { ErreurDetectionAprilTags } from "../lectureErreurs";
+import { AprilTagInstance } from "../../core/services/AprilTagInstance";
 
 type CoordinateTransform = "flip-vertical" | "rotate-cw-90";
 
@@ -15,11 +16,6 @@ type CoordinateTransform = "flip-vertical" | "rotate-cw-90";
 export async function detecterAprilTags(scan: ScanData, imageSharp: sharp.Sharp): Promise<AprilTagDetection[]> {
 
     const tempsDebut = Date.now();
-
-    // probleme d'import avec CJS / ESM, on utilise un import dynamique -> A REGLER (todo)
-    const apriltagModule = await import("@monumental-works/apriltag-node");
-    const AprilTag = apriltagModule.default;
-    const { FAMILIES } = apriltagModule;
 
     // J'ai fait une erreur toute bête lors de l'impression des tags, ils sont flip / miroirés en Y
     // donc on doit corriger ça temporairement à la détection en faisant un flip vertical + rotation 90°
@@ -37,17 +33,8 @@ export async function detecterAprilTags(scan: ScanData, imageSharp: sharp.Sharp)
         .raw()
         .toBuffer({ resolveWithObject: true });
 
-    const aprilTag = new AprilTag(FAMILIES.TAGSTANDARD41H12, {
-        quadDecimate: 1.0, // Aucun downscaling
-        quadSigma: 1.0,    // Aucun flou, image déjà nette
-        refineEdges: true,
-        decodeSharpening: 0.25,
-        // todo: nb de threads?
-    });
 
-    // Pre-initialize to avoid delay on first detection
-    await aprilTag.ensureInitialized();
-
+    const aprilTag = await AprilTagInstance.getInstance();
     const detections = await aprilTag.detectAsync(imgGris.info.width, imgGris.info.height, imgGris.data);
 
     const remapPoint = createPointRemapper(transforms, imgGris.info.width, imgGris.info.height);

@@ -1,15 +1,9 @@
 import sharp from "sharp";
 import { sharp2canvas } from "../../../utils/debugImageUtils";
 import { LayoutPosition } from "../../../generation/bordereau/modules/ModulesBordereau";
-import { writeFileSync } from "fs";
 import { LecturePipelineDebug } from "../LecturePipelineDebug";
 import { EtapeLecture } from "../EtapesDeTraitementDicts";
-
-const dimensionsFormats = {
-    A4: { formatWidthMm: 210, formatHeightMm: 297 },
-};
-
-type MargesMm = { left: number; top: number; right: number; bottom: number };
+import { dimensionsFormats } from "../../../lecture/lireBordereau";
 
 /**
  * Dessine toutes les ROI sur l'image pour visualisation.

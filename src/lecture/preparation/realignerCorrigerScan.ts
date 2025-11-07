@@ -5,12 +5,9 @@ import { visualiserGeometrieAncrage } from "../../core/debug/visualiseurs/visual
 import { visualiserRegionsOfInterests } from "../../core/debug/visualiseurs/visualiserRegionsOfInterests";
 import { CadreEtudiantBenchmarkModule } from "../../generation/bordereau/modules/cadre-etudiant/CadreEtudiantBenchmarkModule";
 import { OpenCvInstance } from "../../core/services/OpenCvInstance";
+import { dimensionsFormats } from "../lireBordereau";
 
 type Pt = [number, number];
-
-const dimensionsFormats = {
-    'A4': { formatWidth: 210, formatHeight: 297 }
-};
 
 export type realignerCorrigerOptions = {
     tailleTagsMm: number;
@@ -22,7 +19,7 @@ export type realignerCorrigerOptions = {
 
 export async function realignerCorrigerScan(image: sharp.Sharp, ordreTags: (number | null)[], detections: AprilTagDetection[], options: realignerCorrigerOptions): Promise<sharp.Sharp> {
     const { tailleTagsMm, margeTagsMm, format } = options;
-    const { formatWidth, formatHeight } = dimensionsFormats[format];
+    const { formatWidthMm, formatHeightMm } = dimensionsFormats[format];
 
     const cv = await OpenCvInstance.getInstance();
 
@@ -39,7 +36,7 @@ export async function realignerCorrigerScan(image: sharp.Sharp, ordreTags: (numb
 
     // Calculer la taille de sortie du document en pixels
     const sortieH = imgHeight;
-    const sortieW = Math.round((formatWidth / formatHeight) * sortieH); // Ratio format d'origine
+    const sortieW = Math.round((formatWidthMm / formatHeightMm) * sortieH); // Ratio format d'origine
 
     // Construit un tableau de lookup rapide des tags par id
     // ID -> données de détection
@@ -50,8 +47,8 @@ export async function realignerCorrigerScan(image: sharp.Sharp, ordreTags: (numb
 
     // fonctions utilitaires
     function mmToPixels(point: Pt): Pt {
-        const ppmX = sortieW / formatWidth; // pixels par millimètre
-        const ppmY = sortieH / formatHeight;
+        const ppmX = sortieW / formatWidthMm; // pixels par millimètre
+        const ppmY = sortieH / formatHeightMm;
         return [point[0] * ppmX, point[1] * ppmY];
     }
 
@@ -75,7 +72,7 @@ export async function realignerCorrigerScan(image: sharp.Sharp, ordreTags: (numb
         const tagId = ordreTags[i]!;
 
         // Calculer la position du tag attendu dans le document modèle
-        const dstPt = calculerPositionTagDansModele(i, margeTagsMm, tailleTagsMm, formatWidth, formatHeight);
+        const dstPt = calculerPositionTagDansModele(i, margeTagsMm, tailleTagsMm, formatWidthMm, formatHeightMm);
         dstPoints[i] = mmToPixels(dstPt);
 
         // Si le tag à été détecté, récuperer sa pos dans l'image source

@@ -17,3 +17,7 @@ export class ErreurDetectionAprilTags extends ErreurLecture { }
 
 // Erreurs de realignement/correction du scan
 export class ErreurRealignement extends ErreurLecture { }
+
+// Erreurs de ROI
+export class ErreurLectureROIs extends ErreurLecture { }
+export class ErreurDecoupeROIs extends ErreurLecture { }

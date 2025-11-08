@@ -1,5 +1,5 @@
 import { ErreurDocumentSource } from '../lectureErreurs';
-import { logInfo, styles } from '../../utils/logger';
+import { logInfo, styles } from '../../../utils/logger';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { pdfToBuffer } from './conversion/pdfToBuffer';
 import { imgToBuffer } from './conversion/imgToBuffer';

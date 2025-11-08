@@ -1,6 +1,6 @@
 import { AprilTagFamily } from 'apriltag'
 import tagConfigFamille from 'apriltag/families/standard41h12.json'
-import { mmToPoints } from '../../utils/pdfUtils';
+import { mmToPoints } from '../../../utils/pdfUtils';
 import { ErreurAprilTag } from '../generationErreurs';
 
 export const APRILTAGS_IDS = [10, 11, 12, 13]; // HG, HD, BG, BD

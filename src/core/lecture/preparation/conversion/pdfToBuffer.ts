@@ -1,9 +1,9 @@
 import { OPS, PDFDocumentProxy } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { ErreurConversion, ErreurPdfIncompatible } from "../../lectureErreurs";
 import { ScanData } from "../extraireScans";
-import { StatistiquesDebug } from "../../../core/debug/StatistiquesDebug";
-import { EtapeLecture } from "../../../core/debug/EtapesDeTraitementDicts";
-import { LecturePipelineDebug } from "../../../core/debug/LecturePipelineDebug";
+import { StatistiquesDebug } from "../../../../core/debug/StatistiquesDebug";
+import { EtapeLecture } from "../../../../core/debug/EtapesDeTraitementDicts";
+import { LecturePipelineDebug } from "../../../../core/debug/LecturePipelineDebug";
 
 /**
  * Extrait les images d'un scan PDF et renvoit un tableau d'octets GREYSCALE prêt à la lecture.\

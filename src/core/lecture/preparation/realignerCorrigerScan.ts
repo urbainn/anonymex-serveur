@@ -1,10 +1,10 @@
 import { AprilTagDetection } from "@monumental-works/apriltag-node";
 import sharp from "sharp";
 import { ErreurRealignement } from "../lectureErreurs";
-import { visualiserGeometrieAncrage } from "../../core/debug/visualiseurs/visualiserGeometrieAncrage";
-import { visualiserRegionsOfInterests } from "../../core/debug/visualiseurs/visualiserRegionsOfInterests";
+import { visualiserGeometrieAncrage } from "../../../core/debug/visualiseurs/visualiserGeometrieAncrage";
+import { visualiserRegionsOfInterests } from "../../../core/debug/visualiseurs/visualiserRegionsOfInterests";
 import { CadreEtudiantBenchmarkModule } from "../../generation/bordereau/modules/cadre-etudiant/CadreEtudiantBenchmarkModule";
-import { OpenCvInstance } from "../../core/services/OpenCvInstance";
+import { OpenCvInstance } from "../../../core/services/OpenCvInstance";
 import { dimensionsFormats } from "../lireBordereau";
 
 type Pt = [number, number];

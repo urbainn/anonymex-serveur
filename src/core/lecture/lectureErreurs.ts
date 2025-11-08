@@ -1,4 +1,4 @@
-import { ErreurBase } from "../core/ErreurBase";
+import { ErreurBase } from "../../core/ErreurBase";
 
 abstract class ErreurLecture extends ErreurBase { }
 

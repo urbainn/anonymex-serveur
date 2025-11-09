@@ -41,8 +41,8 @@ CREATE TABLE epreuve (
     nom VARCHAR(100) NOT NULL,
     statut TINYINT UNSIGNED NOT NULL, -- 0 : INITIAL, 1 : MATERIEL EXAMEN IMPRIME, 2 : DEPOT COPIES, 3 : DEPOT COMPLET, 4 : NOTES EXPORTEES
     date_epreuve DATETIME NOT NULL,
-    duree MEDIUMINT UNSIGNED NOT NULL,
-    inscrits INT UNSIGNED NOT NULL,
+    duree SMALLINT UNSIGNED NOT NULL,
+    inscrits SMALLINT UNSIGNED NOT NULL,
     CONSTRAINT pk_epreuve_session PRIMARY KEY (id_session, code_epreuve),
     CONSTRAINT fk_es_session FOREIGN KEY (id_session)
         REFERENCES session_examen(id_session)

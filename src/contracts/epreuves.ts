@@ -1,4 +1,4 @@
-import z from "zod";
+import { z } from "zod";
 
 export type EpreuveStatut = 1 | 2 | 3 | 4 | 5;
 

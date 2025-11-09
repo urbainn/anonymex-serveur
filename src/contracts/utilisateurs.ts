@@ -13,12 +13,12 @@ export const ListUtilisateursSchema = z.object({
     utilisateurs : z.array(UtilisateurSchema)
 });
 
-export const LoginUtilisateurSchema = UtilisateurSchema.pick({ email: true});
+export const LoginUtilisateurSchema = UtilisateurSchema.pick({ email: true }).extend({ motDePasse: z.string() });
 
 export const UpdateUtilisateurSchema = UtilisateurSchema.omit({ id: true, idRole: true}).partial();
 
 // --- Types ---
 export type APIUtilisateur = z.infer<typeof UtilisateurSchema>;
 export type APIListUtilisateur = z.infer<typeof ListUtilisateursSchema>;
-export type APILoginUtilisateur = z.infer<typeof LoginUtilisateurSchema>;
+export type APILoginBody = z.infer<typeof LoginUtilisateurSchema>;
 export type APIUpdateUtilisateur = z.infer<typeof UpdateUtilisateurSchema>;

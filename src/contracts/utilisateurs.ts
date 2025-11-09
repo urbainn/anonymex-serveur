@@ -1,0 +1,24 @@
+import z from "zod";
+
+// --- Schémas ---
+export const UtilisateurSchema = z.object({
+    id: z.number().int().positive(),
+    email: z.email(),
+    nom: z.string(),
+    prenom: z.string(),
+    idRole: z.number().int().positive()
+});
+
+export const ListUtilisateursSchema = z.object({
+    utilisateurs : z.array(UtilisateurSchema)
+});
+
+export const LoginUtilisateurSchema = UtilisateurSchema.pick({ email: true});
+
+export const UpdateUtilisateurSchema = UtilisateurSchema.omit({ id: true, idRole: true}).partial();
+
+// --- Types ---
+export type APIUtilisateur = z.infer<typeof UtilisateurSchema>;
+export type APIListUtilisateur = z.infer<typeof ListUtilisateursSchema>;
+export type APILoginUtilisateur = z.infer<typeof LoginUtilisateurSchema>;
+export type APIUpdateUtilisateur = z.infer<typeof UpdateUtilisateurSchema>;

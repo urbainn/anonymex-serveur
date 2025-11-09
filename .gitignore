@@ -3,4 +3,5 @@ dist/
 package-lock.json
 /*.pdf
 .vscode/
+.env
 /debug/

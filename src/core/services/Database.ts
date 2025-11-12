@@ -90,7 +90,7 @@ export class Database {
      */
     private static async importer(): Promise<boolean> {
 
-        const results = await this.query<RowDataPacket[]>(`SELECT COUNT(*) as nbTables FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema = '${this.getVarEnv("BDD_NAME")}'`);
+        const results = await this.query<RowDataPacket[]>("SELECT COUNT(*) as nbTables FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema = ?", [this.getVarEnv("BDD_NAME")]);
         if (results.length > 0 && results[0]!.nbTables === 0) {
 
             // Fichier sql contenant le schéma de la BDD

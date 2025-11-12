@@ -46,6 +46,7 @@ export async function decouperROIs(
     const pxPerMmY = imgH / zoneEffectiveH;
 
     for (let roiIndex = 0; roiIndex < rois.length; roiIndex++) {
+        const startTime = Date.now();
         const roi = rois[roiIndex]!;
 
         // Coordonnées converties en pixels du rectangle à découper
@@ -56,6 +57,7 @@ export async function decouperROIs(
 
         // Découper la ROI (floor afin d'éviter de sortir du cadre)
         const roiImage = image.clone().extract({ left: Math.floor(x), top: Math.floor(y), width: Math.floor(w), height: Math.floor(h) });
+        console.log(`Découpe ROI ${roiIndex} en ${Date.now() - startTime}ms`);
         await onDecoupe(roiImage, roiIndex);
     }
 }

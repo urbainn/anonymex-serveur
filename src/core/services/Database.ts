@@ -1,7 +1,9 @@
-import { readFileSync } from "fs";
-import { ConnectionOptions, createConnection, createPool, Pool, ResultSetHeader, RowDataPacket } from "mysql2";
+import { existsSync, readFileSync } from "fs";
+import { ConnectionOptions, createPool, Pool, ResultSetHeader, RowDataPacket } from "mysql2";
 import { join } from "path";
 import { logInfo } from "../../utils/logger";
+import { ConfigManager } from "./ConfigManager";
+import config from "../../../config/config.json";
 
 /**
  * Wrapper d'accès à la base de données MySQL anonymex.
@@ -10,17 +12,6 @@ export class Database {
 
     /** Pool de connexions. Undefined tant que non initialisé */
     private static pool: Pool | undefined;
-
-    /**
-     * Récupère la variable d'environnement ou lève une erreur si elle n'est pas définie.
-     * @param nomVar nom de la var
-     * @returns 
-     */
-    private static getVarEnv(nomVar: string): string {
-        const valeur = process.env[nomVar];
-        if (valeur === undefined) throw new Error(`La variable d'environement ${nomVar} doit être définie.`);
-        else return valeur;
-    }
 
     /**
      * Créé et retourne la pool de connexion à la base de données.
@@ -32,18 +23,22 @@ export class Database {
         }
 
         const access: ConnectionOptions = {
-            user: this.getVarEnv("BDD_USER_NAME"),
-            password: this.getVarEnv("BDD_PASSWORD"),
-            database: this.getVarEnv("BDD_NAME"),
-            port: Number(this.getVarEnv("BDD_PORT")),
-            host: this.getVarEnv("BDD_HOST")
+            user: ConfigManager.getVarEnv("BDD_USER_NAME"),
+            password: ConfigManager.getVarEnv("BDD_PASSWORD"),
+            database: ConfigManager.getVarEnv("BDD_NAME"),
+            port: Number(ConfigManager.getVarEnv("BDD_PORT")),
+            host: ConfigManager.getVarEnv("BDD_HOST")
         };
 
         // Créer la pool de connexion
         this.pool = createPool(access);
 
         // Importer le schéma initial si nécessaire
-        await this.importer();
+        const bddEstVide = await this.importer();
+        if (!bddEstVide) {
+            // Appliquer les patchs de mise à jour si nécessaire
+            await this.appliquerPatchs();
+        }
 
         return this.pool;
     }
@@ -90,15 +85,21 @@ export class Database {
      */
     private static async importer(): Promise<boolean> {
 
-        const results = await this.query<RowDataPacket[]>("SELECT COUNT(*) as nbTables FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema = ?", [this.getVarEnv("BDD_NAME")]);
+        const results = await this.query<RowDataPacket[]>("SELECT COUNT(*) as nbTables FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema = ?", [ConfigManager.getVarEnv("BDD_NAME")]);
         if (results.length > 0 && results[0]!.nbTables === 0) {
 
             // Fichier sql contenant le schéma de la BDD
-            const sqlFilePath = join(__dirname, "..", "bdd.sql");
+            const sqlFilePath = join(__dirname, "..", "..", "..", "config", "schemas", "initial.sql");
             const sqlFile = readFileSync(sqlFilePath, "utf-8");
 
-            // Exécuter le script de création des tables
-            await this.execute(sqlFile);
+            await this.executerSQL(sqlFile);
+
+            // Créer la config cachée persistante avec le numéro de patch courant
+            // pour pouvoir mettre à jour la BDD plus tard si besoin.
+            const configCachee = ConfigManager.getConfigCachee() ?? ConfigManager.nouvelleConfigCachee();
+            configCachee.patch = config.patchNb;
+            ConfigManager.enregistrerConfigCachee(configCachee);
+
             logInfo("Database", "Tables créées avec succès.");
             return true;
         }
@@ -106,4 +107,68 @@ export class Database {
         return false;
     }
 
+    /**
+     * Appliquer les patchs de mise à jour de la BDD, en fonction du numéro de patch courant (config cachée vs. config).
+     */
+    static async appliquerPatchs(): Promise<void> {
+
+        // Créer la config cachée si inexistante
+        const configCachee = ConfigManager.getConfigCachee();
+        if (!configCachee) {
+            ConfigManager.enregistrerConfigCachee(ConfigManager.nouvelleConfigCachee());
+            return;
+        }
+
+        const numeroPatchActuel = config.patchNb;
+        const dernierPatchApplique = configCachee.patch;
+
+        if (typeof dernierPatchApplique !== 'number') {
+            throw new Error('Configuration cachée mal formée : le numéro de patch doit être un nombre. Voir config/.configCachee.json.');
+        } else if (typeof numeroPatchActuel !== 'number') {
+            throw new Error('Configuration locale mal formée : le numéro de patch doit être un nombre. Voir config/config.json.');
+        }
+
+        // Faut-il appliquer des patchs ?
+        if (dernierPatchApplique < numeroPatchActuel) {
+            logInfo('Database', `Mise à jour de la BDD : application de ${numeroPatchActuel - dernierPatchApplique} patch(s).`);
+
+            const startTime = Date.now();
+
+            // du dernier patch jusqu'au patch actuel..
+            for (let patch = dernierPatchApplique + 1; patch <= numeroPatchActuel; patch++) {
+
+                // lire le fichier de patch
+                const patchFilePath = join(__dirname, "..", "..", "..", "config", "schemas", `patch-${patch}.sql`);
+                if (!existsSync(patchFilePath)) {
+                    throw new Error(`Patch #${patch} introuvable : ${patchFilePath}. Vérifiez votre installation.`);
+                }
+
+                const patchFile = readFileSync(patchFilePath, "utf-8");
+                await this.executerSQL(patchFile);
+
+            }
+
+            logInfo('Database', `Mise à jour de la BDD terminée en ${Date.now() - startTime}ms.`);
+
+            // Mettre à jour le numéro de patch dans la config cachée
+            configCachee.patch = numeroPatchActuel;
+            ConfigManager.enregistrerConfigCachee(configCachee);
+        }
+    }
+
+    /**
+     * Exécuter le contenu d'un fichier SQL.
+     * @param sqlContent au format texte, brut
+     */
+    private static async executerSQL(sqlContent: string): Promise<void> {
+        // Exécuter les instructions du script une par une pour éviter le multi statement et problèmes
+        const statements = sqlContent
+            .split(/;\s*/)
+            .map((statement) => statement.trim())
+            .filter((statement) => statement.length > 0);
+
+        for (const statement of statements) {
+            await this.execute(statement);
+        }
+    }
 }

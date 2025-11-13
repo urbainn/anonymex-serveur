@@ -1,0 +1,1 @@
+-- aucun patch à appliquer, permet simplement de tester le mécanisme

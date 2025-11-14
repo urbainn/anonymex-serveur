@@ -1,7 +1,7 @@
 import { DatabaseCacheBase } from "../base/DatabaseCacheBase";
 import { Epreuve, EpreuveData } from "./Epreuve";
 
-export class EpreuveCache extends DatabaseCacheBase<[number, string] /*id*/, Epreuve, EpreuveData>{
+export class EpreuveCache extends DatabaseCacheBase<string /*session-code*/, Epreuve, EpreuveData> {
 
     nomTable: string = "epreuve";
     colonnesClePrimaire: string[] = ["id_session", "code_epreuve"];
@@ -10,8 +10,8 @@ export class EpreuveCache extends DatabaseCacheBase<[number, string] /*id*/, Epr
         return new Epreuve(data);
     }
 
-    getValeursClePrimaire(element: Epreuve): [number, string] {
-        return [element.idSession, element.codeEpreuve];
+    getValeursClePrimaire(element: Epreuve): string {
+        return element.idSession + '-' + element.codeEpreuve;
     }
 
 }

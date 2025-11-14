@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { APIEpreuve, APIListEpreuves } from "../../../contracts/epreuves";
+import { APIEpreuve, APIListEpreuves, EpreuveStatut } from "../../../contracts/epreuves";
 
 const departements = ["I", "P", "S", "V"];
 const nomsUE = ["Electromagnétisme", "Outils Mathématiques 3", "Physiologie et Pathologie", "Chimie organique", "Materiaux Inorganiques",
@@ -14,23 +14,37 @@ const salles = ["36.1", "36.2", "36.3", "36.4", "36.101", "36.102", "36.103", "3
 
 export function mockEpreuve(): APIEpreuve {
     const random = Math.floor(Math.random() * 10000) + 1;
+
+    const dateEpreuve = new Date(
+        Date.now() + ((random % 30) - 15) * 24 * 60 * 60 * 1000 // entre -15 et +15 jours 
+    ).setHours(9 + (random % 8), 0, 0, 0);
+
     const dpt = departements[random % departements.length];
     const nbSalles = (random % 3) + 1;
     const sallesEpreuve = Array.from({ length: nbSalles }, () => salles[Math.floor(Math.random() * salles.length)]!);
+
     return {
         code: `HA${dpt}${random % 8 + 1}0${random % 9 + 1}${dpt}`,
         nom: nomsUE[random % nomsUE.length]!,
         session: 1,
-        statut: (random % 5 + 1) as APIEpreuve["statut"],
+        statut: EpreuveStatut.MATERIEL_NON_IMPRIME,
         salles: sallesEpreuve,
-        date: new Date(2025, 0, (random % 16) + 5, 8 + (random % 7), 0, 0),
+        date: dateEpreuve,
         duree: 60 * (1 + (random % 4)), // entre 1h et 4h
     };
 }
 
 export async function getEpreuves(req: Request): Promise<APIListEpreuves> {
 
+    // optimisation abyssale : TEMPORAIRE!!!!
+    const epreuves = Array.from({ length: 300 }, () => mockEpreuve()).sort((a, b) => a.date - b.date);
+    const now = Date.now();
+
+    const epreuvesAvenir = epreuves.filter(epreuve => epreuve.date >= now);
+    const epreuvesPassees = epreuves.filter(epreuve => epreuve.date < now);
+
     return {
-        epreuves: Array.from({ length: 300 }, () => mockEpreuve())
+        epreuvesAvenir,
+        epreuvesPassees
     };
 }

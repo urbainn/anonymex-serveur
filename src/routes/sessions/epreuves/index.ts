@@ -3,6 +3,7 @@ import { useRest } from "../../useRest";
 import { getEpreuves } from "./getEpreuves";
 import { getEpreuve } from "./getEpreuve";
 import { patchEpreuve } from "./patchEpreuve";
+
 const epreuvesRouter = Router();
 
 // GET /sessions/:session/epreuves/

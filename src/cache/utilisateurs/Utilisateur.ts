@@ -4,7 +4,7 @@ import { Role } from "../roles/Role";
 import { roleCache } from "../roles/RoleCache";
 
 export interface UtilisateurData extends RowDataPacket {
-    id: number;
+    id_utilisateur: number;
     email: string;
     nom: string;
     prenom: string;
@@ -20,7 +20,7 @@ export class Utilisateur extends ElementEnCache {
 
     constructor(data: UtilisateurData) {
         super();
-        this.id = data.id;
+        this.id = data.id_utilisateur;
         this.email = data.email;
         this.nom = data.nom;
         this.prenom = data.prenom;

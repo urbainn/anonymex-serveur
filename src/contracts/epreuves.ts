@@ -1,6 +1,12 @@
 import { z } from "zod";
 
-export type EpreuveStatut = 1 | 2 | 3 | 4 | 5;
+export enum EpreuveStatut {
+    MATERIEL_NON_IMPRIME = 1,
+    MATERIEL_IMPRIME = 2,
+    EN_ATTENTE_DE_DEPOT = 3,
+    DEPOT_COMPLET = 4,
+    NOTE_EXPORTEES = 5
+}
 
 export const EpreuveStatutNom: Record<EpreuveStatut, string> = {
     1: "Matériel non imprimé",

@@ -9,25 +9,25 @@ export async function getIncidents(req: Request): Promise<APIListIncidents> {
                 idIncident: 0,
                 titre: "Numéro d'anonymat inconnu",
                 details: "Lorem ipsum...",
-                resolu: 0
+                resolu: Math.floor(Math.random()) < 0.5
             },
             {
                 idIncident: 1,
                 titre: "Numéro d'anonymat inconnu",
                 details: "Lorem ipsum...",
-                resolu: 1
+                resolu: Math.floor(Math.random()) < 0.5
             },
             {
                 idIncident: 2,
                 titre: "Scan illisible",
                 details: "Lorem ipsum...",
-                resolu: 0
+                resolu: Math.floor(Math.random()) < 0.5
             },
             {
                 idIncident: 3,
                 titre: "Scan illisible",
                 details: "Lorem ipsum...",
-                resolu: 1
+                resolu: Math.floor(Math.random()) < 0.5
             },
         ]
     });

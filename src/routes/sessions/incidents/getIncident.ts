@@ -8,7 +8,7 @@ export async function getIncident(req: Request): Promise<APIIncident> {
         idSession: 1,
         titre: "Numéro d'anonymat inconnu",
         details: "Lorem ipsum...",
-        resolu: 0,
+        resolu: Math.floor(Math.random()) < 0.5,
         codeAnonymat: "AFGH",
         noteQuart: 60,
         idUtilisateur: 3

@@ -5,10 +5,9 @@ import { getIncidents } from "./getIncidents";
 
 const incidentsRouter = Router();
 
-
-// GET /sessions/:session/incidents/
-incidentsRouter.get("/", (req, res) => useRest(getIncidents, req, res));
 // GET /sessions/:session/incidents/:id/
 incidentsRouter.get("/:id", (req, res) => useRest(getIncident, req, res));
+// GET /sessions/:session/incidents/
+incidentsRouter.get("/", (req, res) => useRest(getIncidents, req, res));
 
 export { incidentsRouter };

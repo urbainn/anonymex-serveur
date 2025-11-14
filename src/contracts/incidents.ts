@@ -6,7 +6,7 @@ export const IncidentSchema = z.object({
     idSession: z.number().int().positive(),
     titre: z.string(),
     details: z.string(),
-    resolu: z.union([z.literal(0), z.literal(1)]), // 0: NON RESOLU, 1: RESOLU 
+    resolu: z.boolean(), // 0: NON RESOLU, 1: RESOLU 
     codeAnonymat: z.string().optional(),
     noteQuart: z.number().int().positive().optional(),
     idUtilisateur: z.number().int().positive()

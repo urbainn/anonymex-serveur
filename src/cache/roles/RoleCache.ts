@@ -10,7 +10,7 @@ class RoleCache extends DatabaseCacheBase<number /*id*/, Role, RoleData> {
         return new Role(data);
     }
 
-    getValeursClePrimaire(element: Role): number {
+    getComposanteCache(element: Role): number {
         return element.id;
     }
 

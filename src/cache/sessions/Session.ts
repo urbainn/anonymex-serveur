@@ -1,6 +1,8 @@
 import { RowDataPacket } from "mysql2";
 import { ElementEnCache } from "../base/ElementEnCacheBase";
 import { SessionsStatut } from "../../contracts/sessions"
+import { Epreuve } from "../epreuves/Epreuve";
+import { EpreuveCache } from "../epreuves/EpreuveCache";
 
 export interface SessionData extends RowDataPacket {
     id_session: number,
@@ -15,11 +17,15 @@ export class Session extends ElementEnCache {
     public annee: number;
     public statut: SessionsStatut;
 
+    /** Cache des épreuves associées à cette session */
+    public epreuves: EpreuveCache;
+
     constructor(data: SessionData) {
         super();
         this.id = data.id_session;
         this.nom = data.nom;
         this.annee = data.annee;
         this.statut = data.statut;
+        this.epreuves = new EpreuveCache(this.id);
     }
 }

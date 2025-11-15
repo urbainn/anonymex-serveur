@@ -10,7 +10,7 @@ class UtilisateurCache extends DatabaseCacheBase<number /*id*/, Utilisateur, Uti
         return new Utilisateur(data);
     }
 
-    getValeursClePrimaire(element: Utilisateur): number {
+    getComposanteCache(element: Utilisateur): number {
         return element.id;
     }
 

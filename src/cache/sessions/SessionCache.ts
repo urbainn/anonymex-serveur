@@ -1,7 +1,7 @@
 import { DatabaseCacheBase } from "../base/DatabaseCacheBase";
 import { Session, SessionData } from "./Session";
 
-export class SessionCache extends DatabaseCacheBase<number /*id*/, Session, SessionData>{
+export class SessionCache extends DatabaseCacheBase<number /*id*/, Session, SessionData> {
 
     nomTable: string = "session_examen";
     colonnesClePrimaire: string[] = ["id_session"];
@@ -10,7 +10,7 @@ export class SessionCache extends DatabaseCacheBase<number /*id*/, Session, Sess
         return new Session(data);
     }
 
-    getValeursClePrimaire(element: Session): number {
+    getComposanteCache(element: Session): number {
         return element.id;
     }
 

@@ -5,59 +5,71 @@ import { ElementEnCache } from "./ElementEnCacheBase";
 
 /**
  * Base abstraite pour les classes de cache basée sur une table de base de données. 
- * Les éléments sont indexés par une clé.\
- * @template I Le type des clés utilisées pour indexer les éléments.
+ * Les éléments sont indexés par une clé primaire faite d'une colonne, ou plusieurs (imbrication).
+ * 
+ * Une clé primaire de n composantes est faite ici de n-1 composantes parentes (valeurs données à l'instanciation dans le constructeur)
+ * et de la composante propre à ce cache (obtenue via `getComposanteCache`).
+ * 
+ * En clair, les composantes parentes sont **fixes/immuables** pour une instance de cache donnée, seule
+ * la composante propre à ce cache varie entre les éléments.
+ * @template I Le type de la composante de la clé primaire correspondant à ce cache.
  * @template T Le type des données mises en cache.
  * @template D Le type des données telles qu'elles sont stockées dans la base de données (brut, avant transformation en T).
  */
-export abstract class DatabaseCacheBase<
-    I extends string | number | (string | number)[], // clé primaire
-    T extends ElementEnCache, // élément (instance de classe)
-    D extends RowDataPacket // données brutes de la BDD
-> {
+export abstract class DatabaseCacheBase<I extends string | number, T extends ElementEnCache, D extends RowDataPacket> extends CacheBase<I, T> {
 
     /** Nom de la table associée */
     abstract nomTable: string;
 
-    /** Nom des colonnes composant la clé primaire */
+    /** Noms des colonnes composant la clé primaire, dans l'ordre d'imbrication.
+     * Par exemple, si ce cache est imbriqué dans une session, la clé primaire est `(id_session, <composant clé primaire de ce cache>)`. */
     abstract colonnesClePrimaire: string[];
+
+    /** Valeurs des composantes parentes de la clé primaire, si ce cache est imbriqué. */
+    protected readonly valeursComposantesParent: (string | number)[] | undefined;
 
     /** Fonction de D vers T, c'est à dire d'un objet de la BDD en une instance de T */
     abstract fromDatabase(data: D): T;
 
-    /** Obtenir le couple de clés primaires pour un élément en format indexable.\
-     * @example return element.pk1 + '-' + element.pk2; */
-    abstract getValeursClePrimaire(element: T): I;
+    /** Obtenir la valeur de la composante de la clé primaire propre à ce cache. Les valeurs des composantes parentes
+     * sont données à l'instanciation du cache. */
+    abstract getComposanteCache(element: T): I;
 
-    private cache: I extends (string | number)[] ? Map<
+    /**
+     * @param valeursComposantesParent Valeurs des composantes parentes de la clé primaire, si ce cache est imbriqué.
+     */
+    constructor(valeursComposantesParent?: (string | number)[]) {
+        super();
+        this.valeursComposantesParent = valeursComposantesParent;
+    }
 
-        /**
-         * Récupérer un élément du cache ou de la base de données.
-         * @param id Clé primaire de l'élément à récupérer. Dans le format attendu par getValeursClePrimaire.
-         * @return élément ou undefined s'il n'est pas en cache ou dans la BDD.
-         */
-        public async getOrFetch(id: I): Promise<T | undefined> {
-            let element = this.get(id);
-            if (!element) {
-                // Récupérer depuis la BDD
-                // Associer un paramètre '?' par colonne de la clé primaire
-                const whereSql = this.colonnesClePrimaire.map((colonne) => `\`${colonne}\` = ?`).join(" AND ");
-                const sql = `SELECT * FROM \`${this.nomTable}\` WHERE ${whereSql} LIMIT 1;`;
+    /**
+     * Récupérer un élément du cache ou de la base de données.
+     * @param id Clé primaire de l'élément à récupérer. Dans le format attendu par getComposanteCache.
+     * @return élément ou undefined s'il n'est pas en cache ou dans la BDD.
+     */
+    public async getOrFetch(id: I): Promise<T | undefined> {
+        let element = this.get(id);
+        if (!element) {
+            // Récupérer depuis la BDD
+            // Associer un paramètre '?' par colonne de la clé primaire
+            const whereSql = this.colonnesClePrimaire.map((colonne) => `\`${colonne}\` = ?`).join(" AND ");
+            const sql = `SELECT * FROM \`${this.nomTable}\` WHERE ${whereSql} LIMIT 1;`;
 
-                // Parser les valeurs de la clé primaire (tjrs un tableau, au cas où I serait un type simple)
-                const valeursKp = Array.isArray(id) ? id : [id];
+            // assembler les composantes de la clé primaire (parentes + propre à ce cache)
+            const valeursPK = this.valeursComposantesParent ? [...this.valeursComposantesParent, id] : [id];
 
-                // Requête
-                const results = await Database.query<D[]>(sql, valeursKp);
-                if (results.length > 0) {
-                    // Transformer en élément et le mettre en cache
-                    element = this.fromDatabase(results[0]!);
-                    this.set(this.getValeursClePrimaire(element), element);
-                }
+            // Requête
+            const results = await Database.query<D[]>(sql, valeursPK);
+            if (results.length > 0) {
+                // Transformer en élément et le mettre en cache
+                element = this.fromDatabase(results[0]!);
+                this.set(this.getComposanteCache(element), element);
             }
-
-            return element;
         }
+
+        return element;
+    }
 
     /**
      * Mutation : insérer un nouvel élément dans la BDD et le cache.
@@ -72,7 +84,7 @@ export abstract class DatabaseCacheBase<
 
         const valeurs = Object.values(donnees);
         await Database.execute(sql, valeurs);
-        this.set(this.getValeursClePrimaire(element), element);
+        this.set(this.getComposanteCache(element), element);
     }
 
     /**
@@ -84,7 +96,9 @@ export abstract class DatabaseCacheBase<
         const whereSql = this.colonnesClePrimaire.map((colonne) => `\`${colonne}\` = ?`).join(" AND ");
         const sql = `DELETE FROM \`${this.nomTable}\` WHERE ${whereSql};`;
 
-        await Database.execute(sql, valeursKp);
+        const valeursPK = this.valeursComposantesParent ? [...this.valeursComposantesParent, id] : [id];
+
+        await Database.execute(sql, valeursPK);
         this.delete(id);
     }
 }

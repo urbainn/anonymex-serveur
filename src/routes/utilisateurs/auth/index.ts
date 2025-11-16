@@ -2,6 +2,8 @@ import { Router } from "express";
 import { postLogin } from "./postLogin";
 import { useRest } from "../../useRest";
 import { getInfo } from "./getInfo";
+import { getInvitation } from "./getInvitation";
+import { postCreerUtilisateur } from "./postCreerUtilisateur";
 
 const authRouteur = Router();
 
@@ -9,5 +11,9 @@ const authRouteur = Router();
 authRouteur.post("/login", (req, res) => useRest(postLogin, req, res));
 // GET /utilisateurs/auth/info
 authRouteur.get("/info", (req, res) => useRest(getInfo, req, res));
+// POST /utilisateurs/auth/invitation
+authRouteur.post("/invitation", (req, res) => useRest(getInvitation, req, res));
+// POST /utilisateurs/auth/creer
+authRouteur.post("/creer", (req, res) => useRest(postCreerUtilisateur, req, res));
 
 export { authRouteur as authRouteur };

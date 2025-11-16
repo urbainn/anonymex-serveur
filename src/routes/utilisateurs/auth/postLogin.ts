@@ -9,7 +9,7 @@ import { Utilisateur, UtilisateurData } from "../../../cache/utilisateurs/Utilis
 export async function postLogin(req: Request): Promise<APIBoolResponse> {
     const infosLogin = LoginUtilisateurSchema.parse(req.body);
 
-    const utilisateurEmail = await Database.query<UtilisateurData>("SELECT * FROM utilisateurs WHERE email = ? LIMIT 1", [infosLogin.email]);
+    const utilisateurEmail = await Database.query<UtilisateurData>("SELECT * FROM utilisateur WHERE email = ? LIMIT 1", [infosLogin.email]);
     if (utilisateurEmail.length === 0 || utilisateurEmail[0] === undefined) {
         return { success: false };
     }

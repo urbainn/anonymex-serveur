@@ -60,7 +60,7 @@ export abstract class DatabaseCacheBase<I extends string | number, T extends Ele
             const valeursPK = this.valeursComposantesParent ? [...this.valeursComposantesParent, id] : [id];
 
             // Requête
-            const results = await Database.query<D[]>(sql, valeursPK);
+            const results = await Database.query<D>(sql, valeursPK);
             if (results.length > 0) {
                 // Transformer en élément et le mettre en cache
                 element = this.fromDatabase(results[0]!);
@@ -100,5 +100,15 @@ export abstract class DatabaseCacheBase<I extends string | number, T extends Ele
 
         await Database.execute(sql, valeursPK);
         this.delete(id);
+    }
+
+    /**
+     * Compter le nombre d'éléments dans la table associée.
+     * @return Nombre d'éléments.
+     */
+    public async count(): Promise<number> {
+        const sql = `SELECT COUNT(*) AS count FROM \`${this.nomTable}\`;`;
+        const results = await Database.query<{ count: number }>(sql);
+        return results[0]!.count;
     }
 }

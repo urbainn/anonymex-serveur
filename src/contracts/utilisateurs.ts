@@ -10,15 +10,18 @@ export const UtilisateurSchema = z.object({
 });
 
 export const ListUtilisateursSchema = z.object({
-    utilisateurs : z.array(UtilisateurSchema)
+    utilisateurs: z.array(UtilisateurSchema)
 });
 
 export const LoginUtilisateurSchema = UtilisateurSchema.pick({ email: true }).extend({ motDePasse: z.string() });
 
-export const UpdateUtilisateurSchema = UtilisateurSchema.omit({ id: true, idRole: true}).partial();
+export const UpdateUtilisateurSchema = UtilisateurSchema.omit({ id: true, idRole: true }).partial();
+
+export const GetAuthInfoSchema = z.object({ premiereConnexion: z.boolean() });
 
 // --- Types ---
 export type APIUtilisateur = z.infer<typeof UtilisateurSchema>;
 export type APIListUtilisateur = z.infer<typeof ListUtilisateursSchema>;
 export type APILoginBody = z.infer<typeof LoginUtilisateurSchema>;
 export type APIUpdateUtilisateur = z.infer<typeof UpdateUtilisateurSchema>;
+export type APIGetAuthInfo = z.infer<typeof GetAuthInfoSchema>;

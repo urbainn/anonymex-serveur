@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { ZodError } from "zod";
 
 /**
  * Permet d'utiliser une fonction REST standardisée.
@@ -11,6 +12,11 @@ export function useRest(fn: (req: Request) => Promise<any>, req: Request, res: R
     fn(req)
         .then((data) => res.json(data))
         .catch((error) => {
+            // Erreur de validation Zod
+            if (error instanceof ZodError) {
+                res.status(400).json({ error: "Invalid request" });
+                return;
+            }
             console.error(error);
             res.status(500).json({ error: "Internal Server Error" });
         });

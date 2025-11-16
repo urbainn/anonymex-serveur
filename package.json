@@ -17,6 +17,7 @@
         "@techstark/opencv-js": "^4.11.0-release.1",
         "@types/cors": "^2.8.19",
         "apriltag": "^2.0.3",
+        "bcrypt": "^6.0.0",
         "canvas": "^3.2.0",
         "cors": "^2.8.5",
         "dotenv": "^17.2.3",
@@ -30,6 +31,7 @@
         "zod": "^4.1.12"
     },
     "devDependencies": {
+        "@types/bcrypt": "^6.0.0",
         "@types/express": "^5.0.5",
         "@types/pdfkit": "^0.17.3"
     }

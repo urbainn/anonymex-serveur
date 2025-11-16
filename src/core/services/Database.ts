@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "fs";
-import { ConnectionOptions, createPool, Pool, ResultSetHeader, RowDataPacket } from "mysql2";
+import { ConnectionOptions, createPool, Pool, ResultSetHeader, type RowDataPacket } from "mysql2";
 import { join } from "path";
 import { logInfo } from "../../utils/logger";
 import { ConfigManager } from "./ConfigManager";
@@ -45,13 +45,14 @@ export class Database {
 
     /**
      * Faire une requête de selection.
+     * @template T Le type des lignes retournées.
      * @param sql Requête SQL.
      * @param params paramètres de la requête 
      */
-    public static async query<T extends RowDataPacket[]>(sql: string, params?: any[]): Promise<T> {
+    public static async query<T extends { [column: string]: any; }>(sql: string, params?: any[]): Promise<T[]> {
         const pool = await this.connexion();
-        return new Promise<T>((resolve, reject) => {
-            pool.query<T>(sql, params, (err, results) => {
+        return new Promise<T[]>((resolve, reject) => {
+            pool.query<(RowDataPacket & T)[]>(sql, params, (err, results) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -85,7 +86,7 @@ export class Database {
      */
     private static async importer(): Promise<boolean> {
 
-        const results = await this.query<RowDataPacket[]>("SELECT COUNT(*) as nbTables FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema = ?", [ConfigManager.getVarEnv("BDD_NAME")]);
+        const results = await this.query<{ nbTables: number }>("SELECT COUNT(*) as nbTables FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema = ?", [ConfigManager.getVarEnv("BDD_NAME")]);
         if (results.length > 0 && results[0]!.nbTables === 0) {
 
             // Fichier sql contenant le schéma de la BDD

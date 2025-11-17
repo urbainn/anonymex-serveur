@@ -2,6 +2,7 @@ import { RowDataPacket } from "mysql2";
 import { ElementEnCache } from "../base/ElementEnCacheBase";
 import { Role } from "../roles/Role";
 import { roleCache } from "../roles/RoleCache";
+import { APIUtilisateur } from "../../contracts/utilisateurs";
 
 export interface UtilisateurData extends RowDataPacket {
     id_utilisateur: number;
@@ -32,5 +33,15 @@ export class Utilisateur extends ElementEnCache {
         const role = await roleCache.getOrFetch(this.idRole);
         if (!role) throw new Error(`Erreur de contrainte : le rôle d'id ${this.idRole} n'existe pas pour l'utilisateur d'id ${this.id}.`);
         return role;
+    }
+
+    public toJSON(): APIUtilisateur {
+        return {
+            id: this.id,
+            email: this.email,
+            nom: this.nom,
+            prenom: this.prenom,
+            idRole: this.idRole
+        }
     }
 }

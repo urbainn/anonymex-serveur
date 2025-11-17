@@ -1,6 +1,6 @@
 import { RowDataPacket } from "mysql2";
 import { ElementEnCache } from "../base/ElementEnCacheBase";
-import { SessionsStatut } from "../../contracts/sessions"
+import { APISession, SessionsStatut } from "../../contracts/sessions"
 import { Epreuve } from "../epreuves/Epreuve";
 import { EpreuveCache } from "../epreuves/EpreuveCache";
 
@@ -27,5 +27,14 @@ export class Session extends ElementEnCache {
         this.annee = data.annee;
         this.statut = data.statut;
         this.epreuves = new EpreuveCache(this.id);
+    }
+
+    public toJSON(): APISession {
+        return {
+            id: this.id,
+            nom: this.nom,
+            annee: this.annee,
+            statut: this.statut
+        }
     }
 }

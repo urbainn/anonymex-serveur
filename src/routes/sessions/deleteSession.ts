@@ -1,6 +1,14 @@
 import { Request, Response } from "express";
+import { sessionCache } from "../../cache/sessions/SessionCache";
 
 export async function deleteSession(req: Request): Promise<{ success: boolean }> {
-
-    return { success: Math.random() < 0.5} ;
+    /*
+    const { sessionId } = req.params;
+    const idSession = parseInt(sessionId ?? '');
+    
+    return {
+        success: sessionCache.delete(idSession)
+    }
+    */
+    return { success: Math.random() < 0.5}
 }

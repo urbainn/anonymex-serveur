@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { APIEpreuve, APIListEpreuves, EpreuveStatut } from "../../../contracts/epreuves";
+import { sessionCache } from "../../../cache/sessions/SessionCache";
+import { ErreurRequeteInvalide } from "../../erreursApi";
 
 const departements = ["I", "P", "S", "V"];
 const nomsUE = ["Electromagnétisme", "Outils Mathématiques 3", "Physiologie et Pathologie", "Chimie organique", "Materiaux Inorganiques",
@@ -35,7 +37,42 @@ export function mockEpreuve(): APIEpreuve {
 }
 
 export async function getEpreuves(req: Request): Promise<APIListEpreuves> {
+    /*
+    const { sessionId } = req.params;
+    const idSession = parseInt(sessionId ?? '');
 
+    const session = await sessionCache.getOrFetch(idSession);
+    
+    if(session === undefined) {
+        throw new ErreurRequeteInvalide("Identifiant de session invalide.");
+    }
+
+    const epreuvesBrutes = await session.epreuves.getAll();
+
+    if(epreuvesBrutes === undefined) {
+        throw new ErreurRequeteInvalide("La liste des épreuves n'a pas pu être renvoyées.");
+    }
+
+    const now = Date.now();
+    const epreuvesAvenir: APIEpreuve[] = [];
+    const epreuvesPassees: APIEpreuve[] = [];
+
+    for(const epreuve of epreuvesBrutes) {
+        const epreuveFormatee = epreuve.toJSON();
+
+        if(epreuve.dateEpreuve >= now) {
+            epreuvesAvenir.push(epreuveFormatee);
+        } 
+        else {
+            epreuvesPassees.push(epreuveFormatee);
+        }
+    }
+
+    return {
+        epreuvesAvenir,
+        epreuvesPassees
+    };
+    */
     // optimisation abyssale : TEMPORAIRE!!!!
     const epreuves = Array.from({ length: 300 }, () => mockEpreuve()).sort((a, b) => a.date - b.date);
     const now = Date.now();

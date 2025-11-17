@@ -72,18 +72,29 @@ export abstract class DatabaseCacheBase<I extends string | number, T extends Ele
     }
 
     /**
-     * Séléctionner tous les éléments de la table associée. Ne pas faire sur les tables larges !!
+     * Séléctionner tous les éléments de la table associée. Si la clé primaire est composée de plusieurs colonnes,
+     * ne renvoit que les éléments correspondant aux composantes parentes données à l'instanciation du cache.
+     * @param clause SQL optionnelle à ajouter à la requête (ex: ORDER BY, LIMIT, etc).
      * @return Liste des éléments.
      */
-    public async getAll(): Promise<T[]> {
-        const sql = `SELECT * FROM \`${this.nomTable}\`;`;
-        const results = await Database.query<D>(sql);
+    public async getAll(clause?: string): Promise<T[]> {
+        // Sélectionner les éléments des composantes parentes SI il y en a
+        const whereSql = this.colonnesClePrimaire.length > 1 && this.valeursComposantesParent
+            ? `WHERE ${this.colonnesClePrimaire.slice(0, -1 /* ..sauf la dernière */).map((colonne) => `\`${colonne}\` = ?`).join(" AND ")}`
+            : "";
+        const sql = `SELECT * FROM \`${this.nomTable}\` ${whereSql} ${clause ?? ""};`;
+
+        const results = this.valeursComposantesParent
+            ? await Database.query<D>(sql, this.valeursComposantesParent)
+            : await Database.query<D>(sql);
+
         const elements: T[] = [];
         for (const row of results) {
             const element = this.fromDatabase(row);
             this.set(this.getComposanteCache(element), element);
             elements.push(element);
         }
+
         return elements;
     }
 

@@ -7,7 +7,7 @@ export async function deleteSession(req: Request): Promise<{ success: boolean }>
     const idSession = parseInt(sessionId ?? '');
     
     return {
-        success: sessionCache.delete(idSession)
+        success: await sessionCache.delete(idSession);
     }
     */
     return { success: Math.random() < 0.5}

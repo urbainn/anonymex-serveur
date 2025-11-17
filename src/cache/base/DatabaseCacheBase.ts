@@ -72,6 +72,22 @@ export abstract class DatabaseCacheBase<I extends string | number, T extends Ele
     }
 
     /**
+     * Séléctionner tous les éléments de la table associée. Ne pas faire sur les tables larges !!
+     * @return Liste des éléments.
+     */
+    public async getAll(): Promise<T[]> {
+        const sql = `SELECT * FROM \`${this.nomTable}\`;`;
+        const results = await Database.query<D>(sql);
+        const elements: T[] = [];
+        for (const row of results) {
+            const element = this.fromDatabase(row);
+            this.set(this.getComposanteCache(element), element);
+            elements.push(element);
+        }
+        return elements;
+    }
+
+    /**
      * Mutation : insérer un nouvel élément dans la BDD et le cache.
      * @param donnees Données partielles de l'élément à insérer. doit impérativement contenir les colonnes/propriétés NOT NULL.
      * @param element L'élément à insérer en cache.

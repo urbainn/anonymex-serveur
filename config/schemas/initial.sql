@@ -27,7 +27,7 @@ CREATE TABLE invitation (
     CONSTRAINT fk_invitation_role FOREIGN KEY (id_role_invite) 
         REFERENCES role(id_role)
         ON DELETE RESTRICT ON UPDATE CASCADE
-)
+);
 
 CREATE TABLE session_examen (
     id_session INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -41,7 +41,7 @@ CREATE TABLE etudiant (
     numero_etudiant INT UNSIGNED NOT NULL,
     nom VARCHAR(100) NOT NULL,
     prenom VARCHAR(100) NOT NULL,
-    CONSTRAINT pk_etudiant PRIMARY KEY (numero_etudiant),
+    CONSTRAINT pk_etudiant PRIMARY KEY (numero_etudiant)
 );
 
 CREATE TABLE epreuve (
@@ -63,7 +63,7 @@ CREATE TABLE salle (
     numero_salle VARCHAR(50) NOT NULL,
     type_salle VARCHAR(50) NOT NULL, -- préfixe : SC, A, TD, ...
     CONSTRAINT pk_salle PRIMARY KEY (id_salle)
-)
+);
 
 CREATE TABLE epreuve_session_etudiant (
     id_session INT UNSIGNED NOT NULL,

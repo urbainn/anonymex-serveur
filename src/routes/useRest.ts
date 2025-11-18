@@ -19,7 +19,7 @@ export function useRest(fn: (req: Request) => Promise<any>, req: Request, res: R
             } else if (error instanceof ErreurRequeteInvalide) {
                 res.status(400).json({ error: error.message ?? "Requête invalide ou mal formée" });
             } else if (error instanceof ErreurNonAuthentifie) {
-                res.status(401).json({ error: error.message ?? "Non authentifié" });
+                res.status(401).json({ error: "Non authentifié" });
             } else if (error instanceof ErreurAccesRefuse) {
                 res.status(403).json({ error: error.message ?? "Accès refusé" });
             } else {

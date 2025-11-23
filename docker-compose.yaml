@@ -1,8 +1,8 @@
 
 services:
   serveur:
-    serveur:
-      platform: linux/amd64
+    platform: 
+      - linux/amd64
     build:
       context: .
     ports:

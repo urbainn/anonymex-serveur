@@ -1,0 +1,13 @@
+
+services:
+  serveur:
+    build:
+      context: .
+    ports:
+      - "${SERVEUR_HTTP_PORT}:3000"
+    volumes:
+      - .:/serveur
+      - /serveur/node_modules
+    command: npm run start
+    env_file:
+      - .env

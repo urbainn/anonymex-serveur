@@ -6,6 +6,7 @@ import { RowData } from "../../core/services/Database";
 
 export interface UtilisateurData extends RowData {
     id_utilisateur: number;
+    mot_de_passe: string,
     email: string;
     nom: string;
     prenom: string;

@@ -1,0 +1,21 @@
+import { RowDataPacket } from "mysql2";
+import { ElementEnCache } from "../base/ElementEnCacheBase";
+
+export interface EtudiantData extends RowDataPacket {
+    numero_etudiant: number,
+    nom: string,
+    prenom: string
+}
+
+export class Etudiant extends ElementEnCache {
+    public numeroEtudiant: number;
+    public nom: string;
+    public prenom: string;
+
+    constructor(data: EtudiantData) {
+        super();
+        this.numeroEtudiant = data.numero_etudiant;
+        this.nom = data.nom;
+        this.prenom = data.prenom;
+    }
+}

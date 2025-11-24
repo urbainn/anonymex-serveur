@@ -5,6 +5,10 @@ import { logInfo } from "../../utils/logger";
 import { ConfigManager } from "./ConfigManager";
 import config from "../../../config/config.json";
 
+export interface RowData {
+    [column: string]: any;
+}
+
 /**
  * Wrapper d'accès à la base de données MySQL anonymex.
  */

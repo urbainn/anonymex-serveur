@@ -1,10 +1,10 @@
-import { RowDataPacket } from "mysql2";
 import { ElementEnCache } from "../base/ElementEnCacheBase";
 import { Session } from "../sessions/Session";
 import { sessionCache } from "../sessions/SessionCache";
 import { APIEpreuve, EpreuveStatut } from "../../contracts/epreuves";
+import { RowData } from "../../core/services/Database";
 
-export interface EpreuveData extends RowDataPacket {
+export interface EpreuveData extends RowData {
     id_session: number,
     code_epreuve: string,
     nom: string,
@@ -46,13 +46,13 @@ export class Epreuve extends ElementEnCache {
     /** Obtenir la session de cette epreuve */
     public async getSession(): Promise<Session> {
         const session = await sessionCache.getOrFetch(this.idSession);
-        if(!session) throw new Error(`Erreur de contrainte : la session d'id ${this.idSession} n'existe pas pour l'épreuve de code ${this.codeEpreuve}.`);
+        if (!session) throw new Error(`Erreur de contrainte : la session d'id ${this.idSession} n'existe pas pour l'épreuve de code ${this.codeEpreuve}.`);
         return session;
     }
 
-    public toJSON() : APIEpreuve {
+    public toJSON(): APIEpreuve {
         return {
-            session: this.idSession, 
+            session: this.idSession,
             code: this.codeEpreuve,
             nom: this.nom,
             statut: this.statut,

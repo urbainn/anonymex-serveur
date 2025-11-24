@@ -1,5 +1,5 @@
 import { ResultSetHeader, RowDataPacket } from "mysql2";
-import { Database } from "../../core/services/Database";
+import { Database, RowData } from "../../core/services/Database";
 import { CacheBase } from "./CacheBase";
 import { ElementEnCache } from "./ElementEnCacheBase";
 
@@ -16,7 +16,7 @@ import { ElementEnCache } from "./ElementEnCacheBase";
  * @template T Le type des données mises en cache.
  * @template D Le type des données telles qu'elles sont stockées dans la base de données (brut, avant transformation en T).
  */
-export abstract class DatabaseCacheBase<I extends string | number, T extends ElementEnCache, D extends RowDataPacket> extends CacheBase<I, T> {
+export abstract class DatabaseCacheBase<I extends string | number, T extends ElementEnCache, D extends RowData> extends CacheBase<I, T> {
 
     /** Nom de la table associée */
     abstract nomTable: string;

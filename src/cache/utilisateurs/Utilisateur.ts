@@ -1,10 +1,10 @@
-import { RowDataPacket } from "mysql2";
 import { ElementEnCache } from "../base/ElementEnCacheBase";
 import { Role } from "../roles/Role";
 import { roleCache } from "../roles/RoleCache";
 import { APIUtilisateur } from "../../contracts/utilisateurs";
+import { RowData } from "../../core/services/Database";
 
-export interface UtilisateurData extends RowDataPacket {
+export interface UtilisateurData extends RowData {
     id_utilisateur: number;
     email: string;
     nom: string;

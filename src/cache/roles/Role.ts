@@ -1,5 +1,5 @@
-import { RowDataPacket } from "mysql2";
 import { ElementEnCache } from "../base/ElementEnCacheBase";
+import { RowData } from "../../core/services/Database";
 
 export enum RolePermissions {
     AUCUNE = 0, /* Accès à la plateforme refusé */
@@ -12,7 +12,7 @@ export enum RolePermissions {
     GERER_UTILISATEURS = 1 << 6,
 }
 
-export interface RoleData extends RowDataPacket {
+export interface RoleData extends RowData {
     id_role: number;
     nom: string;
     permissions: number; /* Bitmask */

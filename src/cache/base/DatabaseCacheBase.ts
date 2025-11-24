@@ -1,4 +1,4 @@
-import { RowDataPacket } from "mysql2";
+import { ResultSetHeader, RowDataPacket } from "mysql2";
 import { Database } from "../../core/services/Database";
 import { CacheBase } from "./CacheBase";
 import { ElementEnCache } from "./ElementEnCacheBase";
@@ -101,17 +101,21 @@ export abstract class DatabaseCacheBase<I extends string | number, T extends Ele
     /**
      * Mutation : insérer un nouvel élément dans la BDD et le cache.
      * @param donnees Données partielles de l'élément à insérer. doit impérativement contenir les colonnes/propriétés NOT NULL.
-     * @param element L'élément à insérer en cache.
+     * @param element L'élément à insérer en cache, si déjà disponible. Sinon, vous devez l'ajouter avec #add après l'insertion.
      */
-    public async insert(donnees: Partial<D>, element: T): Promise<void> {
+    public async insert(donnees: Partial<D>, element?: T): Promise<ResultSetHeader> {
         // Construire la requête d'insertion
         const colonnes = Object.keys(donnees).map(colonne => `\`${colonne}\``).join(", ");
         const valeursPlaceholders = Object.keys(donnees).map(() => `?`).join(", ");
         const sql = `INSERT INTO \`${this.nomTable}\` (${colonnes}) VALUES (${valeursPlaceholders});`;
 
         const valeurs = Object.values(donnees);
-        await Database.execute(sql, valeurs);
-        this.set(this.getComposanteCache(element), element);
+        const result = await Database.execute(sql, valeurs);
+
+        // Ajouter au cache si l'élément est fourni
+        if (element) this.set(this.getComposanteCache(element), element);
+
+        return result;
     }
 
     /**

@@ -7,7 +7,6 @@
         "dev": "tsc --watch",
         "build": "tsc",
         "start": "node dist/index.js",
-        "install": "n latest",
         "start:dev": "node --enable-source-maps dist/index.js"
     },
     "keywords": [],

@@ -12,6 +12,7 @@ CREATE TABLE utilisateur (
     nom VARCHAR(100) NOT NULL,
     prenom VARCHAR(100) NOT NULL,
     id_role SMALLINT UNSIGNED NOT NULL,
+    jeton_connexion VARCHAR(100),
     CONSTRAINT pk_utilisateur PRIMARY KEY (id_utilisateur),
     CONSTRAINT fk_utilisateur_role FOREIGN KEY (id_role) 
         REFERENCES role(id_role)

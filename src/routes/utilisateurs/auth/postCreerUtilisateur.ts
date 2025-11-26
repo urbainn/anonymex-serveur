@@ -10,23 +10,23 @@ import { Database } from "../../../core/services/Database";
 export async function postCreerUtilisateur(req: Request): Promise<APIBoolResponse> {
     const nouvelUtilisateur = CreerUtilisateurSchema.parse(req.body);
 
-    const utilisateurEmail = await Database.query<UtilisateurData>("SELECT * FROM invitation WHERE email_invite = ? LIMIT 1", [nouvelUtilisateur.email]);
-    const utilisateurJeton = await Database.query<UtilisateurData>("SELECT * FROM invitation WHERE jeton = ? LIMIT 1", [nouvelUtilisateur.jetonInvitation]);
+    const donneesInvitation = await Database.query<UtilisateurData>("SELECT * FROM invitation WHERE email_invite = ? AND jeton = ? LIMIT 1", [nouvelUtilisateur.email, nouvelUtilisateur.jetonInvitation]);
 
+    // Première inscription (toujours autoriser)
     const estPremierSetup = await utilisateurCache.isAucunUtilisateurEnregistre();
     const jetonDeSetupValide = nouvelUtilisateur.jetonInvitation === "setup";
     const autorisationSetup = estPremierSetup && jetonDeSetupValide;
 
-    const emailEstPresent = utilisateurEmail.length > 0 && utilisateurEmail[0] !== undefined;
-    const jetonEstPresent = utilisateurJeton.length > 0 && utilisateurJeton[0] !== undefined;
-    const autorisationStandard = emailEstPresent && jetonEstPresent;
+    const autorisationStandard = donneesInvitation.length > 0 && donneesInvitation[0] !== undefined;
 
     if(autorisationSetup || autorisationStandard) {
         const motDePasseClair = nouvelUtilisateur.motDePasse;
 
-        bcrypt.hash(motDePasseClair, 10, async function(err, hash) {
-            if(err) {
-                throw new ErreurRequeteInvalide("Erreur lors du hashage du mot de passe.", err);
+        const hash = await new Promise<string>((res) => {
+            bcrypt.hash(motDePasseClair, 10, (err, hash) => res(hash));
+        });
+            if(hash.length === 0) {
+                throw new ErreurRequeteInvalide("Erreur lors du hashage du mot de passe.");
             }
             try {
                 const res = await utilisateurCache.insert({
@@ -35,11 +35,11 @@ export async function postCreerUtilisateur(req: Request): Promise<APIBoolRespons
                     nom: nouvelUtilisateur.nom,
                     prenom: nouvelUtilisateur.prenom,
                 });
+                return { success: true };
+
             } catch(err) {
                 throw new ErreurRequeteInvalide("Erreur lors de l'insertion de l'utilisateur.");
             }
-        });
-        return { success: true };
     }
     return { success: false };
 }

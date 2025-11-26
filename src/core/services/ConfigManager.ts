@@ -15,18 +15,19 @@ export class ConfigManager {
      */
     private static configCachee: ConfigCachee | undefined;
 
-    /** Variables d'environnement (.env). */
+    /** Variables d'environnement (.env). Chargées uniquement si présentes (utile hors Docker) */
     private static envConfig = dotenv.config();
 
     /**
      * Lire une variable d'environnement ou lève une erreur si elle n'est pas définie.
+     * Priorité à process.env (Docker), fallback sur dotenv (local)
      * @param nomVar nom de la var
      * @returns
      */
     public static getVarEnv(nomVar: string): string {
-        const valeur = this.envConfig.parsed ? this.envConfig.parsed[nomVar] : process.env[nomVar];
+        const valeur = process.env[nomVar] || (this.envConfig.parsed ? this.envConfig.parsed[nomVar] : undefined);
         if (valeur === undefined) throw new Error(`La variable d'environnement ${nomVar} doit être définie.`);
-        else return valeur;
+        return valeur;
     }
 
     /**

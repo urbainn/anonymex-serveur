@@ -1,4 +1,4 @@
-import { Request } from "express";
+import { Request, Response } from "express";
 import { APIBoolResponse } from "../../../contracts/common";
 import { LoginUtilisateurSchema } from "../../../contracts/utilisateurs";
 import { utilisateurCache } from "../../../cache/utilisateurs/UtilisateurCache";
@@ -39,4 +39,14 @@ export async function postLogin(req: Request): Promise<APIBoolResponse> {
 
     return { success: true };
 
+}
+
+export function setJetonAuthentificationCookie(res: Response, jeton: string): void {
+    // Définir le cookie d'authentification
+    res.cookie("jeton_auth", jeton, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 16 * 60 * 60 * 1000 // 16 heures
+    });
 }

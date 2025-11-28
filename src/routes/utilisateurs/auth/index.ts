@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { postLogin } from "./postLogin";
-import { useRest } from "../../useRest";
+import { useFullRest, useRest } from "../../useRest";
 import { getInfo } from "./getInfo";
 import { getInvitation } from "./getInvitation";
 import { postCreerUtilisateur } from "./postCreerUtilisateur";
@@ -14,6 +14,6 @@ authRouteur.get("/info", (req, res) => useRest(getInfo, req, res));
 // POST /utilisateurs/auth/invitation
 authRouteur.post("/invitation", (req, res) => useRest(getInvitation, req, res));
 // POST /utilisateurs/auth/creer
-authRouteur.post("/creer", (req, res) => useRest(postCreerUtilisateur, req, res));
+authRouteur.post("/creer", (req, res) => useFullRest(postCreerUtilisateur, req, res));
 
 export { authRouteur as authRouteur };

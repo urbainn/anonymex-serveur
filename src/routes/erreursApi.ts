@@ -10,3 +10,6 @@ export class ErreurNonAuthentifie extends ErreurApi { };
 
 // 403 - Accès refusé
 export class ErreurAccesRefuse extends ErreurApi { };
+
+// 500 - Erreur serveur
+export class ErreurServeur extends ErreurApi { };

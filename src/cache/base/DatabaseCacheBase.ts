@@ -1,4 +1,4 @@
-import { ResultSetHeader, RowDataPacket } from "mysql2";
+import { ResultSetHeader } from "mysql2";
 import { Database, RowData } from "../../core/services/Database";
 import { CacheBase } from "./CacheBase";
 import { ElementEnCache } from "./ElementEnCacheBase";

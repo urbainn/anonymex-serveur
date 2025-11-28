@@ -4,6 +4,7 @@ import { indexRouter } from "./routes";
 import { logInfo } from "./utils/logger";
 import cors from "cors";
 import express from "express";
+import cookieParser from "cookie-parser";
 
 //lireBordereau('debug/img/test_orientation.jpg');
 
@@ -12,6 +13,7 @@ const port = 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 app.use("/api", indexRouter);
 
 app.listen(port, () => {

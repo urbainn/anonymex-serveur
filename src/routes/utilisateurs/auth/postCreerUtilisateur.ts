@@ -36,13 +36,13 @@ export async function postCreerUtilisateur(req: Request, res: Response): Promise
             throw new ErreurServeur("Erreur lors du hachage du mot de passe.");
         });
 
-        // Trouver le role assigné dans l'invitation
-        // A FAIRE!
+        let assignerRoleId: number = donneesInvitation[0]!.id_role; // Rôle associé à l'invitation
 
         if (autorisationSetup) {
             // première inscription : assigner le rôle administrateur par défaut
             // Vérifier si le role administrateur existe
             const roleDefaut = await roleCache.getOrFetch(1);
+            assignerRoleId = 1; // Rôle administrateur par défaut
             if (!roleDefaut) {
                 // ..sinon le créer
                 const roleAdmin = { nom: "Administrateur", permissions: RolePermissions.ADMINISTRATEUR };
@@ -62,7 +62,7 @@ export async function postCreerUtilisateur(req: Request, res: Response): Promise
                 nom: nouvelUtilisateur.nom,
                 prenom: nouvelUtilisateur.prenom,
                 jeton_connexion: jetonAuth,
-                id_role: 1 // Rôle administrateur par défaut
+                id_role: assignerRoleId 
             });
 
             logInfo("Inscription", "Nouvel utilisateur #" + insertionUtilisateur.insertId + " créé avec l'email " + nouvelUtilisateur.email + ".");

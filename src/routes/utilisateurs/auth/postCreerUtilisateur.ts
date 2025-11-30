@@ -36,7 +36,7 @@ export async function postCreerUtilisateur(req: Request, res: Response): Promise
             throw new ErreurServeur("Erreur lors du hachage du mot de passe.");
         });
 
-        let assignerRoleId: number = donneesInvitation[0]!.id_role; // Rôle associé à l'invitation
+        let assignerRoleId: number = autorisationStandard ? donneesInvitation[0]!.id_role : 1; // Rôle associé à l'invitation, ou role admin lors du setup
 
         if (autorisationSetup) {
             // première inscription : assigner le rôle administrateur par défaut

@@ -1,5 +1,6 @@
 import { ElementEnCache } from "../base/ElementEnCacheBase";
 import { RowData } from "../../core/services/Database";
+import { APIRole } from "../../contracts/roles";
 
 export enum RolePermissions {
     AUCUNE = 0, /* Accès à la plateforme refusé */
@@ -37,5 +38,13 @@ export class Role extends ElementEnCache {
      */
     public permet(permission: RolePermissions): boolean {
         return ((this.permissions & permission) === permission) || (this.permissions === RolePermissions.ADMINISTRATEUR);
+    }
+
+    public toJSON(): APIRole {
+        return {
+            idRole: this.id,
+            nom: this.nom,
+            permissions: this.permissions
+        }
     }
 }

@@ -1,10 +1,11 @@
-import { RowDataPacket } from "mysql2";
+import { RowData } from "../../core/services/Database";
 import { ElementEnCache } from "../base/ElementEnCacheBase";
 import { APISession, SessionsStatut } from "../../contracts/sessions"
 import { Epreuve } from "../epreuves/Epreuve";
 import { EpreuveCache } from "../epreuves/EpreuveCache";
 
-export interface SessionData extends RowDataPacket {
+
+export interface SessionData extends RowData {
     id_session: number,
     nom: string,
     annee: number,

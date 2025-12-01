@@ -122,15 +122,17 @@ export abstract class DatabaseCacheBase<I extends string | number, T extends Ele
      * Mutation : supprimer un élément de la BDD et du cache.
      * @param id Clé primaire de l'élément à supprimer. Dans le format attendu par getValeursClePrimaire.
      */
-    public async delete(id: I): Promise<void> {
+    public async delete(id: I): Promise<ResultSetHeader> {
         // Construire la requête de suppression
         const whereSql = this.colonnesClePrimaire.map((colonne) => `\`${colonne}\` = ?`).join(" AND ");
         const sql = `DELETE FROM \`${this.nomTable}\` WHERE ${whereSql};`;
 
         const valeursPK = this.valeursComposantesParent ? [...this.valeursComposantesParent, id] : [id];
 
-        await Database.execute(sql, valeursPK);
+        const result = await Database.execute(sql, valeursPK);
         this.delete(id);
+
+        return result;
     }
 
     /**

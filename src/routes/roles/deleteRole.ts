@@ -12,8 +12,10 @@ export async function deleteRole(req: Request): Promise<{ success: boolean }> {
         throw new ErreurRequeteInvalide("Identifiant de rôle invalide.");
     }
     
+    const suppressionRole = await roleCache.delete(idRole) 
+
     return { 
-        success : await roleCache.delete(idRole) 
+        success : suppressionRole.affectedRows > 0
     }
     */
     return { success: Math.random() < 0.5 };

@@ -46,7 +46,7 @@ export async function getSessions(req: Request): Promise<APIListSessions> {
             },
             {
                 id: 3,
-                nom: "Session 3",
+                nom: "Session 1",
                 annee: 2026,
                 statut: 2
             }

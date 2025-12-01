@@ -30,6 +30,7 @@
         "pdfjs-dist": "^5.4.296",
         "pdfkit": "^0.17.2",
         "sharp": "^0.34.4",
+        "tesseract.js": "^6.0.1",
         "typescript": "^5.9.3",
         "zod": "^4.1.12"
     },

@@ -6,6 +6,8 @@ import { decouperROIs } from './preparation/decouperROIs';
 import { CadreEtudiantBenchmarkModule } from '../generation/bordereau/modules/cadre-etudiant/CadreEtudiantBenchmarkModule';
 import sharp from 'sharp';
 import { ErreurDecoupeROIs } from './lectureErreurs';
+import { preprocessPipelines } from './OCR/preprocessPipelines';
+import { TesseractOCR } from './OCR/TesseractOCR';
 
 export const dimensionsFormats = {
     A4: { formatWidthMm: 210, formatHeightMm: 297 },
@@ -33,19 +35,15 @@ export function lireBordereau(chemin: string): void {
     extraireScans({ data: uint8, encoding: 'buffer', mimeType: 'image/jpeg' }, async (scan: ScanData, data: Uint8ClampedArray | Uint8Array) => {
         const scanPret = await preparerScan(scan, data);
         const rois = new CadreEtudiantBenchmarkModule('ABCDEFGHIJKLMNOPQRSTUVWXYZ').getLayoutPositions().lettresCodeAnonymat;
+
+        await TesseractOCR.setParams({ tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' });
+
         const onRoiExtrait = async (image: sharp.Sharp, index: number) => {
-            await image /*.grayscale()
-                .normalise()
-                .gamma(1.4) //1.2–1.6
-                .resize({
-                    width: 128, height: 128, fit: "contain", background: { r: 255, g: 255, b: 255 },
-                    kernel: "lanczos3"
-                })
-                .median(1)
-                .threshold(190)
-                .flatten({ background: "#ffffff" })
-                */.png().toFile('debug/rois/roi_' + index + '.png');
-            console.log(`ROI ${index} découpée et sauvegardée.`);
+            const bufferImgTraitee = await preprocessPipelines.initial(image).png().toBuffer();
+            //.png().toFile('debug/rois/roi_' + index + '.png');$
+            const texteReconnu = await TesseractOCR.interroger(bufferImgTraitee);
+            console.log('ROI ' + index + ' : ' + texteReconnu);
+            //console.log(`ROI ${index} découpée et sauvegardée.`);
         }
 
         try {

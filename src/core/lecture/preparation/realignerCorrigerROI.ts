@@ -123,6 +123,7 @@ export async function extraireROI(roiMat: Mat): Promise<Mat> {
     const dst = new cv.Mat(size.height, size.width, roiMat.type());
 
     cv.warpPerspective(roiMat, dst, perspective, size, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar(255, 255, 255));
+    postProcessROI(cv, dst);
 
     srcMat.delete();
     dstMat.delete();
@@ -300,4 +301,57 @@ function generateInsetQuad(cv: CvModule, outer: [Pt, Pt, Pt, Pt], dims: { width:
     }
 
     return orderQuadPoints(points);
+}
+
+function postProcessROI(cv: CvModule, mat: Mat): void {
+    attenuerBruit(cv, mat);
+    blanchirBordures(cv, mat);
+}
+
+function attenuerBruit(cv: CvModule, mat: Mat): void {
+    const gray = new cv.Mat();
+    cv.cvtColor(mat, gray, cv.COLOR_BGR2GRAY);
+
+    const median = new cv.Mat();
+    cv.medianBlur(gray, median, 3);
+
+    const bilateral = new cv.Mat();
+    cv.bilateralFilter(median, bilateral, 5, 25, 5);
+
+    cv.cvtColor(bilateral, mat, cv.COLOR_GRAY2BGR);
+
+    gray.delete();
+    median.delete();
+    bilateral.delete();
+}
+
+function blanchirBordures(cv: CvModule, mat: Mat, ratio = 0.015): void {
+    const minDim = Math.min(mat.cols, mat.rows);
+    const epaisseur = Math.max(1, Math.round(minDim * ratio));
+    if (epaisseur * 2 >= minDim) {
+        return;
+    }
+
+    const blanc = new cv.Scalar(255, 255, 255, 255);
+
+    const topRect = new cv.Rect(0, 0, mat.cols, epaisseur);
+    const bottomRect = new cv.Rect(0, mat.rows - epaisseur, mat.cols, epaisseur);
+    const leftRect = new cv.Rect(0, 0, epaisseur, mat.rows);
+    const rightRect = new cv.Rect(mat.cols - epaisseur, 0, epaisseur, mat.rows);
+
+    const top = mat.roi(topRect);
+    top.setTo(blanc);
+    top.delete();
+
+    const bottom = mat.roi(bottomRect);
+    bottom.setTo(blanc);
+    bottom.delete();
+
+    const left = mat.roi(leftRect);
+    left.setTo(blanc);
+    left.delete();
+
+    const right = mat.roi(rightRect);
+    right.setTo(blanc);
+    right.delete();
 }

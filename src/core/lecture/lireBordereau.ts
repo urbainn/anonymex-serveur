@@ -28,13 +28,13 @@ export function lireBordereau(chemin: string): void {
     // TODO: rendre dynamique/configurable
     const margesAprilTagsMm = 10;
     const tailleAprilTagMm = 10;
-    const roiPaddingMm = 1.5;
+    const roiPaddingMm = 1;
 
     extraireScans({ data: uint8, encoding: 'buffer', mimeType: 'image/jpeg' }, async (scan: ScanData, data: Uint8ClampedArray | Uint8Array) => {
         const scanPret = await preparerScan(scan, data);
         const rois = new CadreEtudiantBenchmarkModule('ABCDEFGHIJKLMNOPQRSTUVWXYZ').getLayoutPositions().lettresCodeAnonymat;
         const onRoiExtrait = async (image: sharp.Sharp, index: number) => {
-            await image.grayscale()
+            await image /*.grayscale()
                 .normalise()
                 .gamma(1.4) //1.2–1.6
                 .resize({
@@ -44,7 +44,7 @@ export function lireBordereau(chemin: string): void {
                 .median(1)
                 .threshold(190)
                 .flatten({ background: "#ffffff" })
-                .png().toFile('debug/rois/roi_' + index + '.png');
+                */.png().toFile('debug/rois/roi_' + index + '.png');
             console.log(`ROI ${index} découpée et sauvegardée.`);
         }
 

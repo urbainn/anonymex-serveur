@@ -69,9 +69,11 @@ export async function decouperROIs(
         const w = (toMm(roi.largeur) - 1) * pxPerMmX;
         const h = (toMm(roi.hauteur) - 1) * pxPerMmY;
 
+        // Convertir le padding en pixels
         const paddingX = paddingMm * pxPerMmX;
         const paddingY = paddingMm * pxPerMmY;
 
+        // Calculer la zone effective à découper, en s'assurant de ne pas dépasser les bords de l'image
         const left = Math.max(0, Math.floor(x - paddingX));
         const top = Math.max(0, Math.floor(y - paddingY));
         const right = Math.min(imgW, Math.ceil(x + w + paddingX));
@@ -89,6 +91,8 @@ export async function decouperROIs(
             const message = err instanceof Error ? err.message : String(err);
             console.warn(`[decouperROIs] Homographie ROI ${roiIndex} ignorée : ${message}`);
         }
+
+        if (!processedMat) { console.log(`Découpe ROI ${roiIndex} sans homographie.`); }
 
         const matPourExport = processedMat ?? roiView.clone();
         roiView.delete();

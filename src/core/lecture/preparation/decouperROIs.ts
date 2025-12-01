@@ -1,6 +1,16 @@
 import sharp from "sharp";
+import { Mat } from "@techstark/opencv-js";
 import { LayoutPosition } from "../../generation/bordereau/modules/ModulesBordereau";
 import { dimensionsFormats } from "../lireBordereau";
+import { extraireROI } from "./realignerCorrigerROI";
+import { OpenCvInstance } from "../../services/OpenCvInstance";
+import { matToSharp } from "../../../utils/imgUtils";
+
+
+export interface DecouperROIsOptions {
+    /** Marge supplémentaire appliquée autour de la ROI lors de la découpe (en mm) */
+    paddingMm?: number;
+}
 
 /**
  * Découper les régions d'intérêt (ROIs) dans le scan fourni.
@@ -9,13 +19,16 @@ import { dimensionsFormats } from "../lireBordereau";
  * @param onDecoupe Callback appelé pour chaque ROI extrait, attend que la promesse soit résolue avant de continuer.
  */
 export async function decouperROIs(
-    image: sharp.Sharp,
+    documentMat: Mat,
     rois: LayoutPosition[],
     tailleAprilTagsMm: number,
     margeAprilTagsMm: number,
     format: 'A4',
-    onDecoupe: (roiImage: sharp.Sharp, index: number) => Promise<void>
+    onDecoupe: (roiImage: sharp.Sharp, index: number) => Promise<void>,
+    options: DecouperROIsOptions = {}
 ): Promise<void> {
+
+    const cv = await OpenCvInstance.getInstance();
 
     // Les dimensions/coords des ROIs sont stockés en pt PDFKIT. On doit les convertir en mm
     // On travaille ici en mm directement pour plus de simplicité.
@@ -34,9 +47,8 @@ export async function decouperROIs(
         bottom: distanceBorduresZoneEffective
     };
 
-    const metadatas = await image.metadata();
-    const imgW = metadatas.width!;
-    const imgH = metadatas.height!;
+    const imgW = documentMat.cols;
+    const imgH = documentMat.rows;
 
     const zoneEffectiveW = formatWidthMm - marges.left - marges.right;
     const zoneEffectiveH = formatHeightMm - marges.top - marges.bottom;
@@ -44,6 +56,8 @@ export async function decouperROIs(
     // Conversion mm -> px
     const pxPerMmX = imgW / zoneEffectiveW;
     const pxPerMmY = imgH / zoneEffectiveH;
+
+    const paddingMm = options.paddingMm ?? 1.5;
 
     for (let roiIndex = 0; roiIndex < rois.length; roiIndex++) {
         const startTime = Date.now();
@@ -55,9 +69,34 @@ export async function decouperROIs(
         const w = (toMm(roi.largeur) - 1) * pxPerMmX;
         const h = (toMm(roi.hauteur) - 1) * pxPerMmY;
 
-        // Découper la ROI (floor afin d'éviter de sortir du cadre)
-        const roiImage = image.clone().extract({ left: Math.floor(x), top: Math.floor(y), width: Math.floor(w), height: Math.floor(h) });
+        const paddingX = paddingMm * pxPerMmX;
+        const paddingY = paddingMm * pxPerMmY;
+
+        const left = Math.max(0, Math.floor(x - paddingX));
+        const top = Math.max(0, Math.floor(y - paddingY));
+        const right = Math.min(imgW, Math.ceil(x + w + paddingX));
+        const bottom = Math.min(imgH, Math.ceil(y + h + paddingY));
+        const widthPx = Math.max(1, right - left);
+        const heightPx = Math.max(1, bottom - top);
+
+        const rect = new cv.Rect(left, top, widthPx, heightPx);
+        const roiView = documentMat.roi(rect);
+
+        let processedMat: Mat | null = null;
+        try {
+            processedMat = await extraireROI(roiView);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            console.warn(`[decouperROIs] Homographie ROI ${roiIndex} ignorée : ${message}`);
+        }
+
+        const matPourExport = processedMat ?? roiView.clone();
+        roiView.delete();
+
+        const roiSharp = matToSharp(cv, matPourExport);
+        matPourExport.delete();
+
+        await onDecoupe(roiSharp, roiIndex);
         console.log(`Découpe ROI ${roiIndex} en ${Date.now() - startTime}ms`);
-        await onDecoupe(roiImage, roiIndex);
     }
 }

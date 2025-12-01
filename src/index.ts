@@ -5,8 +5,9 @@ import { logInfo } from "./utils/logger";
 import cors from "cors";
 import express from "express";
 import cookieParser from "cookie-parser";
+import { lireBordereau } from "./core/lecture/lireBordereau";
 
-//lireBordereau('debug/img/test_orientation.jpg');
+lireBordereau('debug/img/test_orientation.jpg');
 
 const app = express();
 const port = 3000;

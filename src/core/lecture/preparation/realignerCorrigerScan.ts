@@ -1,11 +1,13 @@
 import { AprilTagDetection } from "@monumental-works/apriltag-node";
 import sharp from "sharp";
+import { Mat } from "@techstark/opencv-js";
 import { ErreurRealignement } from "../lectureErreurs";
 import { visualiserGeometrieAncrage } from "../../../core/debug/visualiseurs/visualiserGeometrieAncrage";
 import { visualiserRegionsOfInterests } from "../../../core/debug/visualiseurs/visualiserRegionsOfInterests";
 import { CadreEtudiantBenchmarkModule } from "../../generation/bordereau/modules/cadre-etudiant/CadreEtudiantBenchmarkModule";
 import { OpenCvInstance } from "../../../core/services/OpenCvInstance";
 import { dimensionsFormats } from "../lireBordereau";
+import { matToSharp } from "../../../utils/imgUtils";
 
 type Pt = [number, number];
 
@@ -17,7 +19,7 @@ export type realignerCorrigerOptions = {
     //type?: "homographieParEstimation" | "affine";
 };
 
-export async function realignerCorrigerScan(image: sharp.Sharp, ordreTags: (number | null)[], detections: AprilTagDetection[], options: realignerCorrigerOptions): Promise<sharp.Sharp> {
+export async function realignerCorrigerScan(image: sharp.Sharp, ordreTags: (number | null)[], detections: AprilTagDetection[], options: realignerCorrigerOptions): Promise<Mat> {
     const { tailleTagsMm, margeTagsMm, format } = options;
     const { formatWidthMm, formatHeightMm } = dimensionsFormats[format];
 
@@ -123,23 +125,12 @@ export async function realignerCorrigerScan(image: sharp.Sharp, ordreTags: (numb
         throw new ErreurRealignement(`Transformation affine pas encore implémentée. Les 4 coins doivent être visibles.`);
     }
 
-    // On transforme l'image en instance sharp
-    const outData = new Uint8ClampedArray(dstMatImg.data.buffer, dstMatImg.data.byteOffset, dstMatImg.total() * dstMatImg.elemSize());
-    const imageOut = sharp(outData, {
-        raw: {
-            width: dstMatImg.cols,
-            height: dstMatImg.rows,
-            channels: dstMatImg.channels() as any
-        }
-    }).png();
+    // Visualisations debug (Sharp uniquement pour le debug)
+    const roisGroupes = [new CadreEtudiantBenchmarkModule('ABCDEFGHIJKLMNOPQRSTUVWXYZ').getLayoutPositions().lettresCodeAnonymat];
+    const imageOutSharp = matToSharp(cv, dstMatImg);
+    await visualiserRegionsOfInterests(imageOutSharp, roisGroupes);
 
-    dstMatImg.delete();
-
-    //TODO: a gérer proprement
-    const roisGroupes = [new CadreEtudiantBenchmarkModule('ABCDEFGHIJKLMNOPQRSTUVWXYZ').getLayoutPositions().lettresCodeAnonymat]
-    visualiserRegionsOfInterests(imageOut, roisGroupes);
-
-    return imageOut;
+    return dstMatImg;
 }
 
 /**

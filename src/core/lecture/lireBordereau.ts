@@ -28,6 +28,7 @@ export function lireBordereau(chemin: string): void {
     // TODO: rendre dynamique/configurable
     const margesAprilTagsMm = 10;
     const tailleAprilTagMm = 10;
+    const roiPaddingMm = 1.5;
 
     extraireScans({ data: uint8, encoding: 'buffer', mimeType: 'image/jpeg' }, async (scan: ScanData, data: Uint8ClampedArray | Uint8Array) => {
         const scanPret = await preparerScan(scan, data);
@@ -47,8 +48,13 @@ export function lireBordereau(chemin: string): void {
             console.log(`ROI ${index} découpée et sauvegardée.`);
         }
 
-        decouperROIs(scanPret, rois, tailleAprilTagMm, margesAprilTagsMm, 'A4', onRoiExtrait)
-            .catch((err) => { throw ErreurDecoupeROIs.assigner(err); });
+        try {
+            await decouperROIs(scanPret, rois, tailleAprilTagMm, margesAprilTagsMm, 'A4', onRoiExtrait, { paddingMm: roiPaddingMm });
+        } catch (err) {
+            throw ErreurDecoupeROIs.assigner(err);
+        } finally {
+            scanPret.delete();
+        }
     });
 
 }

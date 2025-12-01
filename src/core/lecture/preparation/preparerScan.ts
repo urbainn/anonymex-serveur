@@ -1,4 +1,5 @@
-import sharp, { Sharp } from "sharp";
+import sharp from "sharp";
+import { Mat } from "@techstark/opencv-js";
 import { detecterAprilTags } from "./detecterAprilTags";
 import { ScanData } from "./extraireScans";
 import { obtenirOrientation } from "./obtenirOrientation";
@@ -11,7 +12,7 @@ import { remapperDetections } from "./remapperDetections";
  * @param scanProps Propriétés brutes du scan.
  * @param buffer Buffer de l'image brute.
  */
-export async function preparerScan(scanProps: ScanData, buffer: Uint8ClampedArray | Uint8Array): Promise<Sharp> {
+export async function preparerScan(scanProps: ScanData, buffer: Uint8ClampedArray | Uint8Array): Promise<Mat> {
 
     // Transformer l'image dans un format lisible par les outils de traitement d'images
     const scan = scanProps.raw ? sharp(buffer, {

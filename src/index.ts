@@ -7,7 +7,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import { lireBordereau } from "./core/lecture/lireBordereau";
 
-lireBordereau('debug/pdf/hugo.pdf');
+//lireBordereau('debug/pdf/hugo.pdf');
 
 const app = express();
 const port = 3000;

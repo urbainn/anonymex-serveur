@@ -9,8 +9,8 @@ export interface IncidentData extends RowData {
     titre: string;
     details: string;
     resolu: boolean;
-    code_anonymat: string;
-    note_quart: number;
+    code_anonymat: string | null;
+    note_quart: number | null;
 }
 
 export class Incident extends ElementEnCache {
@@ -20,8 +20,8 @@ export class Incident extends ElementEnCache {
     public titre: string;
     public details: string;
     public resolu: boolean;
-    public codeAnonymat: string;
-    public noteQuart: number;
+    public codeAnonymat: string | null;
+    public noteQuart: number | null;
 
     constructor(data: IncidentData) {
         super();
@@ -43,8 +43,8 @@ export class Incident extends ElementEnCache {
             titre: this.titre,
             details: this.details,
             resolu: this.resolu,
-            codeAnonymat: this.codeAnonymat,
-            noteQuart: this.noteQuart
+            codeAnonymat: this.codeAnonymat ?? undefined,
+            noteQuart: this.noteQuart ?? undefined
         }
     }
 }

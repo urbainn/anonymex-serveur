@@ -10,12 +10,15 @@ export const preprocessPipelines = {
         .grayscale()
         .normalise()
         .gamma(1.4)
-        .resize({
-            width: 128, height: 128, fit: "contain", background: { r: 255, g: 255, b: 255 },
-            kernel: "lanczos3"
-        })
         .median(1)
         .threshold(190)
-        .flatten({ background: "#ffffff" })
+        .flatten({ background: "#ffffff" }),
+
+    /** Seuillage léger */
+    lightThreshold: (img: Sharp) => img
+        .grayscale()
+        .normalise()
+        .gamma(1.2)
+
 
 };

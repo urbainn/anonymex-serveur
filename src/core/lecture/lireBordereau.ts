@@ -40,12 +40,15 @@ export function lireBordereau(chemin: string): void {
         let totalBon = 0;
         const resultatBenchmark: Record<string, number> = {}; // x: lettre correcte, y: lettre détectée, xy: nombre de fois (ex: AA: 5, AB: 2, ...)
 
-
         await TesseractOCR.configurerModeCaractereUnique('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
 
         const onRoiExtrait = async (image: sharp.Sharp, index: number) => {
             const bufferImgTraitee = await preprocessPipelines
                 .initial(image)
+                .resize({
+                    width: 128, height: 128, fit: "contain", background: { r: 255, g: 255, b: 255 },
+                    kernel: "lanczos3"
+                })
                 .png()
                 .toBuffer();
 

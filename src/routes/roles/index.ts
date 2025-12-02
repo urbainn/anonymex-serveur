@@ -10,11 +10,11 @@ const rolesRouteur = Router();
 
 // GET /roles/:id/
 rolesRouteur.get("/:id", (req, res) => useRest(getRole, req, res));
-// GET /roles/list/
-rolesRouteur.get("/:id", (req, res) => useRest(getRoles, req, res));
+// GET /roles/
+rolesRouteur.get("/", (req, res) => useRest(getRoles, req, res));
 // DELETE /roles/:id/
 rolesRouteur.get("/:id", (req, res) => useRest(deleteRole, req, res));
-// POST /roles/new/
-rolesRouteur.post("/new", (req, res) => useRest(postRole, req, res));
+// POST /roles/
+rolesRouteur.post("/", (req, res) => useRest(postRole, req, res));
 
 export { rolesRouteur as rolesRouteur };

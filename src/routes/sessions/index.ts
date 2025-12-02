@@ -15,13 +15,13 @@ sessionsRouter.use("/:session/epreuves", epreuvesRouter);
 // Incidents
 sessionsRouter.use("/:session/incidents", incidentsRouter);
 
-// GET /sessions/list/
-sessionsRouter.get("/list", (req, res) => useRest(getSessions, req, res));
-// POST /sessions/new/
-sessionsRouter.post("/new", (req, res) => useRest(postSession, req, res));
+// GET /sessions/
+sessionsRouter.get("/", (req, res) => useRest(getSessions, req, res));
+// POST /sessions/
+sessionsRouter.post("/", (req, res) => useRest(postSession, req, res));
 // DELETE /sessions/:id/
 sessionsRouter.delete("/:id", (req, res) => useRest(deleteSession, req, res));
-// PATCH /sessions/:id/update/
-sessionsRouter.patch("/:id/update", (req, res) => useRest(patchSession, req, res));
+// PATCH /sessions/:id/
+sessionsRouter.patch("/:id", (req, res) => useRest(patchSession, req, res));
 
 export { sessionsRouter as sessionsRouter };

@@ -10,7 +10,7 @@ const epreuvesRouter = Router();
 epreuvesRouter.get("/:code", (req, res) => useRest(getEpreuve, req, res));
 // GET /sessions/:session/epreuves/
 epreuvesRouter.get("/", (req, res) => useRest(getEpreuves, req, res));
-// PATCH /sessions/:session/epreuves/:code/update/
-epreuvesRouter.patch("/:code/update", (req, res) => useRest(patchEpreuve, req, res));
+// PATCH /sessions/:session/epreuves/:code/
+epreuvesRouter.patch("/:code", (req, res) => useRest(patchEpreuve, req, res));
 
 export { epreuvesRouter };

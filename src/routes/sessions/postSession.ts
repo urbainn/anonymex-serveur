@@ -4,11 +4,14 @@ import { sessionCache } from "../../cache/sessions/SessionCache";
 import { ErreurRequeteInvalide } from "../erreursApi";
 
 export async function postSession(req: Request): Promise<APINewSession> {
-    /*
+
     const nouvelleSession = NewSessionSchema.parse(req.body);
 
-    if(nouvelleSession.annee < 2025) {
-        throw new ErreurRequeteInvalide("Erreur l'année ne peut pas être inférieure à 2025.")
+    const dateDuJour = new Date();
+    const anneeCourante = dateDuJour.getFullYear();
+
+    if(nouvelleSession.annee < anneeCourante) {
+        throw new ErreurRequeteInvalide(`Erreur l'année ne peut pas être inférieure à ${anneeCourante}.`)
     }
 
     const insertionSession = {
@@ -19,9 +22,5 @@ export async function postSession(req: Request): Promise<APINewSession> {
     const res = await sessionCache.insert(insertionSession)
 
     return insertionSession;
-    */
-    return {
-        nom: "Session 1", 
-        annee: 2025
-    };
+
 }

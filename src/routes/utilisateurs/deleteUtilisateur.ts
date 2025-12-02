@@ -11,8 +11,10 @@ export async function deleteUtilisateur(req: Request): Promise<{ success: boolea
         throw new ErreurRequeteInvalide("Identifiant de d'utilisateur invalide.");
     }
     
+    const res = await utilisateurCache.delete(idUtilisateur)
+
     return {
-        success: utilisateurCache.delete(idUtilisateur)
+        success: res.affectedRows > 0
     }
     */
     return { success: Math.random() < 0.5 };

@@ -4,12 +4,12 @@ import { literal, object, z } from "zod";
 export const IncidentSchema = z.object({
     idIncident: z.number().int().positive(),
     idSession: z.number().int().positive(),
+    codeEpreuve: z.string(),
     titre: z.string(),
     details: z.string(),
     resolu: z.boolean(), // 0: NON RESOLU, 1: RESOLU 
     codeAnonymat: z.string().optional(),
     noteQuart: z.number().int().positive().optional(),
-    idUtilisateur: z.number().int().positive()
 });
 
 export const ListIncidentsSchema = z.object({

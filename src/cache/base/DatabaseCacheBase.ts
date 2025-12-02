@@ -119,8 +119,8 @@ export abstract class DatabaseCacheBase<I extends string | number, T extends Ele
     }
 
     /**
-     * Mutation : supprimer un élément de la BDD et du cache.
-     * @param id Clé primaire de l'élément à supprimer. Dans le format attendu par getValeursClePrimaire.
+     * Mutation : supprimer un élément de la BDD **et du cache**.
+     * @param id Clé primaire de l'élément à supprimer. Dans le format attendu par getComposanteCache.
      */
     public async delete(id: I): Promise<ResultSetHeader> {
         // Construire la requête de suppression
@@ -133,6 +133,23 @@ export abstract class DatabaseCacheBase<I extends string | number, T extends Ele
         this.delete(id);
 
         return result;
+    }
+
+    /**
+     * Mutation : mettre à jour un élément dans la BDD et le cache. **Ne met pas à jour l'élément en cache !**
+     * @param id Clé primaire de l'élément à mettre à jour. Dans le format attendu par getComposanteCache.
+     * @param donnees Données partielles à mettre à jour.
+     */
+    public async update(id: I, donnees: Partial<D>): Promise<ResultSetHeader> {
+        // Construire la requête de mise à jour
+        const setSql = Object.keys(donnees).map(colonne => `\`${colonne}\` = ?`).join(", ");
+        const whereSql = this.colonnesClePrimaire.map((colonne) => `\`${colonne}\` = ?`).join(" AND ");
+        const sql = `UPDATE \`${this.nomTable}\` SET ${setSql} WHERE ${whereSql};`;
+
+        const valeurs = [...Object.values(donnees)]; // valeurs des colonnes à mettre à jour
+        const valeursPK = this.valeursComposantesParent ? [...this.valeursComposantesParent, id] : [id]; // valeurs de la clé primaire
+
+        return await Database.execute(sql, [...valeurs, ...valeursPK]);
     }
 
     /**

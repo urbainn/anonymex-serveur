@@ -196,7 +196,6 @@ def tfa_image_rotate(image, angle):
 
 
 def translate_image(image, translations):
-    """Translate image by integer pixel offsets without wrap-around artifacts."""
     translations = tf.cast(translations, tf.int32)
     shift_y, shift_x = translations[0], translations[1]
     top = tf.maximum(shift_y, 0)
@@ -256,21 +255,23 @@ def load_emnist_letters(cache=False, val_split=0.1, batch_size=256, seed=1337, a
 
     train_examples, val_examples = compute_split_sizes(val_split)
 
-    raw_train = tfds.load(
+    train_instr = tfds.core.ReadInstruction('train', to=train_examples, unit='abs')
+    val_instr = tfds.core.ReadInstruction('train', from_=train_examples, to=train_examples + val_examples, unit='abs')
+
+    datasets = tfds.load(
         DATASET_NAME,
-        split='train',
+        split={
+            'train': train_instr,
+            'val': val_instr,
+            'test': 'test',
+        },
         as_supervised=True,
-        shuffle_files=False,
-    )
-    test_ds = tfds.load(
-        DATASET_NAME,
-        split='test',
-        as_supervised=True,
-        shuffle_files=False,
+        shuffle_files=True,
     )
 
-    train_ds = raw_train.take(train_examples)
-    val_ds = raw_train.skip(train_examples).take(val_examples)
+    train_ds = datasets['train']
+    val_ds = datasets['val']
+    test_ds = datasets['test']
 
     # map normalization
     train_ds = train_ds.map(normalize_img, num_parallel_calls=AUTOTUNE)

@@ -19,13 +19,6 @@ export function lireBordereau(chemin: string): void {
     const buffer = readFileSync(chemin);
     const uint8 = new Uint8Array(buffer);
 
-    const bordereauConfig: BordereauAnonProprietes = {
-        longueurCodeAnonymat: 4,
-        longueurCodeEpreuve: 2,
-        format: 'A4',
-        version: 1
-    };
-
     // Configuration
     // TODO: rendre dynamique/configurable
     const margesAprilTagsMm = 10;

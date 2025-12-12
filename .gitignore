@@ -8,5 +8,7 @@ package-lock.json
 /config/.configCachee.json
 
 # Scripts d'entrainement
-/scripts/checkpoints/
-/scripts/logs/
+/resources/scripts/checkpoints/
+/resources/scripts/logs/
+/resources/scripts/model_tfjs/
+/resources/scripts/model_final.keras

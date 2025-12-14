@@ -3,21 +3,51 @@ import { LecturePipelineDebug } from "../LecturePipelineDebug";
 import { EtapeLecture } from "../EtapesDeTraitementDicts";
 import { sharp2canvas } from "../../../utils/debugImageUtils";
 import { CibleConcentriqueDetection } from "../../lecture/preparation/detecterCiblesConcentriques";
+import { MatVector } from "@techstark/opencv-js";
 
 type Pt = [number, number];
 
-export async function visualiserGeometrieCibles(image: sharp.Sharp, detectionsCibles: CibleConcentriqueDetection[]): Promise<void> {
+/**
+ * Visualise les cibles détectées, la hiérarchie et l'estimation de la géométrie du document.
+ * @param image
+ * @param detectionsCibles cibles detectées
+ * @param contours tous les contours détectés
+ */
+export async function visualiserGeometrieCibles(image: sharp.Sharp, detectionsCibles: CibleConcentriqueDetection[], contours: MatVector): Promise<void> {
     const canvas = await sharp2canvas(image);
     const ctx = canvas.getContext("2d");
 
-    // Dessiner les points d'ancrage SOURCE
+    // dessiner la hiérarchie
+    ctx.strokeStyle = 'blue';
+    ctx.lineWidth = 0.5;
+
+    for (let i = 0; i < contours.size(); i++) {
+        const contour = contours.get(i);
+        console.log(`position contour ${i} : rows=${contour.rows}, cols=${contour.cols}`);
+        if (contour.rows > 0) {
+            ctx.beginPath();
+            for (let j = 0; j < contour.rows; j++) {
+                const pointData = contour.data32S[j * 2]!; // x
+                const pointDataY = contour.data32S[j * 2 + 1]!; // y
+                if (j === 0) {
+                    ctx.moveTo(pointData, pointDataY);
+                } else {
+                    ctx.lineTo(pointData, pointDataY);
+                }
+            }
+            ctx.closePath();
+            ctx.stroke();
+        } contour.delete();
+    }
+
+    // Dessiner les cibles détectées + géométrie
     ctx.fillStyle = 'green';
     ctx.strokeStyle = 'red';
     ctx.lineWidth = 1;
 
     for (const groupe of detectionsCibles) {
 
-        const pt: Pt = groupe.center;
+        const pt: Pt = groupe.centre;
 
         if (pt) {
             ctx.beginPath();
@@ -26,7 +56,7 @@ export async function visualiserGeometrieCibles(image: sharp.Sharp, detectionsCi
 
             // cercle autour du point
             ctx.beginPath();
-            ctx.arc(pt[0], pt[1], groupe.radiusPx, 0, 2 * Math.PI);
+            ctx.arc(pt[0], pt[1], groupe.rayonPx, 0, 2 * Math.PI);
             ctx.stroke();
             ctx.closePath();
 
@@ -35,7 +65,7 @@ export async function visualiserGeometrieCibles(image: sharp.Sharp, detectionsCi
             for (const autre of detectionsCibles) {
                 if (autre && autre !== groupe) {
                     ctx.moveTo(pt[0], pt[1]);
-                    ctx.lineTo(autre.center[0], autre.center[1]);
+                    ctx.lineTo(autre.centre[0], autre.centre[1]);
                 }
             }
 

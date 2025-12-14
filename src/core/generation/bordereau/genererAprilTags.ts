@@ -6,11 +6,17 @@ import { ErreurAprilTag } from '../generationErreurs';
 export const APRILTAGS_IDS = [10, 11, 12, 13]; // HG, HD, BG, BD
 
 /**
+ * NOTE: transition vers des cibles circulaires concentriques plutôt que les april tags.
+ * Cette fonction est dépréciée.
+ */
+
+/**
  * Génère sur le document entré les 4 AprilTags aux coins.
  * @param doc Document PDFKit (modifié en place)
  * @param tailleMm taille des tags en mm (pour scan 200DPI, 14mm recommandé, DPI + élevé -> taille plus petite possible)
  * @param margeInterneMm marge interne des tags par rapport aux bords du document (en mm)
  * @param coins liste des coins auxquels attacher un tag, 0 = haut droit, 1 = haut gauche, 2 = bas droit, 3 = bas gauche.
+ * @deprecated
  */
 export function genererAprilTags(doc: PDFKit.PDFDocument, tailleMm: number, margeInterneMm: number, coins?: number[]) {
 
@@ -43,9 +49,10 @@ export function genererAprilTags(doc: PDFKit.PDFDocument, tailleMm: number, marg
         doc.rect(tagX - margeQuietZone, tagY - margeQuietZone, taille + 2 * margeQuietZone, taille + 2 * margeQuietZone).fill('#FFFFFF');
 
         // Dessiner chaque pixel individuellement (jusqu'à 9x9 = 81 pixels)
-        for (let x = 0; x < tagPixels.length; x++) {
-            for (let y = 0; y < tagPixels.length; y++) {
-                if (tagPixels[x]![y] === 'b') {
+        for (let y = 0; y < tagPixels.length; y++) {
+            const lignePixels = tagPixels[y]!;
+            for (let x = 0; x < lignePixels.length; x++) {
+                if (lignePixels[x] === 'b') {
                     // Rempli avec un gris à 80% : économie d'encre
                     doc.rect(
                         /* x */ tagX + x * tailleDePixel - rembourrage,

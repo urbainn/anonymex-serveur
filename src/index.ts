@@ -6,8 +6,16 @@ import cors from "cors";
 import express from "express";
 import cookieParser from "cookie-parser";
 import { lireBordereau } from "./core/lecture/lireBordereau";
+import { genererBordereau } from "./core/generation/bordereau/genererBordereau";
 
-//lireBordereau('debug/pdf/hugo.pdf');
+genererBordereau({
+    'format': 'A4',
+    'longueurCodeAnonymat': 8,
+    'longueurCodeEpreuve': 6,
+    'version': 1,
+});
+
+lireBordereau('debug/pdf/BON.pdf')
 
 const app = express();
 const port = 3000;

@@ -4,6 +4,7 @@ import { genererAprilTags } from './genererAprilTags';
 import { logInfo, styles } from '../../../utils/logger';
 import { CadreEtudiantBenchmarkModule } from './modules/cadre-etudiant/CadreEtudiantBenchmarkModule';
 import { ErreurAprilTag } from '../generationErreurs';
+import { genererCiblesConcentriques } from './genererCiblesConcentriques';
 
 export interface BordereauAnonProprietes {
     format: 'A4' | 'A5';
@@ -27,7 +28,7 @@ export function genererBordereau(proprietes: BordereauAnonProprietes): boolean {
     doc.pipe(createWriteStream('bordereau_test.pdf'));
 
     try {
-        genererAprilTags(doc, 10, 10);
+        genererCiblesConcentriques(doc, 5, 10);
     } catch (error) {
         throw ErreurAprilTag.assigner(error);
     }

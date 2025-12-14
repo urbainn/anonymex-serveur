@@ -45,7 +45,7 @@ export async function detecterAprilTags(scan: ScanData, imageSharp: sharp.Sharp)
     }));
 
     // Enregistrer le temps d'exécution
-    StatistiquesDebug.ajouterTempsExecution(EtapeLecture.DETECTION_APRIL_TAGS, Date.now() - tempsDebut);
+    StatistiquesDebug.ajouterTempsExecution(EtapeLecture.DETECTION_CIBLES, Date.now() - tempsDebut);
 
     // Visualiser les détections
     if (scan.debug) await visualiserTagDetection(imageSharp, correctedDetections);

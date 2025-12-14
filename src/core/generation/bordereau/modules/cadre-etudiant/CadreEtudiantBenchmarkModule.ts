@@ -22,15 +22,15 @@ export class CadreEtudiantBenchmarkModule extends CadreEtudiantModule {
         const lettresCode = new Array<LayoutPosition>(this.alphabet.length * 10);
 
         for (let i = 0; i < this.alphabet.length; i++) {
-            const colonneX = 55 + (i % 2) * 262; // position x de la colonne
+            const colonneX = 40 + (i % 2) * 267; // position x de la colonne
             const ligneY = 90 + Math.floor(i / 2) * 53; // position y de la ligne
 
             for (let j = 0; j < 10; j++) {
                 lettresCode[i * 10 + j] = {
-                    x: j * 23 + colonneX,
+                    x: j * 25 + colonneX,
                     y: ligneY,
-                    largeur: 20,
-                    hauteur: 25
+                    largeur: 22,
+                    hauteur: 26
                 };
             }
         }
@@ -68,12 +68,7 @@ export class CadreEtudiantBenchmarkModule extends CadreEtudiantModule {
         pdf.rect(position.x, position.y, position.largeur, position.hauteur)
             .lineWidth(0.5)
             .strokeColor('black')
-            .undash()
             .stroke()
-            .rect(position.x + 2, position.y + 2, position.largeur - 4, position.hauteur - 4)
-            .strokeColor('#d1d1d1')
-            .dash(2, {})
-            .stroke();
 
     }
 

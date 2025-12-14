@@ -51,6 +51,6 @@ export async function visualiserTagDetection(image: Sharp, detections: AprilTagD
     }
 
     // Enregistrer l'image
-    await LecturePipelineDebug.enregistrerImageDebug(EtapeLecture.DETECTION_APRIL_TAGS, canvas.toBuffer('image/jpeg'));
+    await LecturePipelineDebug.enregistrerImageDebug(EtapeLecture.DETECTION_CIBLES, canvas.toBuffer('image/jpeg'));
 
 }

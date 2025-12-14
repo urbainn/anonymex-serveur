@@ -6,6 +6,7 @@ import { obtenirOrientation } from "./obtenirOrientation";
 import { ErreurDetectionAprilTags } from "../lectureErreurs";
 import { realignerCorrigerScan } from "./realignerCorrigerScan";
 import { remapperDetections } from "./remapperDetections";
+import { detecterCiblesConcentriques } from "./detecterCiblesConcentriques";
 
 /**
  * Prépare et ajuste le scan (découpage, rotation, ...).
@@ -25,6 +26,10 @@ export async function preparerScan(scanProps: ScanData, buffer: Uint8ClampedArra
 
     // Libérer la mémoire du scan brut
     buffer = new Uint8Array(0);
+
+    const detectionCiblesConcentriques = await detecterCiblesConcentriques(scanProps, scan);
+    console.log("Cibles concentriques détectées :", detectionCiblesConcentriques);
+    return new Mat();
 
     // Reconnaissance des april tags.
     const detections = await detecterAprilTags(scanProps, scan)

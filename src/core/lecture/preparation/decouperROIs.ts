@@ -2,7 +2,6 @@ import sharp from "sharp";
 import { Mat } from "@techstark/opencv-js";
 import { LayoutPosition } from "../../generation/bordereau/modules/ModulesBordereau";
 import { dimensionsFormats } from "../lireBordereau";
-import { extraireROI } from "./realignerCorrigerROI";
 import { OpenCvInstance } from "../../services/OpenCvInstance";
 import { matToSharp } from "../../../utils/imgUtils";
 
@@ -21,8 +20,8 @@ export interface DecouperROIsOptions {
 export async function decouperROIs(
     documentMat: Mat,
     rois: LayoutPosition[],
-    tailleAprilTagsMm: number,
-    margeAprilTagsMm: number,
+    diametreCiblesMm: number,
+    margeCiblesMm: number,
     format: 'A4',
     onDecoupe: (roiImage: sharp.Sharp, index: number) => Promise<void>,
     options: DecouperROIsOptions = {}
@@ -34,17 +33,15 @@ export async function decouperROIs(
     // On travaille ici en mm directement pour plus de simplicité.
     const toMm = (v: number) => (v * 25.4) / 72;
 
-    // Calculer la taille effective du document (une fois coupé et réaligné, en coupant les AprilTags)
-    // La zone effective commence à l'extrêmité du rectangle intérieur de l'AprilTag, soit 7/9 de la taille de l'AprilTag.
     const { formatWidthMm, formatHeightMm } = dimensionsFormats[format];
-    const distanceBorduresZoneEffective = margeAprilTagsMm + (tailleAprilTagsMm * (7 / 9));
+    const distanceBorduresCentresCiblesMm = diametreCiblesMm / 2 + margeCiblesMm;
 
     // permet de potentiellement modifier plus tard les marges individuellement afin d'adapter la découpe des ROIs
     const marges = {
-        left: distanceBorduresZoneEffective,
-        right: distanceBorduresZoneEffective,
-        top: distanceBorduresZoneEffective,
-        bottom: distanceBorduresZoneEffective
+        left: distanceBorduresCentresCiblesMm,
+        right: distanceBorduresCentresCiblesMm,
+        top: distanceBorduresCentresCiblesMm,
+        bottom: distanceBorduresCentresCiblesMm
     };
 
     const imgW = documentMat.cols;
@@ -57,7 +54,7 @@ export async function decouperROIs(
     const pxPerMmX = imgW / zoneEffectiveW;
     const pxPerMmY = imgH / zoneEffectiveH;
 
-    const paddingMm = options.paddingMm ?? 1.5;
+    const paddingMm = options.paddingMm ?? -0.05;
 
     for (let roiIndex = 0; roiIndex < rois.length; roiIndex++) {
         const startTime = Date.now();
@@ -84,21 +81,8 @@ export async function decouperROIs(
         const rect = new cv.Rect(left, top, widthPx, heightPx);
         const roiView = documentMat.roi(rect);
 
-        let processedMat: Mat | null = null;
-        try {
-            processedMat = await extraireROI(roiView);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : String(err);
-            console.warn(`[decouperROIs] Homographie ROI ${roiIndex} ignorée : ${message}`);
-        }
-
-        if (!processedMat) { console.log(`Découpe ROI ${roiIndex} sans homographie.`); }
-
-        const matPourExport = processedMat ?? roiView.clone();
+        const roiSharp = matToSharp(cv, roiView); // todo: trop de conversions.. passer toute l'extraction d'un scan par sharp sans repasser par cv.Mat
         roiView.delete();
-
-        const roiSharp = matToSharp(cv, matPourExport);
-        matPourExport.delete();
 
         await onDecoupe(roiSharp, roiIndex);
         console.log(`Découpe ROI ${roiIndex} en ${Date.now() - startTime}ms`);

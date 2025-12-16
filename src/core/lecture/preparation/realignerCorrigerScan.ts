@@ -1,4 +1,3 @@
-import { AprilTagDetection } from "@monumental-works/apriltag-node";
 import sharp from "sharp";
 import { Mat } from "@techstark/opencv-js";
 import { ErreurRealignement } from "../lectureErreurs";
@@ -21,7 +20,7 @@ export type realignerCorrigerOptions = {
 };
 
 export async function realignerCorrigerScan(image: sharp.Sharp, detections: Array<null | CibleConcentriqueDetection>, options: realignerCorrigerOptions): Promise<Mat> {
-    const { tailleCiblesMm: tailleTagsMm, margeCiblesMm: margeTagsMm, format } = options;
+    const { tailleCiblesMm, margeCiblesMm, format } = options;
     const { formatWidthMm, formatHeightMm } = dimensionsFormats[format];
 
     const cv = await OpenCvInstance.getInstance();
@@ -40,13 +39,6 @@ export async function realignerCorrigerScan(image: sharp.Sharp, detections: Arra
     // Calculer la taille de sortie du document en pixels
     const sortieH = imgHeight;
     const sortieW = Math.round((formatWidthMm / formatHeightMm) * sortieH); // Ratio format d'origine
-
-    // Construit un tableau de lookup rapide des tags par id
-    // ID -> données de détection
-    const tagLookup = new Map<number, AprilTagDetection>();
-    for (const detection of detections) {
-        tagLookup.set(detection.id, detection);
-    }
 
     // fonctions utilitaires
     function mmToPixels(point: Pt): Pt {
@@ -71,20 +63,17 @@ export async function realignerCorrigerScan(image: sharp.Sharp, detections: Arra
     // l'idée est, une fois que l'on a les points d'ancrage source et destination (réels/théoriques),
     // d'appliquer une transformation homographique ou affine pour réaligner le document avec ces points de correspondance.
 
-    for (let i = 0; i < ordreTags.length; i++) {
-        const tagId = ordreTags[i]!;
+    for (let i = 0; i < detections.length; i++) {
+        const detection = detections[i];
 
-        // Calculer la position du tag attendu dans le document modèle
-        const dstPt = calculerPositionTagDansModele(i, margeTagsMm, tailleTagsMm, formatWidthMm, formatHeightMm);
+        // Calculer la position de la cible attendue dans le document modèle
+        const dstPt = calculerPositionCibleDansModele(i, margeCiblesMm, tailleCiblesMm, formatWidthMm, formatHeightMm);
         dstPoints[i] = mmToPixels(dstPt);
 
-        // Si le tag à été détecté, récuperer sa pos dans l'image source
-        if (tagId !== null) {
-            const detection = tagLookup.get(tagId);
-            if (detection) {
-                const srcPt = trouverPointAncrage(detection, imgWidth, imgHeight);
-                srcPoints[i] = srcPt;
-            }
+        // Si la cible a été détectée, récuperer sa pos dans l'image source
+        if (detection) {
+            const srcPt = [detection.centre[0], detection.centre[1]] as Pt;
+            srcPoints[i] = srcPt;
         }
 
     }
@@ -92,6 +81,8 @@ export async function realignerCorrigerScan(image: sharp.Sharp, detections: Arra
     // Vérifier qu'on a au moins 3 points valides pour faire la transformation
     const srcPts = srcPoints.filter(pt => pt !== null) as Pt[];
     const dstPts = dstPoints.filter(p => p !== null) as Pt[];
+    console.log('source: ', srcPts);
+    console.log('dest: ', dstPts);
     if (srcPts.length < 3) {
         throw new ErreurRealignement(`Impossible de réaligner le document, trop peu de points d'ancrage (3 nécessaires, ${srcPts.length} obtenus)`);
     }
@@ -129,19 +120,19 @@ export async function realignerCorrigerScan(image: sharp.Sharp, detections: Arra
     // Visualisations debug (Sharp uniquement pour le debug)
     const roisGroupes = [new CadreEtudiantBenchmarkModule('ABCDEFGHIJKLMNOPQRSTUVWXYZ').getLayoutPositions().lettresCodeAnonymat];
     const imageOutSharp = matToSharp(cv, dstMatImg);
-    await visualiserRegionsOfInterests(imageOutSharp, roisGroupes);
+    const margesDistanceMm = margeCiblesMm + (tailleCiblesMm / 2);
+    await visualiserRegionsOfInterests(imageOutSharp, roisGroupes, { marginsMm: { left: margesDistanceMm, top: margesDistanceMm, right: margesDistanceMm, bottom: margesDistanceMm } });
 
     return dstMatImg;
 }
 
 /**
- * renvoit la position théorique d'un tag dans le modèle du document.
+ * renvoit la position théorique d'une cible dans le modèle du document.
  * @param coinId 0,1,2,3 = HG, HD, BG, BD
  */
-function calculerPositionTagDansModele(coinId: number, tagMarge: number, tagTaille: number, formatWidth: number, formatHeight: number): Pt {
-    // Puisque le point d'ancrage est le coin intérieur du tag pointant vers le centre du document,
-    // ses distances x et y aux bords du document est égale à la marge + la taille du tag.
-    const margeTot = tagMarge + tagTaille;
+function calculerPositionCibleDansModele(coinId: number, cibleMarge: number, diametre: number, formatWidth: number, formatHeight: number): Pt {
+    // renvoit les coordonnées théoriques (en mm) du centre de la cible dans le modèle du document
+    const margeTot = cibleMarge + (diametre / 2);
 
     switch (coinId) {
         case 0: // HG
@@ -153,34 +144,6 @@ function calculerPositionTagDansModele(coinId: number, tagMarge: number, tagTail
         case 3: // BD
             return [formatWidth - margeTot, formatHeight - margeTot];
         default:
-            throw new ErreurRealignement(`calculerPositionTagDansModele: coinId invalide : ${coinId} / (0..3)`); // impossible sauf erreur monumentale
+            throw new ErreurRealignement(`calculerPositionCibleDansModele: coinId invalide : ${coinId} / (0..3)`); // impossible sauf erreur monumentale
     }
-}
-
-/**
- * renvoit le point d'ancrage réel d'un tag (coin intérieur pointant vers le centre du document)
- * @param detection
- */
-function trouverPointAncrage(detection: AprilTagDetection, imgW: number, imgH: number): Pt {
-    const coins = detection.corners;
-
-    // centre du document
-    const cx = imgW / 2;
-    const cy = imgH / 2;
-
-    // coin le plus proche du centre, et sa distance
-    let coinPlusProche = coins[0]!;
-    let distance = Number.POSITIVE_INFINITY;
-
-    for (const [x, y] of coins) {
-        const dx = x - cx;
-        const dy = y - cy;
-        const d2 = dx * dx + dy * dy;
-        if (d2 < distance) {
-            distance = d2;
-            coinPlusProche = [x, y];
-        }
-    }
-
-    return coinPlusProche;
 }

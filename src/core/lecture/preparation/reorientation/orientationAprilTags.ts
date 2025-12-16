@@ -1,7 +1,7 @@
 import { AprilTagDetection } from "@monumental-works/apriltag-node";
-import { ScanData } from "./extraireScans";
-import { APRILTAGS_IDS } from "../../generation/bordereau/genererAprilTags";
-import { ErreurAlignement } from "../lectureErreurs";
+import { ScanData } from "../extraireScans";
+import { APRILTAGS_IDS } from "../../../generation/bordereau/genererAprilTags";
+import { ErreurAlignement } from "../../lectureErreurs";
 
 type TagDistance = { id: number, distance: number };
 
@@ -18,7 +18,7 @@ const ARRANGEMENTS_ORIENTATION = [
  * @param detections 
  * @returns L'angle de rotation en degrés à appliquer, et l'ordre des tags détectés (valeur null = tag illisible ou incohérent).
  */
-export function obtenirOrientation(scan: ScanData, detections: AprilTagDetection[]): { orientation: number, ordreTags: (number | null)[] } {
+export function orientationAprilTags(scan: ScanData, detections: AprilTagDetection[]): { orientation: number, ordreTags: (number | null)[] } {
 
     // L'idée de cet algorithme est de, pour chaque coin du document, trouver le tag le plus proche
     // ainsi que sa distance. Puis on réoriente le document en fonction de l'ordre des tags trouvé, si cohérent.

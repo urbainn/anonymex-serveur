@@ -13,7 +13,7 @@ type Pt = [number, number];
  * @param detectionsCibles cibles detectées
  * @param contours tous les contours détectés
  */
-export async function visualiserGeometrieCibles(image: sharp.Sharp, detectionsCibles: CibleConcentriqueDetection[], contours: MatVector): Promise<void> {
+export async function visualiserGeometrieCibles(image: sharp.Sharp, detectionsCibles: Array<null | CibleConcentriqueDetection>, contours: MatVector): Promise<void> {
     const canvas = await sharp2canvas(image);
     const ctx = canvas.getContext("2d");
 
@@ -23,7 +23,6 @@ export async function visualiserGeometrieCibles(image: sharp.Sharp, detectionsCi
 
     for (let i = 0; i < contours.size(); i++) {
         const contour = contours.get(i);
-        console.log(`position contour ${i} : rows=${contour.rows}, cols=${contour.cols}`);
         if (contour.rows > 0) {
             ctx.beginPath();
             for (let j = 0; j < contour.rows; j++) {
@@ -47,6 +46,7 @@ export async function visualiserGeometrieCibles(image: sharp.Sharp, detectionsCi
 
     for (const groupe of detectionsCibles) {
 
+        if (!groupe) continue;
         const pt: Pt = groupe.centre;
 
         if (pt) {

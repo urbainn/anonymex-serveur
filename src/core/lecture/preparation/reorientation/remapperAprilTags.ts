@@ -1,5 +1,5 @@
 import { AprilTagDetection } from "@monumental-works/apriltag-node";
-import { ErreurAlignement } from "../lectureErreurs";
+import { ErreurAlignement } from "../../lectureErreurs";
 
 /**
  * Remappe les coordonnées des détections d'april tags en fonction des transformations appliquées à l'image (suite à la réorientation).
@@ -9,7 +9,7 @@ import { ErreurAlignement } from "../lectureErreurs";
  * @param height Hauteur de l'image après rotation.
  * @returns Nouvelles détections avec coordonnées remappées.
  */
-export function remapperDetections(detections: AprilTagDetection[], orientation: number, width: number, height: number): AprilTagDetection[] {
+export function remapperAprilTags(detections: AprilTagDetection[], orientation: number, width: number, height: number): AprilTagDetection[] {
     if (orientation % 90 !== 0) {
         throw new ErreurAlignement("L'orientation doit être un multiple de 90° pour le remapping des détections.");
     }

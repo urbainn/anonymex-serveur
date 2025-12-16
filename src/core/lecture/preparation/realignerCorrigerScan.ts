@@ -8,19 +8,20 @@ import { CadreEtudiantBenchmarkModule } from "../../generation/bordereau/modules
 import { OpenCvInstance } from "../../../core/services/OpenCvInstance";
 import { dimensionsFormats } from "../lireBordereau";
 import { matToSharp } from "../../../utils/imgUtils";
+import { CibleConcentriqueDetection } from "./detecterCiblesConcentriques";
 
 type Pt = [number, number];
 
 export type realignerCorrigerOptions = {
-    tailleTagsMm: number;
-    margeTagsMm: number;
+    /** Taille (diamètre) des cibles concentriques en millimètres */
+    tailleCiblesMm: number;
+    /** Marge en millimètres autour des cibles */
+    margeCiblesMm: number;
     format: 'A4';
-    /* Type de transformation à utilier si un coin est manquant (estimer puis appliquer une homographie, ou une transformation affine avec 3 points) */
-    //type?: "homographieParEstimation" | "affine";
 };
 
-export async function realignerCorrigerScan(image: sharp.Sharp, ordreTags: (number | null)[], detections: AprilTagDetection[], options: realignerCorrigerOptions): Promise<Mat> {
-    const { tailleTagsMm, margeTagsMm, format } = options;
+export async function realignerCorrigerScan(image: sharp.Sharp, detections: Array<null | CibleConcentriqueDetection>, options: realignerCorrigerOptions): Promise<Mat> {
+    const { tailleCiblesMm: tailleTagsMm, margeCiblesMm: margeTagsMm, format } = options;
     const { formatWidthMm, formatHeightMm } = dimensionsFormats[format];
 
     const cv = await OpenCvInstance.getInstance();

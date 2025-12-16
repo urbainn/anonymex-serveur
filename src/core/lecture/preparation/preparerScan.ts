@@ -2,11 +2,12 @@ import sharp from "sharp";
 import { Mat } from "@techstark/opencv-js";
 import { detecterAprilTags } from "./detecterAprilTags";
 import { ScanData } from "./extraireScans";
-import { obtenirOrientation } from "./obtenirOrientation";
+import { orientationAprilTags } from "./reorientation/orientationAprilTags";
 import { ErreurDetectionAprilTags } from "../lectureErreurs";
 import { realignerCorrigerScan } from "./realignerCorrigerScan";
-import { remapperDetections } from "./remapperDetections";
 import { detecterCiblesConcentriques } from "./detecterCiblesConcentriques";
+import { orientationCiblesConcentriques } from "./reorientation/orientationCiblesConcentriques";
+import { remapperCiblesConcentriques } from "./reorientation/remapperCiblesConcentriques";
 
 /**
  * Prépare et ajuste le scan (découpage, rotation, ...).
@@ -27,20 +28,26 @@ export async function preparerScan(scanProps: ScanData, buffer: Uint8ClampedArra
     // Libérer la mémoire du scan brut
     buffer = new Uint8Array(0);
 
-    const detectionCiblesConcentriques = await detecterCiblesConcentriques(scanProps, scan);
-    console.log("Cibles concentriques détectées :", detectionCiblesConcentriques);
-    return new Mat();
+    const detectionCibles = await detecterCiblesConcentriques(scanProps, scan);
+    const orientationDeg = orientationCiblesConcentriques(detectionCibles);
 
-    // Reconnaissance des april tags.
-    const detections = await detecterAprilTags(scanProps, scan)
-        .catch((err) => { throw ErreurDetectionAprilTags.assigner(err) });
+    if (orientationDeg === -1) {
+        // TODO!!! à réimplémenter proprement en tant que fallback si cibles concentriques illisibles
+        // Reconnaissance des april tags.
+        const detectionsAprilTags = await detecterAprilTags(scanProps, scan)
+            .catch((err) => { throw ErreurDetectionAprilTags.assigner(err) });
 
-    // Orienter correctement le document
-    const { orientation, ordreTags } = obtenirOrientation(scanProps, detections);
-    scan.rotate(orientation);
+        // Orienter correctement le document
+        const { orientation, ordreTags } = orientationAprilTags(scanProps, detectionsAprilTags);
+    }
+
+    scan.rotate(orientationDeg);
+    console.log(`Rotation appliquée: ${orientationDeg}°`);
 
     // Remapper les détections d'april tags en fonction de la rotation appliquée
-    const detectionsRemap = remapperDetections(detections, orientation, scanProps.width, scanProps.height);
+    //const detectionsRemap = remapperDetections(detectionsAprilTags, orientation, scanProps.width, scanProps.height);
+
+    const detectionsRemap = remapperCiblesConcentriques(detectionCibles, orientationDeg);
 
     // Scan prêt : réaligner et corriger le scan
     const scanPret = await realignerCorrigerScan(scan, ordreTags, detectionsRemap, {

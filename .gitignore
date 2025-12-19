@@ -6,9 +6,7 @@ package-lock.json
 .env
 /debug/
 /config/.configCachee.json
+*.traineddata
 
 # Scripts d'entrainement
-/resources/scripts/checkpoints/
-/resources/scripts/logs/
-/resources/scripts/model_tfjs/
-/resources/scripts/model_final.keras
+/resources/datasets/

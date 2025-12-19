@@ -18,7 +18,11 @@ export const preprocessPipelines = {
     lightThreshold: (img: Sharp) => img
         .grayscale()
         .normalise()
-        .gamma(1.2)
+        .gamma(1.2),
 
+    /** CNN EMNIST */
+    emnist: (img: Sharp) => img
+        .gamma(3)
+        .threshold(200),
 
 };

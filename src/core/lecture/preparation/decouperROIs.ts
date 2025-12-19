@@ -57,7 +57,6 @@ export async function decouperROIs(
     const paddingMm = options.paddingMm ?? -0.05;
 
     for (let roiIndex = 0; roiIndex < rois.length; roiIndex++) {
-        const startTime = Date.now();
         const roi = rois[roiIndex]!;
 
         // Coordonnées converties en pixels du rectangle à découper
@@ -85,6 +84,5 @@ export async function decouperROIs(
         roiView.delete();
 
         await onDecoupe(roiSharp, roiIndex);
-        console.log(`Découpe ROI ${roiIndex} en ${Date.now() - startTime}ms`);
     }
 }

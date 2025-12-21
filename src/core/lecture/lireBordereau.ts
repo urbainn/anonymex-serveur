@@ -10,12 +10,27 @@ import { preprocessPipelines } from './OCR/preprocessPipelines';
 import { TesseractOCR } from './OCR/TesseractOCR';
 import { TensorFlowCNN } from './CNN/TensorFlowCNN';
 
+const vraiOrdre = 'ANBOCPDQERFSGTHUIVJWKXLYMZ'.split('');
+let total = 0;
+let totalBon = 0;
+let totalBonCnn = 0;
+let totalBonOCR = 0;
+let echecTotal = 0;
+let tempsTotalOCR = 0;
+let tempsTotalCNN = 0;
+let pageIndex = 0;
+let echecsParPage: number[] = [];
+const resultatOCRBenchmark: Record<string, number> = {}; // x: lettre correcte, y: lettre détectée, xy: nombre de fois (ex: AA: 5, AB: 2, ...)
+const resultatCNNBenchmark: Record<string, number> = {}; // idem, pour CNN
+const resultatTotal: Record<string, number> = {}; // idem, pour OCR + CNN
+const jamaisReconnusLettres: Record<string, number> = {}; // lettres jamais reconnues (clé: lettre, valeur: nombre d'échecs complets => OCR + CNN)
+
 export const dimensionsFormats = {
     A4: { formatWidthMm: 210, formatHeightMm: 297 },
 };
 
 // WIP : chemin deviendra buffer/busboy
-export function lireBordereau(chemin: string): void {
+export async function lireBordereau(chemin: string): Promise<void> {
 
     const buffer = readFileSync(chemin);
     const uint8 = new Uint8Array(buffer);
@@ -25,16 +40,10 @@ export function lireBordereau(chemin: string): void {
     const margeCiblesMm = 7;
     const diametreCiblesMm = 6;
 
-    extraireScans({ data: uint8, encoding: 'buffer', mimeType: 'application/pdf' }, async (scan: ScanData, data: Uint8ClampedArray | Uint8Array) => {
+    await extraireScans({ data: uint8, encoding: 'buffer', mimeType: 'application/pdf' }, async (scan: ScanData, data: Uint8ClampedArray | Uint8Array) => {
         const scanPret = await preparerScan(scan, data);
 
         const rois = new CadreEtudiantBenchmarkModule('ABCDEFGHIJKLMNOPQRSTUVWXYZ').getLayoutPositions().lettresCodeAnonymat;
-
-        const vraiOrdre = 'ANBOCPDQERFSGTHUIVJWKXLYMZ'.split('');
-        let totalBon = 0;
-        let totalBonCnn = 0;
-        let echecTotal = 0;
-        const resultatBenchmark: Record<string, number> = {}; // x: lettre correcte, y: lettre détectée, xy: nombre de fois (ex: AA: 5, AB: 2, ...)
 
         await TesseractOCR.configurerModeCaractereUnique('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
 
@@ -48,25 +57,36 @@ export function lireBordereau(chemin: string): void {
                 .png()
                 .toBuffer();
 
-            await image.png().toFile('debug/rois/roi_' + index + '.png');
-            await preprocessPipelines.emnist(image).png().toFile('debug/rois/roi_emnist_' + index + '.png');
+            //await image.png().toFile('debug/rois/roi_' + index + '.png');
+            //await preprocessPipelines.emnist(image).png().toFile('debug/rois/roi_emnist_' + index + '.png');
+            const debutOCR = Date.now();
             const { text, confidence } = await TesseractOCR.interroger(bufferImgTraitee);
+            tempsTotalOCR += (Date.now() - debutOCR);
+
+            const debutCNN = Date.now();
             const prediction = await TensorFlowCNN.predire(await preprocessPipelines.emnist(image).png().toBuffer(), 'EMNIST-Standard');
+            tempsTotalCNN += (Date.now() - debutCNN);
 
             const lettreAttendue = vraiOrdre[Math.floor(index / 10)];
 
+            total++;
+
             //console.log(`ROI ${index} : ${text.trim()} (${confidence.toFixed(2)}%) -- attendu : ${lettreAttendue}`);
-            if (text.trim().toUpperCase() === lettreAttendue) totalBon++;
-            if (prediction.caractere === lettreAttendue) totalBonCnn++;
+            if (text.trim().toUpperCase() === lettreAttendue) { totalBon++; totalBonOCR++; }
+            if (prediction.caractere === lettreAttendue) { totalBonCnn++; totalBon++; }
             if (text.trim().toUpperCase() !== lettreAttendue && prediction.caractere !== lettreAttendue) {
                 echecTotal++;
-                console.log('Echec total ROI ' + index + ': attendu ' + lettreAttendue + ', Tesseract a lu "' + text.trim() + '" (conf: ' + confidence.toFixed(2) + '%), CNN a lu "' + prediction.caractere + '" (confiance: ' + (prediction.confiance * 100).toFixed(2) + '%).');
+                echecsParPage[pageIndex] = (echecsParPage[pageIndex] || 0) + 1;
+                jamaisReconnusLettres[lettreAttendue!] = (jamaisReconnusLettres[lettreAttendue!] || 0) + 1;
+                //console.log('Echec total ROI ' + index + ': attendu ' + lettreAttendue + ', Tesseract a lu "' + text.trim() + '" (conf: ' + confidence.toFixed(2) + '%), CNN a lu "' + prediction.caractere + '" (confiance: ' + (prediction.confiance * 100).toFixed(2) + '%).');
             }
 
             //console.log("PREDICTION CNN :", prediction.caractere, "confiance :", (prediction.confiance * 100).toFixed(2) + '% -- attendu :', lettreAttendue);
 
             const key = `${lettreAttendue}${text.trim().toUpperCase()}`;
-            resultatBenchmark[key] = (resultatBenchmark[key] || 0) + 1;
+            resultatOCRBenchmark[key] = (resultatOCRBenchmark[key] || 0) + 1;
+            const keyCnn = `${lettreAttendue}${prediction.caractere}`;
+            resultatCNNBenchmark[keyCnn] = (resultatCNNBenchmark[keyCnn] || 0) + 1;
 
             //console.log(`ROI ${index} découpée et sauvegardée.`);
         }
@@ -75,26 +95,58 @@ export function lireBordereau(chemin: string): void {
             await decouperROIs(scanPret, rois, diametreCiblesMm, margeCiblesMm, 'A4', onRoiExtrait);
 
             // TEMP pour benchmark!!
-            const lettres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-            let csvOutput = ' ,' + lettres.join(',') + '\n';
-            for (const lettreAttendue of lettres) {
-                const row = [lettreAttendue];
-                for (const lettreDetectee of lettres) {
-                    const key = `${lettreAttendue}${lettreDetectee}`;
-                    row.push(resultatBenchmark[key] ? String(resultatBenchmark[key]) : '0');
-                }
-                csvOutput += row.join(',') + '\n';
+
+            console.log(versCSV(resultatOCRBenchmark));
+            console.log('---------- CNN ----------');
+            console.log(versCSV(resultatCNNBenchmark));
+            console.log('---------- TOTAL ----------');
+
+            // fusion des 2 résultats
+            for (const key of new Set([...Object.keys(resultatOCRBenchmark), ...Object.keys(resultatCNNBenchmark)])) {
+                resultatTotal[key] = (resultatOCRBenchmark[key] || 0) + (resultatCNNBenchmark[key] || 0);
             }
-            console.log(csvOutput);
-            console.log('\n\n%age de lettres correctes : ' + ((totalBon / rois.length) * 100).toFixed(2) + '%');
-            console.log('%age de lettres correctes CNN : ' + ((totalBonCnn / rois.length) * 100).toFixed(2) + '%');
-            console.log('Echecs totaux (les 2 méthodes incorrectes) : ' + echecTotal + ' sur ' + rois.length + ' lettres.');
+            console.log(versCSV(resultatTotal));
+            console.log('---------- STATS ----------');
+            console.log('Lettres jamais reconnues (OCR + CNN) :');
+            console.log('\n\n%age de lettres correctes : ' + ((totalBon / (total * 2)) * 100).toFixed(2) + '%');
+            console.log('%age de lettres correctes CNN : ' + ((totalBonCnn / total) * 100).toFixed(2) + '%');
+            console.log('%age de lettres correctes OCR : ' + ((totalBonOCR / total) * 100).toFixed(2) + '%');
+            console.log('Echecs totaux (les 2 méthodes incorrectes) : ' + echecTotal + ' sur ' + total + ' lettres. soit ' + ((echecTotal / total) * 100).toFixed(2) + '%');
+            console.log('---------- TEMPS MOYENS ----------');
+            console.log('Temps moyen OCR par lettre : ' + (tempsTotalOCR / total).toFixed(2) + ' ms');
+            console.log('Temps moyen CNN par lettre : ' + (tempsTotalCNN / total).toFixed(2) + ' ms');
+            console.log('------------------------------');
+            const lettres = Object.keys(jamaisReconnusLettres).sort((a, b) => jamaisReconnusLettres[b]! - jamaisReconnusLettres[a]!).slice(0, 8); // afficher un max de 8 lettres et trier par VALEUR
+            for (const lettre of lettres) {
+                console.log(`Lettre ${lettre} : ${jamaisReconnusLettres[lettre]} échecs complets.`);
+            }
+            console.log('------------------------------');
+            console.log('Echecs par page :');
+            echecsParPage.forEach((echecs, index) => {
+                console.log(`Page ${index + 1} : ${echecs} échecs complets.`);
+            });
+            console.log('------------------------------\n\n');
 
         } catch (err) {
             throw ErreurDecoupeROIs.assigner(err);
         } finally {
             scanPret.delete();
+            pageIndex++;
         }
     });
 
+}
+
+function versCSV(resultats: Record<string, number>): string {
+    const lettres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    let csvOutput = ' ,' + lettres.join(',') + '\n';
+    for (const lettreAttendue of lettres) {
+        const row = [lettreAttendue];
+        for (const lettreDetectee of lettres) {
+            const key = `${lettreAttendue}${lettreDetectee}`;
+            row.push(resultats[key] ? String(resultats[key]) : '0');
+        }
+        csvOutput += row.join(',') + '\n';
+    }
+    return csvOutput;
 }

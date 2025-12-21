@@ -24,3 +24,8 @@ export class ErreurRealignement extends ErreurLecture { }
 // Erreurs de ROI
 export class ErreurLectureROIs extends ErreurLecture { }
 export class ErreurDecoupeROIs extends ErreurLecture { }
+
+// Erreurs de reconnaissance
+export class ErreurReconnaissance extends ErreurLecture { }
+export class ErreurOCR extends ErreurReconnaissance { }
+export class ErreurCNN extends ErreurReconnaissance { }

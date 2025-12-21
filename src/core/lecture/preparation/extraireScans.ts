@@ -12,7 +12,7 @@ export type ScanData = { channels: 1 | 3 | 4; debug: boolean; width: number; hei
  * @param doc Le document source à traiter : PDF, image ou archive de pdf/images.
  * @param onScanExtrait Callback appelé pour chaque scan extrait, avec un buffer image 3 canaux.
  */
-export async function extraireScans(doc: DocumentSource, onScanExtrait: (scan: ScanData, buffer: Uint8ClampedArray | Uint8Array) => void): Promise<void> {
+export async function extraireScans(doc: DocumentSource, onScanExtrait: (scan: ScanData, buffer: Uint8ClampedArray | Uint8Array) => Promise<void>): Promise<void> {
 
     logInfo('extraireScans', 'Extraction des scans du document source. ' + styles.dim
         + '(format ' + styles.fg.cyan + doc.mimeType + styles.fg.white + ')');
@@ -27,7 +27,7 @@ export async function extraireScans(doc: DocumentSource, onScanExtrait: (scan: S
             // Charger et faire un rendu de chaque page
             for (let pageNum = 1; pageNum <= nbPages; pageNum++) {
                 logInfo('extraireScans', `Extraction du scan de la page ${styles.fg.cyan}${pageNum}${styles.fg.white}/${nbPages} du PDF source.`);
-                onScanExtrait(...await pdfToBuffer(pdf, pageNum));
+                await onScanExtrait(...await pdfToBuffer(pdf, pageNum));
             }
             break;
 
@@ -37,7 +37,7 @@ export async function extraireScans(doc: DocumentSource, onScanExtrait: (scan: S
             // Traiter l'image unique
             logInfo('extraireScans', `Extraction du scan de l'image source.`);
             const scan = await imgToBuffer(doc);
-            onScanExtrait(scan, doc.data);
+            await onScanExtrait(scan, doc.data);
             break;
 
         default:

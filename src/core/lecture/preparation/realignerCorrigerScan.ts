@@ -81,8 +81,6 @@ export async function realignerCorrigerScan(image: sharp.Sharp, detections: Arra
     // Vérifier qu'on a au moins 3 points valides pour faire la transformation
     const srcPts = srcPoints.filter(pt => pt !== null) as Pt[];
     const dstPts = dstPoints.filter(p => p !== null) as Pt[];
-    console.log('source: ', srcPts);
-    console.log('dest: ', dstPts);
     if (srcPts.length < 3) {
         throw new ErreurRealignement(`Impossible de réaligner le document, trop peu de points d'ancrage (3 nécessaires, ${srcPts.length} obtenus)`);
     }

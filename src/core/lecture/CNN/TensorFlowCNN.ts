@@ -1,8 +1,8 @@
 import * as tf from "@tensorflow/tfjs-node";
 import { Tensor, Tensor3D, Tensor4D } from "@tensorflow/tfjs-node";
-import { Canvas, Image, ImageData } from "canvas";
 import { existsSync } from "fs";
 import { resolve } from "path";
+import { ErreurCNN } from "../lectureErreurs";
 
 const EMNIST_INPUT_SIZE = 28;
 const EMNIST_NUM_CLASSES = 26;
@@ -49,7 +49,7 @@ export class TensorFlowCNN {
             const logits = Array.isArray(prediction) ? prediction[0] : prediction;
 
             if (!(logits instanceof Tensor)) {
-                throw new Error("Unexpected EMNIST model output format.");
+                throw new ErreurCNN("Format de sortie du modèle EMNIST inattendu.");
             }
 
             const probabilitiesTensor = tf.softmax(logits);
@@ -84,7 +84,7 @@ export class TensorFlowCNN {
 
         if (!this.promessesChargement[modele]) {
             if (!existsSync(this.CHEMINS[modele])) {
-                throw new Error(`EMNIST model not found at ${this.CHEMINS[modele]}`);
+                throw new ErreurCNN(`Modèle CNN EMNIST non trouvé au chemin : ${this.CHEMINS[modele]}`);
             }
 
             this.promessesChargement[modele] = tf
@@ -96,7 +96,7 @@ export class TensorFlowCNN {
                 .catch((error: Error) => {
                     this.promessesChargement[modele] = null;
                     console.log("Error loading EMNIST model:", error);
-                    throw error;
+                    throw ErreurCNN.assigner(error);
                 });
         }
 
@@ -115,9 +115,6 @@ export class TensorFlowCNN {
             const grayscale = floatImg.shape[2] === 1 ? floatImg : floatImg.mean(2).expandDims(2);
             const resized = tf.image.resizeBilinear(grayscale as Tensor3D, [EMNIST_INPUT_SIZE, EMNIST_INPUT_SIZE], true);
             const normalized = resized.div(255);
-            // Align upright, black-on-white glyphs to raw EMNIST orientation used during training:
-            // flip left-right, then transpose (inverse of EMNIST "fix"), then invert colors.
-            //const mirrored = normalized.reverse(1);
             const rotated = normalized.transpose([1, 0, 2]);
             const inverted = tf.sub(1, rotated);
 
@@ -136,20 +133,20 @@ export class TensorFlowCNN {
 
             if (source.rank === 4) {
                 if (source.shape[0] !== 1) {
-                    throw new Error("Expected a batch of size 1 when providing a rank-4 tensor to TensorFlowCNN.");
+                    throw new ErreurCNN("Taille de batch non supportée pour le prétraitement EMNIST.");
                 }
 
                 return source.squeeze([0]) as Tensor3D;
             }
 
-            throw new Error("Unsupported tensor rank for EMNIST preprocessing.");
+            throw new ErreurCNN("Rang de tenseur non supporté pour le prétraitement EMNIST.");
         }
 
         if (Buffer.isBuffer(source) || source instanceof Uint8Array) {
             return tf.node.decodeImage(source, 1) as Tensor3D;
         }
 
-        throw new Error("Unsupported image source type for EMNIST inference.");
+        throw new ErreurCNN("Type de source d'image non supporté pour l'inférence EMNIST.");
     }
 
     private static getTopProbability(probabilities: number[]): { index: number; value: number } {

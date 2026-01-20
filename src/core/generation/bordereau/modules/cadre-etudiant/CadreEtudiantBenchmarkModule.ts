@@ -1,4 +1,5 @@
-import { CadreEtudiantModule, LayoutPosition } from "../ModulesBordereau";
+import { LayoutPosition } from "../../../ModeleLectureBase";
+import { CadreEtudiantModule } from "../ModulesBordereau";
 
 export class CadreEtudiantBenchmarkModule extends CadreEtudiantModule {
 
@@ -17,7 +18,7 @@ export class CadreEtudiantBenchmarkModule extends CadreEtudiantModule {
         return "A4";
     }
 
-    getLayoutPositions(): { lettresCodeAnonymat: LayoutPosition[]; lettresCodeEpreuve: LayoutPosition[]; } {
+    getZonesLecture(): { lettresCodeAnonymat: LayoutPosition[]; lettresCodeEpreuve: LayoutPosition[]; } {
         // 10 cases par lettre de l'alphabet
         const lettresCode = new Array<LayoutPosition>(this.alphabet.length * 10);
 
@@ -43,7 +44,7 @@ export class CadreEtudiantBenchmarkModule extends CadreEtudiantModule {
 
     generer(pdf: PDFKit.PDFDocument): boolean {
 
-        const layout = this.getLayoutPositions();
+        const layout = this.getZonesLecture();
 
         // Dessiner les cadres pour chaque lettre du code d'anonymat
         for (const position of layout.lettresCodeAnonymat) {

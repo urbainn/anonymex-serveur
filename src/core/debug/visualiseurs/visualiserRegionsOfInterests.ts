@@ -1,9 +1,9 @@
 import sharp from "sharp";
 import { sharp2canvas } from "../../../utils/debugImageUtils";
-import { LayoutPosition } from "../../generation/bordereau/modules/ModulesBordereau";
 import { LecturePipelineDebug } from "../LecturePipelineDebug";
 import { EtapeLecture } from "../EtapesDeTraitementDicts";
 import { dimensionsFormats } from "../../lecture/lireBordereau";
+import { LayoutPosition } from "../../generation/ModeleLectureBase";
 
 /**
  * Dessine toutes les ROI sur l'image pour visualisation.

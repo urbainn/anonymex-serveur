@@ -43,7 +43,7 @@ export async function lireBordereau(chemin: string): Promise<void> {
     await extraireScans({ data: uint8, encoding: 'buffer', mimeType: 'application/pdf' }, async (scan: ScanData, data: Uint8ClampedArray | Uint8Array) => {
         const scanPret = await preparerScan(scan, data);
 
-        const rois = new CadreEtudiantBenchmarkModule('ABCDEFGHIJKLMNOPQRSTUVWXYZ').getLayoutPositions().lettresCodeAnonymat;
+        const rois = new CadreEtudiantBenchmarkModule('ABCDEFGHIJKLMNOPQRSTUVWXYZ').getZonesLecture().lettresCodeAnonymat;
 
         await TesseractOCR.configurerModeCaractereUnique('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
 

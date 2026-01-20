@@ -15,7 +15,7 @@ genererBordereau({
     'version': 1,
 });
 
-lireBordereau('debug/pdf/test.pdf')
+//lireBordereau('debug/pdf/test.pdf')
 
 const app = express();
 const port = 3000;

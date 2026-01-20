@@ -1,9 +1,9 @@
 import sharp from "sharp";
 import { Mat } from "@techstark/opencv-js";
-import { LayoutPosition } from "../../generation/bordereau/modules/ModulesBordereau";
 import { dimensionsFormats } from "../lireBordereau";
 import { OpenCvInstance } from "../../services/OpenCvInstance";
 import { matToSharp } from "../../../utils/imgUtils";
+import { LayoutPosition } from "../../generation/ModeleLectureBase";
 
 
 export interface DecouperROIsOptions {

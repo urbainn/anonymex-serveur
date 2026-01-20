@@ -116,7 +116,7 @@ export async function realignerCorrigerScan(image: sharp.Sharp, detections: Arra
     }
 
     // Visualisations debug (Sharp uniquement pour le debug)
-    const roisGroupes = [new CadreEtudiantBenchmarkModule('ABCDEFGHIJKLMNOPQRSTUVWXYZ').getLayoutPositions().lettresCodeAnonymat];
+    const roisGroupes = [new CadreEtudiantBenchmarkModule('ABCDEFGHIJKLMNOPQRSTUVWXYZ').getZonesLecture().lettresCodeAnonymat];
     const imageOutSharp = matToSharp(cv, dstMatImg);
     const margesDistanceMm = margeCiblesMm + (tailleCiblesMm / 2);
     await visualiserRegionsOfInterests(imageOutSharp, roisGroupes, { marginsMm: { left: margesDistanceMm, top: margesDistanceMm, right: margesDistanceMm, bottom: margesDistanceMm } });

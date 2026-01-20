@@ -2,12 +2,12 @@ import sharp from "sharp";
 import { ScanData } from "./extraireScans";
 import { OpenCvInstance } from "../../../core/services/OpenCvInstance";
 import { dimensionsFormats } from "../lireBordereau";
-import { CIBLES_NB_RINGS } from "../../generation/bordereau/genererCiblesConcentriques";
 import { ErreurDetectionCiblesConcentriques } from "../lectureErreurs";
 import { visualiserGeometrieCibles } from "../../debug/visualiseurs/visualiserGeometrieCibles";
 import { StatistiquesDebug } from "../../debug/StatistiquesDebug";
 import { EtapeLecture } from "../../debug/EtapesDeTraitementDicts";
 import { Mat } from "@techstark/opencv-js";
+import { CIBLES_NB_RINGS } from "../../generation/common/genererCiblesConcentriques";
 
 type FormatId = keyof typeof dimensionsFormats;
 type CoinIndice = 0 | 1 | 2 | 3;

@@ -1,6 +1,6 @@
 import { AprilTagDetection } from "@monumental-works/apriltag-node";
 import { ScanData } from "../extraireScans";
-import { APRILTAGS_IDS } from "../../../generation/bordereau/genererAprilTags";
+import { APRILTAGS_IDS } from "../../../generation/common/genererAprilTags";
 import { ErreurAlignement } from "../../lectureErreurs";
 
 type TagDistance = { id: number, distance: number };

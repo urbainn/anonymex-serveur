@@ -16,7 +16,6 @@ export const APRILTAGS_IDS = [10, 11, 12, 13]; // HG, HD, BG, BD
  * @param tailleMm taille des tags en mm (pour scan 200DPI, 14mm recommandé, DPI + élevé -> taille plus petite possible)
  * @param margeInterneMm marge interne des tags par rapport aux bords du document (en mm)
  * @param coins liste des coins auxquels attacher un tag, 0 = haut droit, 1 = haut gauche, 2 = bas droit, 3 = bas gauche.
- * @deprecated
  */
 export function genererAprilTags(doc: PDFKit.PDFDocument, tailleMm: number, margeInterneMm: number, coins?: number[]) {
 

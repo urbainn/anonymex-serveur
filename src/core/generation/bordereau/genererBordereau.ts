@@ -1,10 +1,9 @@
 import PDFDocument from 'pdfkit';
 import { createWriteStream } from 'fs';
-import { genererAprilTags } from './genererAprilTags';
 import { logInfo, styles } from '../../../utils/logger';
 import { CadreEtudiantBenchmarkModule } from './modules/cadre-etudiant/CadreEtudiantBenchmarkModule';
 import { ErreurAprilTag } from '../generationErreurs';
-import { genererCiblesConcentriques } from './genererCiblesConcentriques';
+import { genererCiblesConcentriques } from '../common/genererCiblesConcentriques';
 
 export interface BordereauAnonProprietes {
     format: 'A4' | 'A5';

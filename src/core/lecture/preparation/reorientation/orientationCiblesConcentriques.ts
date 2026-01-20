@@ -1,4 +1,4 @@
-import { CIBLES_NB_RINGS } from "../../../generation/bordereau/genererCiblesConcentriques";
+import { CIBLES_NB_RINGS } from "../../../generation/common/genererCiblesConcentriques";
 import { CibleConcentriqueDetection } from "../detecterCiblesConcentriques";
 
 /** Classer les IDs de cible par niveau de confiance; cibles qui sont les moins sujettes aux erreurs de détection en premier */

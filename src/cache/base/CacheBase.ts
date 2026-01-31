@@ -56,4 +56,12 @@ export abstract class CacheBase<I, T> {
         return this.cache.size;
     }
 
+    /**
+     * Obtenir tous les éléments en cache.
+     * @return Liste des éléments en cache.
+     */
+    public values(): T[] {
+        return Array.from(this.cache.values());
+    }
+
 }

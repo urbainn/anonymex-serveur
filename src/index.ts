@@ -8,7 +8,11 @@ import cookieParser from "cookie-parser";
 import { lireBordereau } from "./core/lecture/lireBordereau";
 import { genererBordereau } from "./core/generation/bordereau/genererBordereau";
 import { genererFeuilleEmargement } from "./core/generation/emargement/genererFeuilleEmargement";
+import { lectureXLSX } from "./core/xlsx/lectureXLSX";
+import { interpretationXLSX } from "./core/xlsx/interpretationXLSX";
+import { Session } from "./cache/sessions/Session";
 
+interpretationXLSX(lectureXLSX('Init_ExamsVraiSessionMai25_ano.xlsx'), new Session({ "annee": 2026, "id_session": 1, "nom": "Session 1 mai 2026", "statut": 1 }))
 /* genererBordereau({
     'format': 'A4',
     'longueurCodeAnonymat': 8,
@@ -16,8 +20,8 @@ import { genererFeuilleEmargement } from "./core/generation/emargement/genererFe
     'version': 1,
 }); */
 
-genererFeuilleEmargement({
-    noms: [ // ordre alphabétique par nom de famille
+/*genererFeuilleEmargement({
+    noms: [
         ["Alice", "Dupont"],
         ["Bob", "Martin"],
         ["Charlie", "Durand"],
@@ -72,7 +76,7 @@ genererFeuilleEmargement({
         ["Zoé", "Dupont"]
     ].sort((a, b) => a[1]!.localeCompare(b[1]!)) as [string, string][],
     version: 1,
-});
+});*/
 
 //lireBordereau('debug/pdf/test.pdf')
 

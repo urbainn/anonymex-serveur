@@ -50,9 +50,9 @@ CREATE TABLE epreuve (
     code_epreuve CHAR(10) NOT NULL, -- HAXXXXX
     nom VARCHAR(100) NOT NULL,
     statut TINYINT UNSIGNED NOT NULL, -- 0 : INITIAL, 1 : MATERIEL EXAMEN IMPRIME, 2 : DEPOT COPIES, 3 : DEPOT COMPLET, 4 : NOTES EXPORTEES
-    date_epreuve DATETIME NOT NULL,
+    date_epreuve INT UNSIGNED NOT NULL, -- timestamp en minutes
     duree SMALLINT UNSIGNED NOT NULL,
-    nb_presents SMALLINT UNSIGNED NOT NULL,
+    nb_presents SMALLINT UNSIGNED,
     CONSTRAINT pk_epreuve_session PRIMARY KEY (id_session, code_epreuve),
     CONSTRAINT fk_es_session FOREIGN KEY (id_session)
         REFERENCES session_examen(id_session)
@@ -66,14 +66,14 @@ CREATE TABLE salle (
     CONSTRAINT pk_salle PRIMARY KEY (id_salle)
 );
 
-CREATE TABLE epreuve_session_etudiant (
+CREATE TABLE convocation_epreuve (
     id_session INT UNSIGNED NOT NULL,
     code_epreuve CHAR(10) NOT NULL,
     numero_etudiant INT UNSIGNED NOT NULL,
     code_anonymat CHAR(6) NOT NULL,
     note_quart TINYINT UNSIGNED,
     id_salle SMALLINT UNSIGNED NOT NULL,
-    CONSTRAINT pk_epreuve_session_etudiant PRIMARY KEY (id_session, code_epreuve, numero_etudiant),
+    CONSTRAINT pk_convocation_epreuve PRIMARY KEY (id_session, code_epreuve, numero_etudiant),
     CONSTRAINT uq_code UNIQUE (id_session, code_anonymat),
     CONSTRAINT fk_ese_session FOREIGN KEY (id_session)
         REFERENCES session_examen(id_session)

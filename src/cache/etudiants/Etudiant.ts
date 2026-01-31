@@ -1,7 +1,7 @@
-import { RowDataPacket } from "mysql2";
 import { ElementEnCache } from "../base/ElementEnCacheBase";
+import { RowData } from "../../core/services/Database";
 
-export interface EtudiantData extends RowDataPacket {
+export interface EtudiantData extends RowData {
     numero_etudiant: number,
     nom: string,
     prenom: string

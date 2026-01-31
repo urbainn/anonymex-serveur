@@ -28,6 +28,9 @@ export abstract class DatabaseCacheBase<I extends string | number, T extends Ele
     /** Valeurs des composantes parentes de la clé primaire, si ce cache est imbriqué. */
     protected readonly valeursComposantesParent: (string | number)[] | undefined;
 
+    /** Tous les éléments ont-ils été récupérés depuis la BDD? */
+    private tousRecuperes: boolean = false;
+
     /** Fonction de D vers T, c'est à dire d'un objet de la BDD en une instance de T */
     abstract fromDatabase(data: D): T;
 
@@ -47,6 +50,7 @@ export abstract class DatabaseCacheBase<I extends string | number, T extends Ele
      * Récupérer un élément du cache ou de la base de données.
      * @param id Clé primaire de l'élément à récupérer. Dans le format attendu par getComposanteCache.
      * @return élément ou undefined s'il n'est pas en cache ou dans la BDD.
+     * @cache Si l'élément est récupéré depuis la BDD, il est mis en cache avant d'être renvoyé.
      */
     public async getOrFetch(id: I): Promise<T | undefined> {
         let element = this.get(id);
@@ -75,9 +79,15 @@ export abstract class DatabaseCacheBase<I extends string | number, T extends Ele
      * Séléctionner tous les éléments de la table associée. Si la clé primaire est composée de plusieurs colonnes,
      * ne renvoit que les éléments correspondant aux composantes parentes données à l'instanciation du cache.
      * @param clause SQL optionnelle à ajouter à la requête (ex: ORDER BY, LIMIT, etc).
-     * @return Liste des éléments.
+     * @param force Si true, tous les éléments seront récupérés, même s'ils sont déjà en cache.
+     * @cache Tous les éléments récupérés sont mis en cache.
      */
-    public async getAll(clause?: string): Promise<T[]> {
+    public async getAll(clause?: string, force: boolean = false): Promise<T[]> {
+        if (this.tousRecuperes && !force) {
+            // Tous les éléments ont déjà été récupérés; retourner ceux en cache
+            return this.values();
+        }
+
         // Sélectionner les éléments des composantes parentes SI il y en a
         const whereSql = this.colonnesClePrimaire.length > 1 && this.valeursComposantesParent
             ? `WHERE ${this.colonnesClePrimaire.slice(0, -1 /* ..sauf la dernière */).map((colonne) => `\`${colonne}\` = ?`).join(" AND ")}`
@@ -95,6 +105,8 @@ export abstract class DatabaseCacheBase<I extends string | number, T extends Ele
             elements.push(element);
         }
 
+        this.tousRecuperes = true;
+
         return elements;
     }
 
@@ -102,6 +114,7 @@ export abstract class DatabaseCacheBase<I extends string | number, T extends Ele
      * Mutation : insérer un nouvel élément dans la BDD et le cache.
      * @param donnees Données partielles de l'élément à insérer. doit impérativement contenir les colonnes/propriétés NOT NULL.
      * @param element L'élément à insérer en cache, si déjà disponible. Sinon, vous devez l'ajouter avec #add après l'insertion.
+     * @return Résultat de l'insertion dans la BDD.
      */
     public async insert(donnees: Partial<D>, element?: T): Promise<ResultSetHeader> {
         // Construire la requête d'insertion
@@ -160,5 +173,13 @@ export abstract class DatabaseCacheBase<I extends string | number, T extends Ele
         const sql = `SELECT COUNT(*) AS count FROM \`${this.nomTable}\`;`;
         const results = await Database.query<{ count: number }>(sql);
         return results[0]!.count;
+    }
+
+    /**
+     * Vider le cache.
+     */
+    public override clear(): void {
+        super.clear();
+        this.tousRecuperes = false;
     }
 }

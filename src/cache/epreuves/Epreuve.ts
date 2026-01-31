@@ -9,12 +9,10 @@ export interface EpreuveData extends RowData {
     code_epreuve: string,
     nom: string,
     statut: number,
-    salles: string[],
+    /* Timestamp (epoch unix) en minutes */
     date_epreuve: number,
     duree: number,
-    copies: number | null,
-    copies_total: number | null,
-    incidents: number | null
+    nb_presents: number | null,
 }
 
 export class Epreuve extends ElementEnCache {
@@ -22,12 +20,12 @@ export class Epreuve extends ElementEnCache {
     public codeEpreuve: string;
     public nom: string;
     public statut: EpreuveStatut;
-    public salles: string[];
+    public salles: string[] = [];//todo
     public dateEpreuve: number;
     public duree: number;
-    public copies: number | null;
-    public copiesTotal: number | null;
-    public incidents: number | null;
+    public copies: number = 0;//todo
+    public nbPresents: number | null;
+    public incidents: number = 0;//todo
 
     constructor(data: EpreuveData) {
         super();
@@ -35,12 +33,9 @@ export class Epreuve extends ElementEnCache {
         this.codeEpreuve = data.code_epreuve;
         this.nom = data.nom;
         this.statut = data.statut;
-        this.salles = data.salles
-        this.dateEpreuve = data.date_epreuve;
+        this.dateEpreuve = data.date_epreuve * 60; // convertir en secondes
         this.duree = data.duree;
-        this.copies = data.copies;
-        this.copiesTotal = data.copies_total;
-        this.incidents = data.incidents;
+        this.nbPresents = data.nb_presents;
     }
 
     /** Obtenir la session de cette epreuve */
@@ -59,9 +54,8 @@ export class Epreuve extends ElementEnCache {
             salles: this.salles,
             date: this.dateEpreuve,
             duree: this.duree,
-            copies: this.copies ?? undefined,
-            copiesTotal: this.copiesTotal ?? undefined,
-            incidents: this.incidents ?? undefined
+            copies: this.copies,
+            incidents: this.incidents
         }
     }
 }

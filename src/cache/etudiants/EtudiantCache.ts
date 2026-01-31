@@ -6,13 +6,14 @@ export class EtudiantCache extends DatabaseCacheBase<number /*numero*/, Etudiant
     nomTable: string = "etudiant";
     colonnesClePrimaire: string[] = ["numero_etudiant"];
 
-        fromDatabase(data: EtudiantData): Etudiant {
-            return new Etudiant(data);
-        }
-    
-        getComposanteCache(element: Etudiant): number {
-            return element.numeroEtudiant;
-        }
+    fromDatabase(data: EtudiantData): Etudiant {
+        return new Etudiant(data);
+    }
+
+    getComposanteCache(element: Etudiant): number {
+        return element.numeroEtudiant;
+    }
+
 }
 
 export const etudiantCache = new EtudiantCache();

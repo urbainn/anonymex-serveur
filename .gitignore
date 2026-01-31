@@ -7,6 +7,7 @@ package-lock.json
 /debug/
 /config/.configCachee.json
 *.traineddata
+/*.xlsx
 
 # Scripts d'entrainement
 /resources/datasets/

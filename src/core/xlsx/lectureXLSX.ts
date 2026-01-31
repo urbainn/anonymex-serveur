@@ -1,6 +1,7 @@
 import XLSX from "@e965/xlsx";
 import { readFileSync } from 'fs';
 import { ErreurConversion } from "../lecture/lectureErreurs";
+import { ErreurLectureXLSX } from "./ErreursXLSX";
 
 export interface SheetData {
     DAT_DEB_PES: string,
@@ -21,24 +22,24 @@ export interface SheetData {
     C_RES: number
 }
 
-export function lectureXLSX(chemin: string): SheetData[] {
+export function lectureXLSX(chemin: string): Record<string, unknown>[] {
     let workbook;
     try {
         const buffer = readFileSync(chemin);
         workbook = XLSX.read(buffer);
-    } catch(err) {
-        throw ErreurConversion.assigner(err);
+    } catch (err) {
+        throw ErreurLectureXLSX.assigner(err);
     }
     const sheetName = workbook.SheetNames[0]
-    if(!sheetName) {
-        throw new ErreurConversion("Le fichier XLSX ne contient aucune feuille.")
-    }
-        
-    const worksheet = workbook.Sheets[sheetName]
-    if(!worksheet) {
-        throw new ErreurConversion("Erreur lors de la lecture de la feuille.")
+    if (!sheetName) {
+        throw new ErreurLectureXLSX("Le fichier XLSX ne contient aucune feuille.")
     }
 
-    const contenu = XLSX.utils.sheet_to_json<SheetData>(worksheet);
+    const worksheet = workbook.Sheets[sheetName]
+    if (!worksheet) {
+        throw new ErreurLectureXLSX("Erreur lors de la lecture de la feuille " + sheetName + " (non trouvée).")
+    }
+
+    const contenu = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet);
     return contenu;
 }

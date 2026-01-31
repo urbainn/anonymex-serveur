@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { APIRole, APIListRoles } from "../../contracts/roles";
-import { roleCache } from "../../cache/roles/RoleCache";
+import { roleCache } from "../../cache/utilisateurs/roles/RoleCache";
 import { ErreurRequeteInvalide } from "../erreursApi";
 
 export async function getRoles(req: Request): Promise<APIListRoles> {
@@ -18,21 +18,21 @@ export async function getRoles(req: Request): Promise<APIListRoles> {
 
     return { roles: rolesFormatees };
     */
-    return { 
-        roles : [
+    return {
+        roles: [
             {
-                idRole : 1,
-                nom : "Administrateur",
+                idRole: 1,
+                nom: "Administrateur",
                 permissions: 1
             },
             {
-                idRole : 2,
-                nom : "Scanner",
+                idRole: 2,
+                nom: "Scanner",
                 permissions: 2
             },
             {
-                idRole : 3,
-                nom : "Correcteur",
+                idRole: 3,
+                nom: "Correcteur",
                 permissions: 32
             }
         ]

@@ -5,8 +5,8 @@ import bcrypt from "bcrypt";
 import { ErreurRequeteInvalide, ErreurServeur } from "../../erreursApi";
 import { UtilisateurData } from "../../../cache/utilisateurs/Utilisateur";
 import { Database } from "../../../core/services/Database";
-import { roleCache } from "../../../cache/roles/RoleCache";
-import { Role, RolePermissions } from "../../../cache/roles/Role";
+import { roleCache } from "../../../cache/utilisateurs/roles/RoleCache";
+import { Role, RolePermissions } from "../../../cache/utilisateurs/roles/Role";
 import { logInfo } from "../../../utils/logger";
 import { setJetonAuthentificationCookie } from "./postLogin";
 
@@ -62,7 +62,7 @@ export async function postCreerUtilisateur(req: Request, res: Response): Promise
                 nom: nouvelUtilisateur.nom,
                 prenom: nouvelUtilisateur.prenom,
                 jeton_connexion: jetonAuth,
-                id_role: assignerRoleId 
+                id_role: assignerRoleId
             });
 
             logInfo("Inscription", "Nouvel utilisateur #" + insertionUtilisateur.insertId + " créé avec l'email " + nouvelUtilisateur.email + ".");

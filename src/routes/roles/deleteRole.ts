@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { APIRole } from "../../contracts/roles";
-import { roleCache } from "../../cache/roles/RoleCache";
 import { ErreurRequeteInvalide } from "../erreursApi";
 
 export async function deleteRole(req: Request): Promise<{ success: boolean }> {

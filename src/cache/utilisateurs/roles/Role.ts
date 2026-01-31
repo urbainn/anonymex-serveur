@@ -1,6 +1,6 @@
-import { ElementEnCache } from "../base/ElementEnCacheBase";
-import { RowData } from "../../core/services/Database";
-import { APIRole } from "../../contracts/roles";
+import { ElementEnCache } from "../../base/ElementEnCacheBase";
+import { RowData } from "../../../core/services/Database";
+import { APIRole } from "../../../contracts/roles";
 
 export enum RolePermissions {
     AUCUNE = 0, /* Accès à la plateforme refusé */

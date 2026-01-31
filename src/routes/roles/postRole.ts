@@ -1,9 +1,8 @@
 import { Request, Response } from "express";
 import { APIRole, APIListRoles, RoleSchema } from "../../contracts/roles";
-import { roleCache } from "../../cache/roles/RoleCache";
 import { ErreurRequeteInvalide } from "../erreursApi";
 
-export async function postRole(req: Request): Promise<{ success : boolean }>  {
+export async function postRole(req: Request): Promise<{ success: boolean }> {
     /*
     const nouveauRole = RoleSchema.parse(req.body);
     

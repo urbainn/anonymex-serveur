@@ -1,4 +1,4 @@
-import { DatabaseCacheBase } from "../base/DatabaseCacheBase";
+import { DatabaseCacheBase } from "../../base/DatabaseCacheBase";
 import { Role, RoleData } from "./Role";
 
 class RoleCache extends DatabaseCacheBase<number /*id*/, Role, RoleData> {

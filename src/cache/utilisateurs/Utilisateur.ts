@@ -1,6 +1,6 @@
 import { ElementEnCache } from "../base/ElementEnCacheBase";
-import { Role } from "../roles/Role";
-import { roleCache } from "../roles/RoleCache";
+import { Role } from "./roles/Role";
+import { roleCache } from "./roles/RoleCache";
 import { APIUtilisateur } from "../../contracts/utilisateurs";
 import { RowData } from "../../core/services/Database";
 

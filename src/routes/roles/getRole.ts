@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { APIRole } from "../../contracts/roles";
-import { roleCache } from "../../cache/roles/RoleCache";
+import { roleCache } from "../../cache/utilisateurs/roles/RoleCache";
 import { ErreurRequeteInvalide } from "../erreursApi";
 
 export async function getRole(req: Request): Promise<APIRole> {
@@ -16,8 +16,8 @@ export async function getRole(req: Request): Promise<APIRole> {
     return roleBrut.toJSON();
     */
     return {
-            idRole : 1,
-            nom : "Administrateur",
-            permissions: 1
-        }
+        idRole: 1,
+        nom: "Administrateur",
+        permissions: 1
+    }
 }

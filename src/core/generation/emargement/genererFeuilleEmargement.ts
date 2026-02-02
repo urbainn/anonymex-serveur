@@ -10,6 +10,7 @@ import { Session } from "../../../cache/sessions/Session";
 import { Epreuve } from "../../../cache/epreuves/Epreuve";
 import { renduEnteteTableauEmargement, renduLigneEmargement, renduTableauEmargement } from "./renduTableauEmargement";
 import { Etudiant } from "../../../cache/etudiants/Etudiant";
+import { renduPiedPageEmargement } from "./renduPiedPageEmargement";
 
 const LIGNES_PAR_PAGE = 28;
 const MARGE_HORIZONTALE = mmToPoints(10 /* mm */);
@@ -26,7 +27,7 @@ export function genererFeuilleEmargement(proprietes: FeuilleEmargementProprietes
     // Calculer la taille de chaque ligne de la feuille d'émargement
 
     // Initialiser le PDF
-    const doc = new PDFDocument({ size: 'A4', autoFirstPage: false });
+    const doc = new PDFDocument({ size: 'A4', autoFirstPage: false, margins: { top: 0, bottom: 0, left: 0, right: 0 } });
     doc.pipe(createWriteStream('emargement_test.pdf'));
 
     // Rendu des pages
@@ -62,9 +63,10 @@ function renduPageEmargement(doc: typeof PDFDocument, noms: [string, string][], 
     const hauteurLigneMm = (297 - 2 * hauteurZoneCiblesMm) / (LIGNES_PAR_PAGE + 1);
     const positionYDepartMm = hauteurZoneCiblesMm + hauteurLigneMm;
 
-    // Marges
+    // Marges et zone de contenu
     const margesGauche = MARGE_HORIZONTALE;
     const margesDroite = MARGE_HORIZONTALE;
+    const largeurContenu = doc.page.width - margesGauche - margesDroite;
 
     // Generer les cibles concentriques aux 4 coins
     try {
@@ -82,14 +84,14 @@ function renduPageEmargement(doc: typeof PDFDocument, noms: [string, string][], 
     renduEnteteEmargement(doc, epr, noms, 'TD.36.106', { gauche: margesGauche, droite: margesDroite }, `p. ${numPage}/${pagesTotal}`);
 
     // Numéro de page (centré bas)
-    doc.fontSize(10);
+    /*doc.fontSize(10);
     doc.font('Helvetica');
     const pageTexte = `Page ${numPage}`;
     const pageLargeur = doc.widthOfString(pageTexte, { lineBreak: false });
-    doc.text(pageTexte, (doc.page.width - pageLargeur) / 2, doc.page.height - 28, { baseline: 'middle', lineBreak: false });
+    doc.text(pageTexte, (doc.page.width - pageLargeur) / 2, doc.page.height - 28, { baseline: 'middle', lineBreak: false });*/
 
     // Entête du tableau
-    renduEnteteTableauEmargement(doc, margesGauche, mmToPoints(positionYDepartMm - hauteurLigneMm), doc.page.width - margesGauche - margesDroite, mmToPoints(hauteurLigneMm));
+    renduEnteteTableauEmargement(doc, margesGauche, mmToPoints(positionYDepartMm - hauteurLigneMm), largeurContenu, mmToPoints(hauteurLigneMm));
 
     // Lignes horizontales et noms
     doc.fontSize(12);
@@ -98,7 +100,7 @@ function renduPageEmargement(doc: typeof PDFDocument, noms: [string, string][], 
         // Rendu de chaque ligne
         const yDebut = mmToPoints(positionYDepartMm + i * hauteurLigneMm);
         const numeroEtu = '22300' + Math.round((Math.random() * 999)).toString().padStart(3, '0');
-        renduLigneEmargement(doc, i, margesGauche, yDebut, doc.page.width - margesGauche - margesDroite, mmToPoints(hauteurLigneMm), noms[i]![1], noms[i]![0], numeroEtu);
+        renduLigneEmargement(doc, i, margesGauche, yDebut, largeurContenu, mmToPoints(hauteurLigneMm), noms[i]![1], noms[i]![0], numeroEtu);
 
     }
 
@@ -112,7 +114,10 @@ function renduPageEmargement(doc: typeof PDFDocument, noms: [string, string][], 
 
     // Contours du tableau,
     // on ajoute 1 ligne pour l'entête
-    renduTableauEmargement(doc, margesGauche, mmToPoints(positionYDepartMm - hauteurLigneMm), mmToPoints(hauteurLigneMm), noms.length + 1, doc.page.width - margesGauche - margesDroite);
+    renduTableauEmargement(doc, margesGauche, mmToPoints(positionYDepartMm - hauteurLigneMm), mmToPoints(hauteurLigneMm), noms.length + 1, largeurContenu);
+
+    // Pied de page
+    renduPiedPageEmargement(doc, margesGauche, finTableauY, largeurContenu);
 
     return doc;
 }

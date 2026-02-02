@@ -1,6 +1,6 @@
 import PDFDocument from 'pdfkit';
 import { Etudiant } from '../../../cache/etudiants/Etudiant';
-import { mmToPoints } from '../../../utils/pdfUtils';
+import { mmToPoints, tronquerTexte } from '../../../utils/pdfUtils';
 
 type ColonneTableau = { titre: string, largeurPourcent: number };
 
@@ -68,30 +68,27 @@ export function renduLigneEmargement(doc: typeof PDFDocument, i: number, x: numb
     doc.font('Helvetica-Bold').fontSize(hauteur * 0.5);
     const tailleColonneNom = (COLONNES_TABLEAU[1].largeurPourcent / 100) * largeur;
     const yTexte = y + (hauteur - doc.currentLineHeight()) / 2 + 1.3;
-    doc.text(nom.toUpperCase(), xCourant + MARGE_INTERNE_CELLULES_PT, yTexte, {
-        width: tailleColonneNom - 2 * MARGE_INTERNE_CELLULES_PT,
-        lineBreak: false,
-        ellipsis: true
+    const largeurNom = tailleColonneNom - MARGE_INTERNE_CELLULES_PT;
+    doc.text(tronquerTexte(doc, nom.toUpperCase(), largeurNom), xCourant + MARGE_INTERNE_CELLULES_PT, yTexte, {
+        lineBreak: false
     });
     xCourant += tailleColonneNom;
 
     // Rendu PRÉNOM
     doc.font('Helvetica').fontSize(hauteur * 0.5);
     const tailleColonnePrenom = (COLONNES_TABLEAU[2].largeurPourcent / 100) * largeur;
-    doc.text(prenom, xCourant + MARGE_INTERNE_CELLULES_PT, yTexte, {
-        width: tailleColonnePrenom - 2 * MARGE_INTERNE_CELLULES_PT,
-        lineBreak: false,
-        ellipsis: true
+    const largeurPrenom = tailleColonnePrenom - MARGE_INTERNE_CELLULES_PT;
+    doc.text(tronquerTexte(doc, prenom, largeurPrenom), xCourant + MARGE_INTERNE_CELLULES_PT, yTexte, {
+        lineBreak: false
     });
     xCourant += tailleColonnePrenom;
 
     // Rendu N° ÉTUDIANT
     const tailleColonneNumEtu = (COLONNES_TABLEAU[3].largeurPourcent / 100) * largeur;
-    doc.text(numEtudiant, xCourant + MARGE_INTERNE_CELLULES_PT, yTexte, {
-        width: tailleColonneNumEtu - 2 * MARGE_INTERNE_CELLULES_PT,
+    doc.text(tronquerTexte(doc, numEtudiant, tailleColonneNumEtu), xCourant, yTexte, {
+        width: tailleColonneNumEtu,
         align: 'center',
         lineBreak: false,
-        ellipsis: true
     });
 
 }

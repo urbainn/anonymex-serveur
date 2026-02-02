@@ -4,9 +4,15 @@ import { createWriteStream } from 'fs';
 import { genererCiblesConcentriques } from "../common/genererCiblesConcentriques";
 import { ErreurAprilTag } from "../generationErreurs";
 import { mmToPoints } from "../../../utils/pdfUtils";
+import { renduEnteteEmargement } from "./renduEnteteEmargement";
+import { sessionCache } from "../../../cache/sessions/SessionCache";
+import { Session } from "../../../cache/sessions/Session";
+import { Epreuve } from "../../../cache/epreuves/Epreuve";
+import { renduEnteteTableauEmargement, renduLigneEmargement, renduTableauEmargement } from "./renduTableauEmargement";
+import { Etudiant } from "../../../cache/etudiants/Etudiant";
 
-const LIGNES_PAR_PAGE = 35;
-const MARGE_HORIZONTALE = mmToPoints(12 /* mm */);
+const LIGNES_PAR_PAGE = 28;
+const MARGE_HORIZONTALE = mmToPoints(10 /* mm */);
 
 export interface FeuilleEmargementProprietes {
     noms: [string, string][];
@@ -14,13 +20,13 @@ export interface FeuilleEmargementProprietes {
 }
 
 export function genererFeuilleEmargement(proprietes: FeuilleEmargementProprietes): boolean {
-    logInfo('genererFeuilleEmargement', 'Génération d\'une feuille d\'émargement..');
+    logInfo('genererEmargement', 'Génération d\'une feuille d\'émargement..');
     const debutMs = Date.now();
 
     // Calculer la taille de chaque ligne de la feuille d'émargement
 
     // Initialiser le PDF
-    const doc = new PDFDocument({ size: 'A4' });
+    const doc = new PDFDocument({ size: 'A4', autoFirstPage: false });
     doc.pipe(createWriteStream('emargement_test.pdf'));
 
     // Rendu des pages
@@ -29,17 +35,17 @@ export function genererFeuilleEmargement(proprietes: FeuilleEmargementProprietes
     while (pageIndex < nbPages) {
 
         // Nouvelle page sauf pour la première (crée automatiquement)
-        if (pageIndex > 0) doc.addPage();
+        doc.addPage();
 
         // Couper les n premiers noms pour cette page
         const nomsPage = proprietes.noms.slice(pageIndex * LIGNES_PAR_PAGE, (pageIndex + 1) * LIGNES_PAR_PAGE);
-        renduPageEmargement(doc, nomsPage, pageIndex + 1);
+        renduPageEmargement(doc, nomsPage, pageIndex + 1, nbPages);
         pageIndex++;
     }
 
 
     doc.end();
-    logInfo('genererFeuilleEmargement', 'Feuille d\'émargement générée avec succès. ' + styles.dim + `(en ${Date.now() - debutMs} ms)`);
+    logInfo('genererEmargement', 'Feuille d\'émargement générée avec succès. ' + styles.dim + `(en ${Date.now() - debutMs} ms)`);
 
     // note, l'objectif sera de renvoyer un stream via http (pipé dans la response) contenant le pdf généré, sans stockage local
     // pour l'instant on utilise le stockage local pour le développement
@@ -47,36 +53,33 @@ export function genererFeuilleEmargement(proprietes: FeuilleEmargementProprietes
 
 }
 
-function renduPageEmargement(doc: typeof PDFDocument, noms: [string, string][], numPage: number) {
-    const ciblesMargeMm = 7;
+function renduPageEmargement(doc: typeof PDFDocument, noms: [string, string][], numPage: number, pagesTotal: number): typeof PDFDocument {
+    const ciblesMargeMm = 5;
     const ciblesTailleMm = 7;
 
-    const hauteurZoneCiblesMm = ciblesMargeMm + ciblesTailleMm + 3 /* marge */;
-    const hauteurLigneMm = (297 - 2 * hauteurZoneCiblesMm) / LIGNES_PAR_PAGE;
-    const positionYDepartMm = hauteurZoneCiblesMm;
+    // Limites de la zone de lecture
+    const hauteurZoneCiblesMm = ciblesMargeMm + ciblesTailleMm + 15;
+    const hauteurLigneMm = (297 - 2 * hauteurZoneCiblesMm) / (LIGNES_PAR_PAGE + 1);
+    const positionYDepartMm = hauteurZoneCiblesMm + hauteurLigneMm;
+
+    // Marges
+    const margesGauche = MARGE_HORIZONTALE;
+    const margesDroite = MARGE_HORIZONTALE;
 
     // Generer les cibles concentriques aux 4 coins
     try {
-        genererCiblesConcentriques(doc, 7, 7);
+        genererCiblesConcentriques(doc, 7, 5);
     } catch (error) {
         throw ErreurAprilTag.assigner(error);
     }
 
-    // En-tête : A-Z | Infos Epreuve 
-    doc.fontSize(14).fillColor('#000000');
-    const titresY = mmToPoints(ciblesMargeMm + (ciblesTailleMm / 2) + 0.5);
+    const sess = new Session({ 'annee': 2024, 'id_session': 1, 'nom': 'Session Test', 'statut': 1 });
+    sessionCache.set(1234, sess);
+    const epr = new Epreuve({ id_session: 1234, code_epreuve: 'HAI123X', nom: 'Sciences de l\'émargement', date_epreuve: new Date('2024-06-15T09:00:00').getTime() / 60000, duree: 120, nb_presents: 30, statut: 1 });
+    sess.epreuves.set(epr.codeEpreuve, epr);
 
-    // Première/dernière lettres
-    doc.font('Helvetica');
-    const xDebutLettres = MARGE_HORIZONTALE;
-    const lettresAfficher = noms.length > 0 ? `${noms[0]![1].charAt(0).toUpperCase()}-${noms[noms.length - 1]![1].charAt(0).toUpperCase()}` : '';
-    doc.text(lettresAfficher, mmToPoints(ciblesMargeMm + ciblesTailleMm + 2), titresY, { align: 'left', baseline: 'middle' });
-
-    // Infos épreuve (centré)
-    doc.font('Helvetica-Bold');
-    const titreTexte = "HAI601 - 20/05/2026 - Amphi 5.01";
-    const titreLargeur = doc.widthOfString(titreTexte, { lineBreak: false });
-    doc.text(titreTexte, (doc.page.width - titreLargeur) / 2, titresY, { baseline: 'middle' });
+    // Dessiner l'en-tête (titres, infos épreuve, lettres A-Z)
+    renduEnteteEmargement(doc, epr, noms, 'TD.36.106', { gauche: margesGauche, droite: margesDroite }, `p. ${numPage}/${pagesTotal}`);
 
     // Numéro de page (centré bas)
     doc.fontSize(10);
@@ -85,91 +88,31 @@ function renduPageEmargement(doc: typeof PDFDocument, noms: [string, string][], 
     const pageLargeur = doc.widthOfString(pageTexte, { lineBreak: false });
     doc.text(pageTexte, (doc.page.width - pageLargeur) / 2, doc.page.height - 28, { baseline: 'middle', lineBreak: false });
 
+    // Entête du tableau
+    renduEnteteTableauEmargement(doc, margesGauche, mmToPoints(positionYDepartMm - hauteurLigneMm), doc.page.width - margesGauche - margesDroite, mmToPoints(hauteurLigneMm));
+
     // Lignes horizontales et noms
     doc.fontSize(12);
-    let derniereLettreDebut = '';
     for (let i = 0; i < noms.length; i++) {
+
+        // Rendu de chaque ligne
         const yDebut = mmToPoints(positionYDepartMm + i * hauteurLigneMm);
-        const yFin = mmToPoints(positionYDepartMm + (i + 1) * hauteurLigneMm);
-        const yMillieu = (yDebut + yFin) / 2;
-
-        // Fill une ligne sur deux
-        if (i % 2 === 1) {
-            doc.rect(
-                xDebutLettres, yDebut,
-                doc.page.width - MARGE_HORIZONTALE - xDebutLettres,
-                mmToPoints(hauteurLigneMm)
-            ).fill('#F0F0F0').fillColor('#000000');
-        }
-
-        // Rendu LIGNE horizontale
-        doc.moveTo(xDebutLettres, yDebut)
-            .lineTo(doc.page.width - MARGE_HORIZONTALE, yDebut)
-            .strokeColor('#000000').lineWidth(0.5).stroke();
-
-        // Préparer nom et prénom
-        const nom = noms[i]![1].toUpperCase();
-        const prenom = noms[i]![0];
-
-        // Rendu NOM Prénom
-        const hauteurNomComplet = doc.heightOfString(nom + ' ' + prenom, { lineBreak: false });
-        const largeurNom = doc.widthOfString(nom, { lineBreak: false });
-        const hauteurLigne = yFin - yDebut;
-        const yTexte = yMillieu - (hauteurLigne - hauteurNomComplet) / 2;
-
-        // Rendu NOM
-        doc.font('Helvetica-Bold').fillColor('#000000');
-        doc.text(nom, xDebutLettres + mmToPoints(2), yTexte, {
-            align: 'left',
-            lineBreak: false
-        })
-
-        // Rendu Prénom
-        doc.font('Helvetica');
-        doc.text(' ' + prenom, xDebutLettres + mmToPoints(2) + largeurNom + 2, yTexte, {
-            align: 'left',
-            lineBreak: false
-        });
-
-        // Indicateur de lettre initiale (si changement de lettre)
-        /* const lettreInitiale = nom.charAt(0).toUpperCase();
-        if (lettreInitiale !== derniereLettreDebut) {
-            const largeurLettre = doc.widthOfString(lettreInitiale, { lineBreak: false });
-            doc.font('Helvetica-Bold');
-            doc.text(lettreInitiale, xDebutLettres - largeurLettre - 5, yTexte, {
-                align: 'right',
-                lineBreak: false
-            });
-            derniereLettreDebut = lettreInitiale;
-        } */
+        const numeroEtu = '22300' + Math.round((Math.random() * 999)).toString().padStart(3, '0');
+        renduLigneEmargement(doc, i, margesGauche, yDebut, doc.page.width - margesGauche - margesDroite, mmToPoints(hauteurLigneMm), noms[i]![1], noms[i]![0], numeroEtu);
 
     }
 
     // Ligne finale (fermeture tableau)
-    const yFinPage = mmToPoints(positionYDepartMm + noms.length * hauteurLigneMm);
-    doc.moveTo(MARGE_HORIZONTALE, yFinPage)
-        .lineTo(doc.page.width - MARGE_HORIZONTALE, yFinPage)
-        .strokeColor('#000000').lineWidth(0.5).stroke();
+    const finTableauY = mmToPoints(positionYDepartMm + noms.length * hauteurLigneMm);
+    doc.moveTo(margesGauche, finTableauY)
+        .lineTo(doc.page.width - margesDroite, finTableauY)
+        .strokeColor('#000000')
+        .lineWidth(0.5)
+        .stroke();
 
-    // Colonnes verticales
-    const xPositionColonnes = [
-        xDebutLettres, // délimitation gauche
-        //MARGE_HORIZONTALE + 100, // début nom
-        doc.page.width - MARGE_HORIZONTALE - 100, // début signature
-        doc.page.width - MARGE_HORIZONTALE // délimitation droite
-    ];
-
-    for (let i = 0; i < xPositionColonnes.length; i++) {
-        const xPos = xPositionColonnes[i]!;
-        const yDebut = mmToPoints(positionYDepartMm);
-        const yFin = mmToPoints(positionYDepartMm + noms.length * hauteurLigneMm);
-
-        doc.moveTo(xPos, yDebut)
-            .lineTo(xPos, yFin)
-            .strokeColor('#000000')
-            .lineWidth(0.5)
-            .stroke();
-    }
+    // Contours du tableau,
+    // on ajoute 1 ligne pour l'entête
+    renduTableauEmargement(doc, margesGauche, mmToPoints(positionYDepartMm - hauteurLigneMm), mmToPoints(hauteurLigneMm), noms.length + 1, doc.page.width - margesGauche - margesDroite);
 
     return doc;
 }

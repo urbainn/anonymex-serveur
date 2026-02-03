@@ -1,9 +1,10 @@
 import { existsSync, readFileSync } from "fs";
 import { ConnectionOptions, createPool, Pool, ResultSetHeader, type RowDataPacket } from "mysql2";
 import { join } from "path";
-import { logInfo } from "../../utils/logger";
-import { ConfigManager } from "./ConfigManager";
-import config from "../../../config/config.json";
+import { logInfo } from "../../../utils/logger";
+import { ConfigManager } from "../ConfigManager";
+import config from "../../../../config/config.json";
+import { Transaction } from "./Transaction";
 
 export interface RowData {
     [column: string]: any;
@@ -94,7 +95,7 @@ export class Database {
         if (results.length > 0 && results[0]!.nbTables === 0) {
 
             // Fichier sql contenant le schéma de la BDD
-            const sqlFilePath = join(__dirname, "..", "..", "..", "config", "schemas", "initial.sql");
+            const sqlFilePath = join(__dirname, "..", "..", "..", "..", "config", "schemas", "initial.sql");
             const sqlFile = readFileSync(sqlFilePath, "utf-8");
 
             await this.executerSQL(sqlFile);
@@ -175,5 +176,22 @@ export class Database {
         for (const statement of statements) {
             await this.execute(statement);
         }
+    }
+
+    /**
+     * Créer une transaction.
+     * @return instance de Transaction
+     */
+    public static async creerTransaction(): Promise<Transaction> {
+        const pool = await this.connexion();
+        return new Promise<Transaction>((resolve, reject) => {
+            pool.getConnection((err, connection) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(new Transaction(connection));
+                }
+            });
+        });
     }
 }

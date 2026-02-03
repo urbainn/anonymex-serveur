@@ -1,18 +1,21 @@
 import PDFDocument from 'pdfkit';
 import { Etudiant } from '../../../cache/etudiants/Etudiant';
 import { mmToPoints, tronquerTexte } from '../../../utils/pdfUtils';
+import { genererAprilTag } from '../common/genererAprilTags';
 
 type ColonneTableau = { titre: string, largeurPourcent: number };
 
 const COLONNES_TABLEAU = [
     { titre: '', largeurPourcent: 4 },
+    { titre: '', largeurPourcent: 4 },
     { titre: 'Nom', largeurPourcent: 32 },
-    { titre: 'Prénom', largeurPourcent: 25 },
-    { titre: 'N° Étudiant', largeurPourcent: 15 },
-    { titre: 'Émargement', largeurPourcent: 24 }
-] as [ColonneTableau, ColonneTableau, ColonneTableau, ColonneTableau, ColonneTableau];
+    { titre: 'Prénom', largeurPourcent: 23 },
+    { titre: 'N° Étudiant', largeurPourcent: 14 },
+    { titre: 'Signature', largeurPourcent: 23 }
+] as [ColonneTableau, ColonneTableau, ColonneTableau, ColonneTableau, ColonneTableau, ColonneTableau];
 
 const MARGE_INTERNE_CELLULES_PT = mmToPoints(2); // marge interne des cellules du tableau, en points
+const TAILLE_TAG_MM = 4.5;
 
 /** Rendu des contours du tableau d'émargement (colonnes uniquement) */
 export function renduTableauEmargement(doc: typeof PDFDocument, x: number, y: number, tailleLigne: number, nbLignes: number, largeur: number) {
@@ -51,22 +54,31 @@ export function renduLigneEmargement(doc: typeof PDFDocument, i: number, x: numb
 
     let xCourant = x;
 
+    // Dessiner la colonne de TAG
+    {
+        const tailleTagPt = mmToPoints(TAILLE_TAG_MM);
+        const tailleColonneTag = (COLONNES_TABLEAU[0].largeurPourcent / 100) * largeur;
+        genererAprilTag(doc, Math.round(Math.random() * 2000), TAILLE_TAG_MM, xCourant + (tailleColonneTag - tailleTagPt) / 2, y + (hauteur - tailleTagPt) / 2, 1);
+        xCourant += (COLONNES_TABLEAU[0].largeurPourcent / 100) * largeur;
+    }
+
     // Dessiner la colonne de pointage (carré de 3mm x 3mm centré)
     {
         const tailleCarrePt = mmToPoints(3);
-        const xCentreColonne = xCourant + (COLONNES_TABLEAU[0].largeurPourcent / 100) * largeur / 2;
+        const xCentreColonne = xCourant + (COLONNES_TABLEAU[1].largeurPourcent / 100) * largeur / 2;
         const yCentreLigne = y + hauteur / 2;
         const xCarre = xCentreColonne - tailleCarrePt / 2;
         const yCarre = yCentreLigne - tailleCarrePt / 2;
 
+        doc.rect(xCarre, yCarre, tailleCarrePt, tailleCarrePt).fill('#FFFFFF').fillColor('#000000');
         doc.rect(xCarre, yCarre, tailleCarrePt, tailleCarrePt).strokeColor('#000000').lineWidth(0.5).stroke();
     }
 
-    xCourant += (COLONNES_TABLEAU[0].largeurPourcent / 100) * largeur;
+    xCourant += (COLONNES_TABLEAU[1].largeurPourcent / 100) * largeur;
 
     // Rendu NOM
     doc.font('Helvetica-Bold').fontSize(hauteur * 0.5);
-    const tailleColonneNom = (COLONNES_TABLEAU[1].largeurPourcent / 100) * largeur;
+    const tailleColonneNom = (COLONNES_TABLEAU[2].largeurPourcent / 100) * largeur;
     const yTexte = y + (hauteur - doc.currentLineHeight()) / 2 + 1.3;
     const largeurNom = tailleColonneNom - MARGE_INTERNE_CELLULES_PT;
     doc.text(tronquerTexte(doc, nom.toUpperCase(), largeurNom), xCourant + MARGE_INTERNE_CELLULES_PT, yTexte, {
@@ -76,7 +88,7 @@ export function renduLigneEmargement(doc: typeof PDFDocument, i: number, x: numb
 
     // Rendu PRÉNOM
     doc.font('Helvetica').fontSize(hauteur * 0.5);
-    const tailleColonnePrenom = (COLONNES_TABLEAU[2].largeurPourcent / 100) * largeur;
+    const tailleColonnePrenom = (COLONNES_TABLEAU[3].largeurPourcent / 100) * largeur;
     const largeurPrenom = tailleColonnePrenom - MARGE_INTERNE_CELLULES_PT;
     doc.text(tronquerTexte(doc, prenom, largeurPrenom), xCourant + MARGE_INTERNE_CELLULES_PT, yTexte, {
         lineBreak: false
@@ -84,7 +96,7 @@ export function renduLigneEmargement(doc: typeof PDFDocument, i: number, x: numb
     xCourant += tailleColonnePrenom;
 
     // Rendu N° ÉTUDIANT
-    const tailleColonneNumEtu = (COLONNES_TABLEAU[3].largeurPourcent / 100) * largeur;
+    const tailleColonneNumEtu = (COLONNES_TABLEAU[4].largeurPourcent / 100) * largeur;
     doc.text(tronquerTexte(doc, numEtudiant, tailleColonneNumEtu), xCourant, yTexte, {
         width: tailleColonneNumEtu,
         align: 'center',
@@ -112,7 +124,7 @@ export function renduEnteteTableauEmargement(doc: typeof PDFDocument, x: number,
         const tailleColonne = (col.largeurPourcent / 100) * largeur;
         doc.text(col.titre, xCourant + MARGE_INTERNE_CELLULES_PT, yTexte, {
             width: tailleColonne - 2 * MARGE_INTERNE_CELLULES_PT,
-            align: i >= 3 ? 'center' : 'left',
+            align: i >= 4 ? 'center' : 'left',
             lineBreak: false,
             ellipsis: true
         });

@@ -12,8 +12,8 @@ import { renduEnteteTableauEmargement, renduLigneEmargement, renduTableauEmargem
 import { Etudiant } from "../../../cache/etudiants/Etudiant";
 import { renduPiedPageEmargement } from "./renduPiedPageEmargement";
 
-const LIGNES_PAR_PAGE = 28;
-const MARGE_HORIZONTALE = mmToPoints(10 /* mm */);
+const LIGNES_PAR_PAGE = 29;
+const MARGE_HORIZONTALE = mmToPoints(7 /* mm */);
 
 export interface FeuilleEmargementProprietes {
     noms: [string, string][];
@@ -23,8 +23,6 @@ export interface FeuilleEmargementProprietes {
 export function genererFeuilleEmargement(proprietes: FeuilleEmargementProprietes): boolean {
     logInfo('genererEmargement', 'Génération d\'une feuille d\'émargement..');
     const debutMs = Date.now();
-
-    // Calculer la taille de chaque ligne de la feuille d'émargement
 
     // Initialiser le PDF
     const doc = new PDFDocument({ size: 'A4', autoFirstPage: false, margins: { top: 0, bottom: 0, left: 0, right: 0 } });
@@ -59,9 +57,9 @@ function renduPageEmargement(doc: typeof PDFDocument, noms: [string, string][], 
     const ciblesTailleMm = 7;
 
     // Limites de la zone de lecture
-    const hauteurZoneCiblesMm = ciblesMargeMm + ciblesTailleMm + 15;
+    const hauteurZoneCiblesMm = ciblesMargeMm + ciblesTailleMm + 11;
     const hauteurLigneMm = (297 - 2 * hauteurZoneCiblesMm) / (LIGNES_PAR_PAGE + 1);
-    const positionYDepartMm = hauteurZoneCiblesMm + hauteurLigneMm;
+    const positionYDepartMm = hauteurZoneCiblesMm + hauteurLigneMm + 3;
 
     // Marges et zone de contenu
     const margesGauche = MARGE_HORIZONTALE;
@@ -81,7 +79,7 @@ function renduPageEmargement(doc: typeof PDFDocument, noms: [string, string][], 
     sess.epreuves.set(epr.codeEpreuve, epr);
 
     // Dessiner l'en-tête (titres, infos épreuve, lettres A-Z)
-    renduEnteteEmargement(doc, epr, noms, 'TD.36.106', { gauche: margesGauche, droite: margesDroite }, `p. ${numPage}/${pagesTotal}`);
+    renduEnteteEmargement(doc, epr, noms, 'TD.36.106', { gauche: margesGauche + 8, droite: margesDroite + 8 }, `p. ${numPage}/${pagesTotal}`);
 
     // Numéro de page (centré bas)
     /*doc.fontSize(10);

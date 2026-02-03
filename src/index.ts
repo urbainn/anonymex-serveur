@@ -1,5 +1,5 @@
 import { utilisateurCache } from "./cache/utilisateurs/UtilisateurCache";
-import { Database } from "./core/services/Database";
+import { Database } from "./core/services/database/Database";
 import { indexRouter } from "./routes";
 import { logInfo } from "./utils/logger";
 import cors from "cors";
@@ -12,7 +12,7 @@ import { lectureXLSX } from "./core/xlsx/lectureXLSX";
 import { interpretationXLSX } from "./core/xlsx/interpretationXLSX";
 import { Session } from "./cache/sessions/Session";
 
-//interpretationXLSX(lectureXLSX('Init_ExamsVraiSessionMai25_ano.xlsx'), new Session({ "annee": 2026, "id_session": 1, "nom": "Session 1 mai 2026", "statut": 1 }))
+interpretationXLSX(lectureXLSX('Init_ExamsVraiSessionMai25_ano.xlsx'), new Session({ "annee": 2026, "id_session": 1, "nom": "Session 1 mai 2026", "statut": 1 }))
 /* genererBordereau({
     'format': 'A4',
     'longueurCodeAnonymat': 8,
@@ -20,7 +20,7 @@ import { Session } from "./cache/sessions/Session";
     'version': 1,
 }); */
 
-genererFeuilleEmargement({
+/*genererFeuilleEmargement({
     noms: [
         ['Roberto Marquis Di Gorgonzola', 'Rastapopoulos Gorgonzola'],
         ["Alice", "Dupont"],
@@ -77,7 +77,7 @@ genererFeuilleEmargement({
         ["Zoé", "Dupont"]
     ].sort((a, b) => a[1]!.localeCompare(b[1]!)) as [string, string][],
     version: 1,
-});
+});*/
 
 //lireBordereau('debug/pdf/test.pdf')
 

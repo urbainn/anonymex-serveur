@@ -1,13 +1,15 @@
 import dayjs from "dayjs";
-import { Epreuve } from "../../cache/epreuves/Epreuve";
-import { Etudiant } from "../../cache/etudiants/Etudiant";
+import { Epreuve, EpreuveData } from "../../cache/epreuves/Epreuve";
+import { Etudiant, EtudiantData } from "../../cache/etudiants/Etudiant";
 import { etudiantCache } from "../../cache/etudiants/EtudiantCache";
 import { Session } from "../../cache/sessions/Session";
 import { sessionCache } from "../../cache/sessions/SessionCache";
 import { EpreuveStatut } from "../../contracts/epreuves";
-import { ErreurInterpretationXLSX, ErreurLigneInvalide } from "./ErreursXLSX";
+import { ErreurInterpretationXLSX, ErreurLigneInvalide, ErreurXLSX } from "./ErreursXLSX";
 import { SheetData } from "./lectureXLSX";
 import { logInfo } from "../../utils/logger";
+import { Database } from "../services/database/Database";
+import { Transaction } from "../services/database/Transaction";
 
 const CHAMPS_INTERPRETATION = {
     // nom du champ interprété => nom de la colonne dans le XLSX
@@ -58,75 +60,131 @@ export async function interpretationXLSX(data: Array<Record<string, unknown>>, s
     await session.epreuves.getAll();
     await etudiantCache.getAll(); // devrait sûrement être partitionné par session.....
 
-    for (const [indice, row] of data.entries()) {
+    // Démarrer une transaction
+    const transaction = await Database.creerTransaction();
 
-        const dateEpreuve = (row[CHAMPS_INTERPRETATION.date] as string).replaceAll(' ', '');
-        const horaire = (row[CHAMPS_INTERPRETATION.heure] as string).replaceAll(' ', '');
-        const salle = row[CHAMPS_INTERPRETATION.salle] as string;
-        const codeEpreuve = row[CHAMPS_INTERPRETATION.codeEpreuve] as string;
-        const nomEpreuve = row[CHAMPS_INTERPRETATION.nomEpreuve] as string;
-        const prenomEtudiant = row[CHAMPS_INTERPRETATION.prenomEtudiant] as string;
-        const nomEtudiant = row[CHAMPS_INTERPRETATION.nomEtudiant] as string;
-        const codeEtudiant = parseInt(row[CHAMPS_INTERPRETATION.codeEtudiant] as string);
+    // En cas d'erreur, rollback la transaction
+    try {
 
-        // Vérifications basiques
-        if (!dateEpreuve || !horaire || !salle || !codeEpreuve || !nomEpreuve || !prenomEtudiant || !nomEtudiant || !codeEtudiant) {
-            throw new ErreurLigneInvalide(indice + 1, 'champ obligatoire manquant')
+        // Liste des nouveaux étudiants et épreuves à insérer
+        // Est inséré en batch (optimisation) et dans le cache une fois l'interprétation terminée (évite les résidus en cas d'erreur)
+        const newEtudiants: EtudiantData[] = [];
+        const newEpreuves: EpreuveData[] = [];
+
+        for (const [indice, row] of data.entries()) {
+
+            const dateEpreuve = (row[CHAMPS_INTERPRETATION.date] as string).replaceAll(' ', '');
+            const horaire = (row[CHAMPS_INTERPRETATION.heure] as string).replaceAll(' ', '');
+            const salle = row[CHAMPS_INTERPRETATION.salle] as string;
+            const codeEpreuve = row[CHAMPS_INTERPRETATION.codeEpreuve] as string;
+            const nomEpreuve = row[CHAMPS_INTERPRETATION.nomEpreuve] as string;
+            const prenomEtudiant = row[CHAMPS_INTERPRETATION.prenomEtudiant] as string;
+            const nomEtudiant = row[CHAMPS_INTERPRETATION.nomEtudiant] as string;
+            const codeEtudiant = parseInt(row[CHAMPS_INTERPRETATION.codeEtudiant] as string);
+
+            // Vérifications basiques
+            if (!dateEpreuve || !horaire || !salle || !codeEpreuve || !nomEpreuve || !prenomEtudiant || !nomEtudiant || !codeEtudiant) {
+                throw new ErreurLigneInvalide(indice + 1, 'champ obligatoire manquant')
+            }
+
+            if (isNaN(codeEtudiant)) {
+                throw new ErreurLigneInvalide(indice + 1, `code étudiant non reconnu ('${row[CHAMPS_INTERPRETATION.codeEtudiant]}')`);
+            }
+
+            if (typeof dateEpreuve !== 'string' || typeof horaire !== 'string' || typeof salle !== 'string' || typeof codeEpreuve !== 'string' ||
+                typeof nomEpreuve !== 'string' || typeof prenomEtudiant !== 'string' || typeof nomEtudiant !== 'string') {
+                throw new ErreurLigneInvalide(indice + 1, 'un champ obligatoire est du mauvais type (texte attendu)')
+            }
+
+            const dateEnMinutes = Math.round(dayjs(`${dateEpreuve} ${horaire}`, 'YYYY-MM-DD HH:mm').valueOf() / 60000); // convertir en minutes
+            if (isNaN(dateEnMinutes)) {
+                throw new ErreurLigneInvalide(indice + 1, `date ou horaire invalide ('${dateEpreuve} ${horaire}')`);
+            }
+
+            // Appliquer les filtres
+            if (filtres) {
+                if (filtres.codeEpreuves && !filtres.codeEpreuves.includes(codeEpreuve)) continue;
+                if (filtres.salles && !filtres.salles.includes(salle)) continue;
+                if (filtres.dateEpreuve && filtres.dateEpreuve !== dateEpreuve) continue;
+            }
+
+            // Get ou créer l'étudiant
+            let etudiant = etudiantCache.get(codeEtudiant);
+            if (!etudiant) {
+                newEtudiants.push({
+                    numero_etudiant: codeEtudiant,
+                    nom: nomEtudiant,
+                    prenom: prenomEtudiant
+                });
+            }
+
+            // Get ou créer l'épreuve
+            let epreuve = session.epreuves.get(codeEpreuve);
+            if (!epreuve) {
+                newEpreuves.push({
+                    id_session: session.id,
+                    code_epreuve: codeEpreuve,
+                    nom: nomEpreuve,
+                    statut: EpreuveStatut.MATERIEL_NON_IMPRIME,
+                    date_epreuve: dateEnMinutes,
+                    duree: 0, // inconnu
+                    nb_presents: null,
+                });
+            }
+
         }
 
-        if (isNaN(codeEtudiant)) {
-            throw new ErreurLigneInvalide(indice + 1, `code étudiant non reconnu ('${row[CHAMPS_INTERPRETATION.codeEtudiant]}')`);
-        }
+        await batchInsertion<EtudiantData>(transaction, 'etudiant', newEtudiants);
+        await batchInsertion<EpreuveData>(transaction, 'epreuve', newEpreuves);
 
-        if (typeof dateEpreuve !== 'string' || typeof horaire !== 'string' || typeof salle !== 'string' || typeof codeEpreuve !== 'string' ||
-            typeof nomEpreuve !== 'string' || typeof prenomEtudiant !== 'string' || typeof nomEtudiant !== 'string') {
-            throw new ErreurLigneInvalide(indice + 1, 'un champ obligatoire est du mauvais type (texte attendu)')
-        }
+        // Commit la transaction
+        await transaction.commit();
 
-        const dateEnMinutes = Math.round(dayjs(`${dateEpreuve} ${horaire}`, 'YYYY-MM-DD HH:mm').valueOf() / 60000); // convertir en minutes
-        if (isNaN(dateEnMinutes)) {
-            throw new ErreurLigneInvalide(indice + 1, `date ou horaire invalide ('${dateEpreuve} ${horaire}')`);
-        }
+        logInfo("XLSX", `Interprétation XLSX de la session ${session.id} terminée en ${Date.now() - debut} ms.`);
 
-        // Appliquer les filtres
-        if (filtres) {
-            if (filtres.codeEpreuves && !filtres.codeEpreuves.includes(codeEpreuve)) continue;
-            if (filtres.salles && !filtres.salles.includes(salle)) continue;
-            if (filtres.dateEpreuve && filtres.dateEpreuve !== dateEpreuve) continue;
-        }
+        return true;
 
-        // Get ou créer l'étudiant
-        let etudiant = etudiantCache.get(codeEtudiant);
-        if (!etudiant) {
-            const etudiantData = {
-                numero_etudiant: codeEtudiant,
-                nom: nomEtudiant,
-                prenom: prenomEtudiant
-            };
+    } catch (error) {
+        // Rollback la transaction en cas d'erreur
+        await transaction.rollback();
 
-            etudiant = new Etudiant(etudiantData);
-            await etudiantCache.insert(etudiantData, etudiant);
-        }
+        // faire remonter l'erreur réassignée
+        throw ErreurXLSX.assigner(error);
+    }
+}
 
-        // Get ou créer l'épreuve
-        let epreuve = session.epreuves.get(codeEpreuve);
-        if (!epreuve) {
-            const epreuveData = {
-                id_session: session.id,
-                code_epreuve: codeEpreuve,
-                nom: nomEpreuve,
-                statut: EpreuveStatut.MATERIEL_NON_IMPRIME,
-                date_epreuve: dateEnMinutes,
-                duree: 0, // inconnu
-                nb_presents: null,
-            };
-            epreuve = new Epreuve(epreuveData);
-            await session.epreuves.insert(epreuveData, epreuve);
-        }
+/**
+ * Insert, via transaction, les éléments par batch de 100 dans la table donnée.
+ * @param transaction 
+ * @param nomTable nom de la table SQL
+ * @param elements liste des éléments (sous forme brute, DATA) à insérer
+ */
+async function batchInsertion<D>(transaction: Transaction, nomTable: string, elements: D[]): Promise<void> {
+    const BATCH_SIZE = 100;
+    const nbBatches = Math.ceil(elements.length / BATCH_SIZE);
 
+    if (elements.length === 0) {
+        return;
     }
 
-    logInfo("XLSX", `Interprétation XLSX de la session ${session.id} terminée en ${Date.now() - debut} ms.`);
+    for (let batchIndex = 0; batchIndex < nbBatches; batchIndex++) {
 
-    return true;
+        // découper les [n*BATCH_SIZE .. (n+1)*BATCH_SIZE] éléments composant le batch courant
+        const batchElements = elements.slice(batchIndex * BATCH_SIZE, (batchIndex + 1) * BATCH_SIZE);
+
+        // Construire la requête d'insertion multiple
+        const colonnes = Object.keys(batchElements[0]!); // construire le dico des colonnes à partir du premier élément
+        const placeholders = batchElements.map(() => `(${colonnes.map(() => '?').join(', ')})`).join(', ');
+        const sql = `INSERT INTO \`${nomTable}\` (${colonnes.map((col) => `\`${col}\``).join(', ')}) VALUES ${placeholders}`
+            + ` ON DUPLICATE KEY UPDATE ${colonnes.map((col) => `\`${col}\` = VALUES(\`${col}\`)`).join(', ')};`;
+        const valeurs: any[] = [];
+
+        for (const element of batchElements) {
+            for (const colonne of colonnes) {
+                valeurs.push((element as any)[colonne]);
+            }
+        }
+
+        await transaction.execute(sql, valeurs);
+    }
 }

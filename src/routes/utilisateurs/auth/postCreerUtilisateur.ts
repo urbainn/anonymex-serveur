@@ -4,7 +4,7 @@ import { utilisateurCache } from "../../../cache/utilisateurs/UtilisateurCache";
 import bcrypt from "bcrypt";
 import { ErreurRequeteInvalide, ErreurServeur } from "../../erreursApi";
 import { UtilisateurData } from "../../../cache/utilisateurs/Utilisateur";
-import { Database } from "../../../core/services/Database";
+import { Database } from "../../../core/services/database/Database";
 import { roleCache } from "../../../cache/utilisateurs/roles/RoleCache";
 import { Role, RolePermissions } from "../../../cache/utilisateurs/roles/Role";
 import { logInfo } from "../../../utils/logger";

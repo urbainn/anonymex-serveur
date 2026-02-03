@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { APIBoolResponse } from "../../../contracts/common";
 import { LoginUtilisateurSchema } from "../../../contracts/utilisateurs";
 import { utilisateurCache } from "../../../cache/utilisateurs/UtilisateurCache";
-import { Database } from "../../../core/services/Database";
+import { Database } from "../../../core/services/database/Database";
 import { compare } from "bcrypt";
 import { Utilisateur, UtilisateurData } from "../../../cache/utilisateurs/Utilisateur";
 

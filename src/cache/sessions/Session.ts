@@ -1,4 +1,4 @@
-import { RowData } from "../../core/services/Database";
+import { RowData } from "../../core/services/database/Database";
 import { ElementEnCache } from "../base/ElementEnCacheBase";
 import { APISession, SessionsStatut } from "../../contracts/sessions"
 import { Epreuve } from "../epreuves/Epreuve";

@@ -2,7 +2,7 @@ import { ElementEnCache } from "../base/ElementEnCacheBase";
 import { Session } from "../sessions/Session";
 import { sessionCache } from "../sessions/SessionCache";
 import { APIEpreuve, EpreuveStatut } from "../../contracts/epreuves";
-import { RowData } from "../../core/services/Database";
+import { RowData } from "../../core/services/database/Database";
 
 export interface EpreuveData extends RowData {
     id_session: number,

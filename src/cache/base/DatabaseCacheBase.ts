@@ -1,5 +1,5 @@
 import { ResultSetHeader } from "mysql2";
-import { Database, RowData } from "../../core/services/Database";
+import { Database, RowData } from "../../core/services/database/Database";
 import { CacheBase } from "./CacheBase";
 import { ElementEnCache } from "./ElementEnCacheBase";
 

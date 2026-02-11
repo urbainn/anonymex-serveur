@@ -23,18 +23,24 @@ export function genererBordereau(proprietes: BordereauAnonProprietes): boolean {
 
     const doc = new PDFDocument({
         size: proprietes.format,
+        autoFirstPage: false,
         margins: { top: 0, bottom: 0, left: 0, right: 0 }
     });
 
     doc.pipe(createWriteStream('bordereau_test.pdf'));
 
-    try {
-        genererCiblesConcentriques(doc, 8, 10);
-    } catch (error) {
-        throw ErreurAprilTag.assigner(error);
-    }
+    const template = new BenchmarkUnitaireModule();
 
-    new BenchmarkUnitaireModule().generer(doc);
+    for (let i = 0; i < 500; i++) {
+        doc.addPage();
+        template.generer(doc);
+
+        try {
+            genererCiblesConcentriques(doc, 8, 10);
+        } catch (error) {
+            throw ErreurAprilTag.assigner(error);
+        }
+    }
 
     doc.end();
     logInfo('genererBordereau', 'Bordereau généré avec succès. ' + styles.dim + `(en ${Date.now() - debutMs} ms)`);

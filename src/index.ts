@@ -13,12 +13,12 @@ import { interpretationXLSX } from "./core/xlsx/interpretationXLSX";
 import { Session } from "./cache/sessions/Session";
 
 //interpretationXLSX(lectureXLSX('Init_ExamsVraiSessionMai25_ano.xlsx'), new Session({ "annee": 2026, "id_session": 1, "nom": "Session 1 mai 2026", "statut": 1 }))
-/* genererBordereau({
+genererBordereau({
     'format': 'A4',
     'longueurCodeAnonymat': 8,
     'longueurCodeEpreuve': 6,
     'version': 1,
-}); */
+});
 
 /*genererFeuilleEmargement({
     noms: [

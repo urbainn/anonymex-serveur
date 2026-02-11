@@ -4,6 +4,7 @@ import { logInfo, styles } from '../../../utils/logger';
 import { CadreEtudiantBenchmarkModule } from './modules/cadre-etudiant/CadreEtudiantBenchmarkModule';
 import { ErreurAprilTag } from '../generationErreurs';
 import { genererCiblesConcentriques } from '../common/genererCiblesConcentriques';
+import { BenchmarkUnitaireModule } from './modules/cadre-etudiant/BenchmarkUnitaireModule';
 
 export interface BordereauAnonProprietes {
     format: 'A4' | 'A5';
@@ -21,18 +22,19 @@ export function genererBordereau(proprietes: BordereauAnonProprietes): boolean {
     const debutMs = Date.now();
 
     const doc = new PDFDocument({
-        size: proprietes.format
+        size: proprietes.format,
+        margins: { top: 0, bottom: 0, left: 0, right: 0 }
     });
 
     doc.pipe(createWriteStream('bordereau_test.pdf'));
 
     try {
-        genererCiblesConcentriques(doc, 5, 10);
+        genererCiblesConcentriques(doc, 8, 10);
     } catch (error) {
         throw ErreurAprilTag.assigner(error);
     }
 
-    new CadreEtudiantBenchmarkModule().generer(doc);
+    new BenchmarkUnitaireModule().generer(doc);
 
     doc.end();
     logInfo('genererBordereau', 'Bordereau généré avec succès. ' + styles.dim + `(en ${Date.now() - debutMs} ms)`);

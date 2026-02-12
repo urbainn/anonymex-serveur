@@ -22,8 +22,8 @@ export class BenchmarkUnitaireModule extends ModeleLectureBase {
     getZonesLecture() {
         const tailleDoc = 595; // Largeur d'une page A4 en points
         const gap = 6; // Espace entre les cadres
-        const largeurCadre = 28;
-        const y = 400;
+        const largeurCadre = 30;
+        const y = 420;
 
         const cadres: LayoutPosition[] = [];
 
@@ -42,7 +42,14 @@ export class BenchmarkUnitaireModule extends ModeleLectureBase {
         const yCadreConsignes = 70;
 
         // générer un code aléatoire de nbCaractres lettres majuscules
-        const code = Array.from({ length: this.nbCaractres }, () => String.fromCharCode(65 + Math.floor(Math.random() * 26))).join('');
+        let code = ""; // aucune lettre répétée
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        while (code.length < this.nbCaractres) {
+            const lettre = alphabet[Math.floor(Math.random() * alphabet.length)]!;
+            if (!code.includes(lettre)) {
+                code += lettre;
+            }
+        }
 
         // Ajoute un espace au milieu du code (si nb pair, sinon inchangé)
         const codeAffichable = this.nbCaractres % 2 === 0 ?
@@ -163,11 +170,11 @@ export class BenchmarkUnitaireModule extends ModeleLectureBase {
 
         // CODE
         pdf.fontSize(28).font('Helvetica-Bold').fillColor('black')
-            .text(codeAffichable, 0, 330, { align: 'center', width: pdf.page.width, characterSpacing: 4 });
+            .text(codeAffichable, 0, 350, { align: 'center', width: pdf.page.width, characterSpacing: 4 });
 
         // Flèche
         const flecheX = pdf.page.width / 2;
-        const flecheY = 370;
+        const flecheY = 390;
         pdf.moveTo(flecheX - 12, flecheY)
             .lineTo(flecheX + 12, flecheY)
             .lineTo(flecheX, flecheY + 12)

@@ -34,7 +34,7 @@ export function genererCiblesConcentriques(doc: PDFKit.PDFDocument, tailleMm: nu
                 pos.x + taille / 2,
                 pos.y + taille / 2,
                 currentRingSize / 2
-            ).fill(isBlack ? '#333333' : '#FFFFFF');
+            ).fill(isBlack ? '#111' : '#FFFFFF');
         }
     }
 

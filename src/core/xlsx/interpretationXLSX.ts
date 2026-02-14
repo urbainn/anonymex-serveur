@@ -10,6 +10,7 @@ import { SheetData } from "./lectureXLSX";
 import { logInfo } from "../../utils/logger";
 import { Database } from "../services/database/Database";
 import { Transaction } from "../services/database/Transaction";
+import { ConvocationData } from "../../cache/convocations/Convocation";
 
 const CHAMPS_INTERPRETATION = {
     // nom du champ interprété => nom de la colonne dans le XLSX
@@ -70,6 +71,7 @@ export async function interpretationXLSX(data: Array<Record<string, unknown>>, s
         // Est inséré en batch (optimisation) et dans le cache une fois l'interprétation terminée (évite les résidus en cas d'erreur)
         const newEtudiants: EtudiantData[] = [];
         const newEpreuves: EpreuveData[] = [];
+        const newConvocations: ConvocationData[] = [];
 
         for (const [indice, row] of data.entries()) {
 
@@ -132,6 +134,19 @@ export async function interpretationXLSX(data: Array<Record<string, unknown>>, s
                 });
             }
 
+            // Get ou créer la convocation
+            let convocation = epreuve?.convocations.get(codeEtudiant)
+            if (!convocation) {
+                newConvocations.push({
+                    id_session: session.id,
+                    code_epreuve: codeEpreuve,
+                    numero_etudiant: codeEtudiant,
+                    code_anonymat: 'ABCDEF',
+                    note_quart: null,
+                    id_salle: salle,
+                    rang: 67 // TODO (TEMPORAIRE !)
+                })
+            }
         }
 
         await batchInsertion<EtudiantData>(transaction, 'etudiant', newEtudiants);

@@ -11,4 +11,12 @@ export default {
   transformIgnorePatterns: [
     "/node_modules/(?!(pdfjs-dist)/)"
   ],
+  collectCoverage: true,
+  coverageDirectory: 'coverage',
+  collectCoverageFrom: [
+    "src/**/*.{ts,tsx}",
+    "!src/**/*.d.ts",
+    "!**/node_modules/**",
+    "!**/vendor/**"
+  ]
 };

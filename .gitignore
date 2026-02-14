@@ -11,3 +11,6 @@ package-lock.json
 
 # Scripts d'entrainement
 /resources/datasets/
+
+# Rapport de couverture Jest
+coverage/

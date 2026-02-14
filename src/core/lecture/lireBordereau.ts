@@ -10,6 +10,8 @@ import { preprocessPipelines } from './OCR/preprocessPipelines';
 import { TesseractOCR } from './OCR/TesseractOCR';
 import { TensorFlowCNN } from './CNN/TensorFlowCNN';
 
+type MimeType = 'application/pdf' | 'image/jpeg' | 'image/png';
+
 const vraiOrdre = 'ANBOCPDQERFSGTHUIVJWKXLYMZ'.split('');
 let total = 0;
 let totalBon = 0;
@@ -30,7 +32,7 @@ export const dimensionsFormats = {
 };
 
 // WIP : chemin deviendra buffer/busboy
-export async function lireBordereau(chemin: string): Promise<void> {
+export async function lireBordereau(chemin: string, mimeType: MimeType): Promise<void> {
 
     const buffer = readFileSync(chemin);
     const uint8 = new Uint8Array(buffer);
@@ -40,7 +42,7 @@ export async function lireBordereau(chemin: string): Promise<void> {
     const margeCiblesMm = 7;
     const diametreCiblesMm = 6;
 
-    await extraireScans({ data: uint8, encoding: 'buffer', mimeType: 'application/pdf' }, async (scan: ScanData, data: Uint8ClampedArray | Uint8Array) => {
+    await extraireScans({ data: uint8, encoding: 'buffer', mimeType }, async (scan: ScanData, data: Uint8ClampedArray | Uint8Array) => {
         const scanPret = await preparerScan(scan, data);
 
         const rois = new CadreEtudiantBenchmarkModule('ABCDEFGHIJKLMNOPQRSTUVWXYZ').getZonesLecture().lettresCodeAnonymat;

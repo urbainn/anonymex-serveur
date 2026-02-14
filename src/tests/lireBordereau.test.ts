@@ -43,7 +43,7 @@ describe('lireBordereau - Tests des erreurs', () => {
     beforeEach(() => {
         jest.clearAllMocks();
 
-        (readFileSync as jest.Mock).mockReturnValue(Buffer.from('data')); // Mock du contenu du buffer
+        (readFileSync as jest.Mock).mockReturnValue(Buffer.from('data')); // Mock du contenu du buffer (TODO : modifier en buffer 8bpp)
     })
 
     it('doit lever une erreur si readFileSync échoue', async () => {

@@ -73,6 +73,7 @@ CREATE TABLE convocation_epreuve (
     code_anonymat CHAR(6) NOT NULL,
     note_quart TINYINT UNSIGNED,
     id_salle SMALLINT UNSIGNED NOT NULL,
+    rang CHAR(2) NOT NULL,
     CONSTRAINT pk_convocation_epreuve PRIMARY KEY (id_session, code_epreuve, numero_etudiant),
     CONSTRAINT uq_code UNIQUE (id_session, code_anonymat),
     CONSTRAINT fk_ese_session FOREIGN KEY (id_session)
@@ -104,21 +105,5 @@ CREATE TABLE incident (
         ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT fk_incident_epreuve FOREIGN KEY (id_session, code_epreuve)
         REFERENCES epreuve(id_session, code_epreuve)
-        ON DELETE CASCADE ON UPDATE CASCADE
-);
-
-CREATE TABLE incident_historique (
-    id_historique INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    id_incident INT UNSIGNED NOT NULL,
-    id_correcteur SMALLINT UNSIGNED NOT NULL,
-    date_correction DATETIME NOT NULL,
-    code_anonymat CHAR(6),
-    note_quart TINYINT UNSIGNED,
-    CONSTRAINT pk_incident_historique PRIMARY KEY (id_historique),
-    CONSTRAINT fk_historique_incident FOREIGN KEY (id_incident)
-        REFERENCES incident(id_incident)
-        ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT fk_incident_correcteur FOREIGN KEY (id_correcteur)
-        REFERENCES utilisateur(id_utilisateur)
         ON DELETE CASCADE ON UPDATE CASCADE
 );

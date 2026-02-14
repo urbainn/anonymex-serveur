@@ -73,7 +73,7 @@ CREATE TABLE convocation_epreuve (
     code_anonymat CHAR(6) NOT NULL,
     note_quart TINYINT UNSIGNED,
     id_salle SMALLINT UNSIGNED NOT NULL,
-    rang CHAR(2) NOT NULL,
+    rang TINYINT NOT NULL,
     CONSTRAINT pk_convocation_epreuve PRIMARY KEY (id_session, code_epreuve, numero_etudiant),
     CONSTRAINT uq_code UNIQUE (id_session, code_anonymat),
     CONSTRAINT fk_ese_session FOREIGN KEY (id_session)

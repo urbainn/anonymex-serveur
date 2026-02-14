@@ -3,6 +3,7 @@ import { Session } from "../sessions/Session";
 import { sessionCache } from "../sessions/SessionCache";
 import { APIEpreuve, EpreuveStatut } from "../../contracts/epreuves";
 import { RowData } from "../../core/services/database/Database";
+import { ConvocationCache } from "../convocations/ConvocationCache";
 
 export interface EpreuveData extends RowData {
     id_session: number,
@@ -26,6 +27,9 @@ export class Epreuve extends ElementEnCache {
     public copies: number = 0;//todo
     public nbPresents: number | null;
     public incidents: number = 0;//todo
+    
+    /** Cache des convocations associées à cette épreuve */
+    public convocations: ConvocationCache;
 
     constructor(data: EpreuveData) {
         super();
@@ -36,6 +40,7 @@ export class Epreuve extends ElementEnCache {
         this.dateEpreuve = data.date_epreuve * 60; // convertir en secondes
         this.duree = data.duree;
         this.nbPresents = data.nb_presents;
+        this.convocations = new ConvocationCache(this.codeEpreuve)
     }
 
     /** Obtenir la session de cette epreuve */

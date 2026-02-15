@@ -1,12 +1,11 @@
 import dayjs from "dayjs";
-import { Epreuve, EpreuveData } from "../../cache/epreuves/Epreuve";
-import { Etudiant, EtudiantData } from "../../cache/etudiants/Etudiant";
+import { EpreuveData } from "../../cache/epreuves/Epreuve";
+import { EtudiantData } from "../../cache/etudiants/Etudiant";
 import { etudiantCache } from "../../cache/etudiants/EtudiantCache";
 import { Session } from "../../cache/sessions/Session";
 import { sessionCache } from "../../cache/sessions/SessionCache";
 import { EpreuveStatut } from "../../contracts/epreuves";
-import { ErreurInterpretationXLSX, ErreurLigneInvalide, ErreurXLSX } from "./ErreursXLSX";
-import { SheetData } from "./lectureXLSX";
+import { ErreurLigneInvalide, ErreurXLSX } from "./ErreursXLSX";
 import { logInfo } from "../../utils/logger";
 import { Database } from "../services/database/Database";
 import { Transaction } from "../services/database/Transaction";
@@ -135,7 +134,7 @@ export async function interpretationXLSX(data: Array<Record<string, unknown>>, s
             }
 
             // Get ou créer la convocation
-            let convocation = epreuve?.convocations.get(codeEtudiant)
+            let convocation = epreuve?.convocations.get(codeEtudiant);
             if (!convocation) {
                 newConvocations.push({
                     id_session: session.id,
@@ -151,6 +150,7 @@ export async function interpretationXLSX(data: Array<Record<string, unknown>>, s
 
         await batchInsertion<EtudiantData>(transaction, 'etudiant', newEtudiants);
         await batchInsertion<EpreuveData>(transaction, 'epreuve', newEpreuves);
+        await batchInsertion<ConvocationData>(transaction, 'convocation', newConvocations);
 
         // Commit la transaction
         await transaction.commit();

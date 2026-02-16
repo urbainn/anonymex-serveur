@@ -1,5 +1,5 @@
 import * as tf from "@tensorflow/tfjs-node";
-import { Tensor, Tensor3D, Tensor4D } from "@tensorflow/tfjs-node";
+import { Tensor, Tensor3D, Tensor4D } from "@tensorflow/tfjs";
 import { existsSync } from "fs";
 import { resolve } from "path";
 import { ErreurCNN } from "../lectureErreurs";

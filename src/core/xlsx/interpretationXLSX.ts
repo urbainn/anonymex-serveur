@@ -133,6 +133,15 @@ export async function interpretationXLSX(data: Array<Record<string, unknown>>, s
                 });
             }
 
+            const genAnonymatTemporaire = () => {
+                const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
+                let anonymat = '';
+                for (let i = 0; i < 6; i++) {
+                    anonymat += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+                }
+                return anonymat;
+            }
+
             // Get ou créer la convocation
             let convocation = epreuve?.convocations.get(codeEtudiant);
             if (!convocation) {
@@ -140,9 +149,9 @@ export async function interpretationXLSX(data: Array<Record<string, unknown>>, s
                     id_session: session.id,
                     code_epreuve: codeEpreuve,
                     numero_etudiant: codeEtudiant,
-                    code_anonymat: 'ABCDEF',
+                    code_anonymat: genAnonymatTemporaire(),
                     note_quart: null,
-                    id_salle: salle,
+                    id_salle: 0,
                     rang: 67 // TODO (TEMPORAIRE !)
                 })
             }
@@ -150,7 +159,7 @@ export async function interpretationXLSX(data: Array<Record<string, unknown>>, s
 
         await batchInsertion<EtudiantData>(transaction, 'etudiant', newEtudiants);
         await batchInsertion<EpreuveData>(transaction, 'epreuve', newEpreuves);
-        await batchInsertion<ConvocationData>(transaction, 'convocation', newConvocations);
+        await batchInsertion<ConvocationData>(transaction, 'convocation_epreuve', newConvocations);
 
         // Commit la transaction
         await transaction.commit();

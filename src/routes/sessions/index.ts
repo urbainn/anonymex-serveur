@@ -6,6 +6,7 @@ import { incidentsRouter } from "./incidents"
 import { deleteSession } from "./deleteSession";
 import { patchSession } from "./patchSession";
 import { postSession } from "./postSession";
+import { postImporterFichierSession } from "./postImporterFichierSession";
 
 const sessionsRouter = Router();
 
@@ -19,6 +20,8 @@ sessionsRouter.use("/:session/incidents", incidentsRouter);
 sessionsRouter.get("/", (req, res) => useRest(getSessions, req, res));
 // POST /sessions/
 sessionsRouter.post("/", (req, res) => useRest(postSession, req, res));
+// POST /sessions/importer/:id
+sessionsRouter.post("/:id/importer/", (req, res) => useRest(postImporterFichierSession, req, res));
 // DELETE /sessions/:id/
 sessionsRouter.delete("/:id", (req, res) => useRest(deleteSession, req, res));
 // PATCH /sessions/:id/

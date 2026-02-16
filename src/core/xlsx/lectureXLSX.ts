@@ -22,10 +22,9 @@ export interface SheetData {
     C_RES: number
 }
 
-export function lectureXLSX(chemin: string): Record<string, unknown>[] {
+export function lectureXLSX(buffer: Buffer): Record<string, unknown>[] {
     let workbook;
     try {
-        const buffer = readFileSync(chemin);
         workbook = XLSX.read(buffer);
     } catch (err) {
         throw ErreurLectureXLSX.assigner(err);

@@ -7,7 +7,7 @@ export interface ConvocationData extends RowData {
     numero_etudiant: number,
     code_anonymat: string,
     note_quart: number | null,
-    id_salle: string,
+    id_salle: number,
     rang: number | null // TODO : quand nouvelle version adapter avec le numéro de place (TEMPORAIRE !)
 }
 
@@ -17,9 +17,9 @@ export class Convocation extends ElementEnCache {
     public numeroEtudiant: number;
     public codeAnonymat: string;
     public noteQuart: number | null;
-    public idSalle: string;
+    public idSalle: number;
     public rang: number | null; // TODO (TEMPORAIRE !)
-    
+
     constructor(data: ConvocationData) {
         super();
         this.idSession = data.id_session;

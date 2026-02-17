@@ -10,6 +10,8 @@ import { logInfo } from "../../utils/logger";
 import { Database } from "../services/database/Database";
 import { Transaction } from "../services/database/Transaction";
 import { ConvocationData } from "../../cache/convocations/Convocation";
+import { salleCache } from "../../cache/salles/SalleCache";
+import { Salle, SalleData } from "../../cache/salles/Salle";
 
 const CHAMPS_INTERPRETATION = {
     // nom du champ interprété => nom de la colonne dans le XLSX
@@ -71,12 +73,13 @@ export async function interpretationXLSX(data: Array<Record<string, unknown>>, s
         const newEtudiants: EtudiantData[] = [];
         const newEpreuves: EpreuveData[] = [];
         const newConvocations: ConvocationData[] = [];
+        const newSalles: Omit<SalleData, 'id_salle'>[] = [];
 
         for (const [indice, row] of data.entries()) {
 
             const dateEpreuve = (row[CHAMPS_INTERPRETATION.date] as string).replaceAll(' ', '');
             const horaire = (row[CHAMPS_INTERPRETATION.heure] as string).replaceAll(' ', '');
-            const salle = row[CHAMPS_INTERPRETATION.salle] as string;
+            const nomSalle = row[CHAMPS_INTERPRETATION.salle] as string;
             const codeEpreuve = row[CHAMPS_INTERPRETATION.codeEpreuve] as string;
             const nomEpreuve = row[CHAMPS_INTERPRETATION.nomEpreuve] as string;
             const prenomEtudiant = row[CHAMPS_INTERPRETATION.prenomEtudiant] as string;
@@ -84,7 +87,7 @@ export async function interpretationXLSX(data: Array<Record<string, unknown>>, s
             const codeEtudiant = parseInt(row[CHAMPS_INTERPRETATION.codeEtudiant] as string);
 
             // Vérifications basiques
-            if (!dateEpreuve || !horaire || !salle || !codeEpreuve || !nomEpreuve || !prenomEtudiant || !nomEtudiant || !codeEtudiant) {
+            if (!dateEpreuve || !horaire || !nomSalle || !codeEpreuve || !nomEpreuve || !prenomEtudiant || !nomEtudiant || !codeEtudiant) {
                 throw new ErreurLigneInvalide(indice + 1, 'champ obligatoire manquant')
             }
 
@@ -92,7 +95,7 @@ export async function interpretationXLSX(data: Array<Record<string, unknown>>, s
                 throw new ErreurLigneInvalide(indice + 1, `code étudiant non reconnu ('${row[CHAMPS_INTERPRETATION.codeEtudiant]}')`);
             }
 
-            if (typeof dateEpreuve !== 'string' || typeof horaire !== 'string' || typeof salle !== 'string' || typeof codeEpreuve !== 'string' ||
+            if (typeof dateEpreuve !== 'string' || typeof horaire !== 'string' || typeof nomSalle !== 'string' || typeof codeEpreuve !== 'string' ||
                 typeof nomEpreuve !== 'string' || typeof prenomEtudiant !== 'string' || typeof nomEtudiant !== 'string') {
                 throw new ErreurLigneInvalide(indice + 1, 'un champ obligatoire est du mauvais type (texte attendu)')
             }
@@ -105,12 +108,12 @@ export async function interpretationXLSX(data: Array<Record<string, unknown>>, s
             // Appliquer les filtres
             if (filtres) {
                 if (filtres.codeEpreuves && !filtres.codeEpreuves.includes(codeEpreuve)) continue;
-                if (filtres.salles && !filtres.salles.includes(salle)) continue;
+                if (filtres.salles && !filtres.salles.includes(nomSalle)) continue;
                 if (filtres.dateEpreuve && filtres.dateEpreuve !== dateEpreuve) continue;
             }
 
             // Get ou créer l'étudiant
-            let etudiant = etudiantCache.get(codeEtudiant);
+            const etudiant = etudiantCache.get(codeEtudiant);
             if (!etudiant) {
                 newEtudiants.push({
                     numero_etudiant: codeEtudiant,
@@ -120,7 +123,7 @@ export async function interpretationXLSX(data: Array<Record<string, unknown>>, s
             }
 
             // Get ou créer l'épreuve
-            let epreuve = session.epreuves.get(codeEpreuve);
+            const epreuve = session.epreuves.get(codeEpreuve);
             if (!epreuve) {
                 newEpreuves.push({
                     id_session: session.id,
@@ -142,8 +145,20 @@ export async function interpretationXLSX(data: Array<Record<string, unknown>>, s
                 return anonymat;
             }
 
+            const salle = await salleCache.getParNom(nomSalle);
+            let idSalle = salle?.idSalle;
+            if(!salle || !idSalle) {
+                const salleData = {
+                    numero_salle: nomSalle,
+                    type_salle: 'ABC' // TODO : A modifier par la suite...
+                };
+
+                idSalle = (await salleCache.insert(salleData)).insertId;
+                salleCache.set(idSalle, new Salle({...salleData, id_salle: idSalle}))
+            }
+
             // Get ou créer la convocation
-            let convocation = epreuve?.convocations.get(codeEtudiant);
+            const convocation = epreuve?.convocations.get(codeEtudiant);
             if (!convocation) {
                 newConvocations.push({
                     id_session: session.id,
@@ -151,7 +166,7 @@ export async function interpretationXLSX(data: Array<Record<string, unknown>>, s
                     numero_etudiant: codeEtudiant,
                     code_anonymat: genAnonymatTemporaire(),
                     note_quart: null,
-                    id_salle: 0,
+                    id_salle: idSalle,
                     rang: 67 // TODO (TEMPORAIRE !)
                 })
             }

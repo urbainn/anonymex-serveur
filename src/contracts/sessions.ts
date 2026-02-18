@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 export enum SessionsStatut {
-    ACTIVE = 1,
-    TERMINEE = 2,
-    ARCHIVEE = 3,
-    EN_SUPPRESSION = 4
+    ACTIVE = 0,
+    TERMINEE = 1,
+    ARCHIVEE = 2,
+    EN_SUPPRESSION = 3
 }
 
 // --- Schémas ---
@@ -17,7 +17,7 @@ export const SessionSchema = z.object({
 
 export const NewSessionSchema = SessionSchema.omit({ id: true, statut: true });
 
-export const UpdateSessionSchema = NewSessionSchema.partial();
+export const UpdateSessionSchema = SessionSchema.partial();
 
 export const ListSessionsSchema = z.object({
     anneeMax: z.number().int(),

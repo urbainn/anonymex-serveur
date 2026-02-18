@@ -12,7 +12,7 @@ export type ScanData = { channels: 1 | 3 | 4; debug: boolean; width: number; hei
  * @param doc Le document source à traiter : PDF, image ou archive de pdf/images.
  * @param onScanExtrait Callback appelé pour chaque scan extrait, avec un buffer image 3 canaux.
  */
-export async function extraireScans(doc: DocumentSource, onScanExtrait: (scan: ScanData, buffer: Uint8ClampedArray | Uint8Array) => Promise<void>): Promise<void> {
+export async function extraireScans(doc: DocumentSource, onScanExtrait: (scan: ScanData, buffer: Uint8ClampedArray | Uint8Array) => Promise<void>, lirenb?: number): Promise<void> {
 
     logInfo('extraireScans', 'Extraction des scans du document source. ' + styles.dim
         + '(format ' + styles.fg.cyan + doc.mimeType + styles.fg.white + ')');
@@ -22,7 +22,7 @@ export async function extraireScans(doc: DocumentSource, onScanExtrait: (scan: S
         case 'application/pdf':
             // Charger le document PDF
             const pdf = await getDocument(doc.data).promise;
-            const nbPages = pdf.numPages;
+            const nbPages = Math.min(pdf.numPages, lirenb ?? pdf.numPages);
 
             // Charger et faire un rendu de chaque page
             for (let pageNum = 1; pageNum <= nbPages; pageNum++) {

@@ -54,7 +54,7 @@ export async function decouperROIs(
     const pxPerMmX = imgW / zoneEffectiveW;
     const pxPerMmY = imgH / zoneEffectiveH;
 
-    const paddingMm = options.paddingMm ?? -0.05;
+    const paddingMm = options.paddingMm ?? -0.1;
 
     for (let roiIndex = 0; roiIndex < rois.length; roiIndex++) {
         const roi = rois[roiIndex]!;

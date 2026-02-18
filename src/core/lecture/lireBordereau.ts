@@ -1,18 +1,19 @@
 import { readFileSync } from 'fs';
 import { extraireScans, ScanData } from './preparation/extraireScans';
 import { preparerScan } from './preparation/preparerScan';
-import { BordereauAnonProprietes } from '../generation/bordereau/genererBordereau';
 import { decouperROIs } from './preparation/decouperROIs';
-import { CadreEtudiantBenchmarkModule } from '../generation/bordereau/modules/cadre-etudiant/CadreEtudiantBenchmarkModule';
 import sharp from 'sharp';
 import { ErreurDecoupeROIs } from './lectureErreurs';
 import { preprocessPipelines } from './OCR/preprocessPipelines';
 import { TesseractOCR } from './OCR/TesseractOCR';
 import { TensorFlowCNN } from './CNN/TensorFlowCNN';
+import { BenchmarkUnitaireModule } from '../generation/bordereau/modules/cadre-etudiant/BenchmarkUnitaireModule';
+import { detecterAprilTags } from './preparation/detecterAprilTags';
+import { matToSharp } from '../../utils/imgUtils';
+import { OpenCvInstance } from '../services/OpenCvInstance';
 
 type MimeType = 'application/pdf' | 'image/jpeg' | 'image/png';
 
-const vraiOrdre = 'ANBOCPDQERFSGTHUIVJWKXLYMZ'.split('');
 let total = 0;
 let totalBon = 0;
 let totalBonCnn = 0;
@@ -22,6 +23,7 @@ let tempsTotalOCR = 0;
 let tempsTotalCNN = 0;
 let pageIndex = 0;
 let echecsParPage: number[] = [];
+let pagesImpossibles: number[] = [];
 const resultatOCRBenchmark: Record<string, number> = {}; // x: lettre correcte, y: lettre détectée, xy: nombre de fois (ex: AA: 5, AB: 2, ...)
 const resultatCNNBenchmark: Record<string, number> = {}; // idem, pour CNN
 const resultatTotal: Record<string, number> = {}; // idem, pour OCR + CNN
@@ -39,15 +41,21 @@ export async function lireBordereau(chemin: string, mimeType: MimeType): Promise
 
     // Configuration
     // TODO: rendre dynamique/configurable
-    const margeCiblesMm = 7;
-    const diametreCiblesMm = 6;
+    const margeCiblesMm = 10;
+    const diametreCiblesMm = 8;
 
     await extraireScans({ data: uint8, encoding: 'buffer', mimeType }, async (scan: ScanData, data: Uint8ClampedArray | Uint8Array) => {
         const scanPret = await preparerScan(scan, data);
 
-        const rois = new CadreEtudiantBenchmarkModule('ABCDEFGHIJKLMNOPQRSTUVWXYZ').getZonesLecture().lettresCodeAnonymat;
+        const rois = new BenchmarkUnitaireModule().getZonesLecture().lettresCodeAnonymat;
 
         await TesseractOCR.configurerModeCaractereUnique('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+
+        // LIRE ETIQUETTES et transformer en str
+        const detections = await detecterAprilTags(scan, matToSharp(await OpenCvInstance.getInstance(), scanPret));
+        const code = detections.sort((a, b) => a.center[0] - b.center[0]).map(d => String.fromCharCode(d.id));
+
+        let indexEchoues: number[] = []// indice des cases ayant échouées, pour savoir si une lecture avec redondance aurait été possible
 
         const onRoiExtrait = async (image: sharp.Sharp, index: number) => {
             const bufferImgTraitee = await preprocessPipelines
@@ -61,6 +69,7 @@ export async function lireBordereau(chemin: string, mimeType: MimeType): Promise
 
             //await image.png().toFile('debug/rois/roi_' + index + '.png');
             //await preprocessPipelines.emnist(image).png().toFile('debug/rois/roi_emnist_' + index + '.png');
+
             const debutOCR = Date.now();
             const { text, confidence } = await TesseractOCR.interroger(bufferImgTraitee);
             tempsTotalOCR += (Date.now() - debutOCR);
@@ -69,7 +78,10 @@ export async function lireBordereau(chemin: string, mimeType: MimeType): Promise
             const prediction = await TensorFlowCNN.predire(await preprocessPipelines.emnist(image).png().toBuffer(), 'EMNIST-Standard');
             tempsTotalCNN += (Date.now() - debutCNN);
 
-            const lettreAttendue = vraiOrdre[Math.floor(index / 10)];
+            if (code.length <= index) {
+                throw new Error(`Index ${index} non valide dans le code détecté : ${code.join('')}`);
+            }
+            const lettreAttendue = code[index];
 
             total++;
 
@@ -81,6 +93,9 @@ export async function lireBordereau(chemin: string, mimeType: MimeType): Promise
                 echecsParPage[pageIndex] = (echecsParPage[pageIndex] || 0) + 1;
                 jamaisReconnusLettres[lettreAttendue!] = (jamaisReconnusLettres[lettreAttendue!] || 0) + 1;
                 //console.log('Echec total ROI ' + index + ': attendu ' + lettreAttendue + ', Tesseract a lu "' + text.trim() + '" (conf: ' + confidence.toFixed(2) + '%), CNN a lu "' + prediction.caractere + '" (confiance: ' + (prediction.confiance * 100).toFixed(2) + '%).');
+                indexEchoues.push(index);
+
+                await preprocessPipelines.emnist(image).png().toFile('debug/rois/erreurs/page_' + (pageIndex + 1).toString() + '_' + prediction.caractere + '_' + lettreAttendue + '.png');
             }
 
             //console.log("PREDICTION CNN :", prediction.caractere, "confiance :", (prediction.confiance * 100).toFixed(2) + '% -- attendu :', lettreAttendue);
@@ -95,6 +110,14 @@ export async function lireBordereau(chemin: string, mimeType: MimeType): Promise
 
         try {
             await decouperROIs(scanPret, rois, diametreCiblesMm, margeCiblesMm, 'A4', onRoiExtrait);
+
+            // check si lecture impossible
+            for (const index of indexEchoues) {
+                if (indexEchoues.some(v => index + 3 === v)) {
+                    pagesImpossibles.push(pageIndex);
+                    break;
+                }
+            }
 
             // TEMP pour benchmark!!
 
@@ -125,8 +148,11 @@ export async function lireBordereau(chemin: string, mimeType: MimeType): Promise
             console.log('------------------------------');
             console.log('Echecs par page :');
             echecsParPage.forEach((echecs, index) => {
-                console.log(`Page ${index + 1} : ${echecs} échecs complets.`);
+                if (echecs > 3) {
+                    console.log(`Page ${index + 1} : ${echecs} échecs complets.`);
+                }
             });
+            console.log('pages non lisible par méthode de redondance : ', pagesImpossibles);
             console.log('------------------------------\n\n');
 
         } catch (err) {

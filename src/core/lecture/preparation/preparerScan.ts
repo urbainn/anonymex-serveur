@@ -29,17 +29,18 @@ export async function preparerScan(scanProps: ScanData, buffer: Uint8ClampedArra
     // Libérer la mémoire du scan brut
     buffer = new Uint8Array(0);
 
-    const detectionCibles = await detecterCiblesConcentriques(scanProps, scan);
+    const detectionCibles = await detecterCiblesConcentriques(scanProps, scan, { tailleCibleMm: 8 });
     const orientationDeg = orientationCiblesConcentriques(detectionCibles);
 
     if (orientationDeg === -1) {
         // TODO!!! à réimplémenter proprement en tant que fallback si cibles concentriques illisibles
         // Reconnaissance des april tags.
-        const detectionsAprilTags = await detecterAprilTags(scanProps, scan)
-            .catch((err) => { throw ErreurDetectionAprilTags.assigner(err) });
+        //const detectionsAprilTags = await detecterAprilTags(scanProps, scan)
+        //    .catch((err) => { throw ErreurDetectionAprilTags.assigner(err) });
 
         // Orienter correctement le document
-        const { orientation, ordreTags } = orientationAprilTags(scanProps, detectionsAprilTags);
+        //const { orientation, ordreTags } = orientationAprilTags(scanProps, detectionsAprilTags);
+        throw new Error('cibles concentriques illisibles.');
     }
 
     scan.rotate(orientationDeg);

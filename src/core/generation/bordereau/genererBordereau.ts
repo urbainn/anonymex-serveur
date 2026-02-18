@@ -1,10 +1,10 @@
 import PDFDocument from 'pdfkit';
 import { createWriteStream } from 'fs';
 import { logInfo, styles } from '../../../utils/logger';
-import { CadreEtudiantBenchmarkModule } from './modules/cadre-etudiant/CadreEtudiantBenchmarkModule';
 import { ErreurAprilTag } from '../generationErreurs';
 import { genererCiblesConcentriques } from '../common/genererCiblesConcentriques';
 import { BenchmarkUnitaireModule } from './modules/cadre-etudiant/BenchmarkUnitaireModule';
+import { genererCodesHamming } from '../../../utils/codeAnonymatUtils';
 
 export interface BordereauAnonProprietes {
     format: 'A4' | 'A5';
@@ -29,10 +29,12 @@ export function genererBordereau(proprietes: BordereauAnonProprietes): boolean {
 
     doc.pipe(createWriteStream('bordereau_test.pdf'));
 
+    const codes = genererCodesHamming(500, 6, 3, "BCEFGHIKLNOPQRSTUWXYZ");
     const template = new BenchmarkUnitaireModule();
 
     for (let i = 0; i < 500; i++) {
         doc.addPage();
+        template.code = codes[i] ?? "ERREUR";
         template.generer(doc);
 
         try {

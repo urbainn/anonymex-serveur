@@ -4,8 +4,8 @@ import { LayoutPosition, ModeleLectureBase } from "../../../ModeleLectureBase";
 import { join } from 'path';
 export class BenchmarkUnitaireModule extends ModeleLectureBase {
 
-    /** Nombre de caractères composant le code */
-    private nbCaractres: number = 6;
+    /** Code à générer */
+    public code: string = "??????";
 
     constructor() {
         super();
@@ -27,33 +27,23 @@ export class BenchmarkUnitaireModule extends ModeleLectureBase {
 
         const cadres: LayoutPosition[] = [];
 
-        for (let i = 0; i < this.nbCaractres; i++) {
-            const x = (tailleDoc - (this.nbCaractres * largeurCadre + (this.nbCaractres - 1) * gap)) / 2 + i * (largeurCadre + gap);
+        for (let i = 0; i < this.code.length; i++) {
+            const x = (tailleDoc - (this.code.length * largeurCadre + (this.code.length - 1) * gap)) / 2 + i * (largeurCadre + gap);
             cadres.push({ x, y, largeur: largeurCadre, hauteur: largeurCadre * 1.2 });
         }
 
         return { lettresCodeAnonymat: cadres };
     }
 
-    generer(pdf: PDFKit.PDFDocument): boolean {
+    override generer(pdf: PDFKit.PDFDocument): boolean {
 
         const xSeparation = pdf.page.width / 2;
         const tailleColonne = pdf.page.width / 2 - 40;
         const yCadreConsignes = 70;
 
-        // générer un code aléatoire de nbCaractres lettres majuscules
-        let code = ""; // aucune lettre répétée
-        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        while (code.length < this.nbCaractres) {
-            const lettre = alphabet[Math.floor(Math.random() * alphabet.length)]!;
-            if (!code.includes(lettre)) {
-                code += lettre;
-            }
-        }
-
         // Ajoute un espace au milieu du code (si nb pair, sinon inchangé)
-        const codeAffichable = this.nbCaractres % 2 === 0 ?
-            code.substring(0, this.nbCaractres / 2) + " " + code.substring(this.nbCaractres / 2) : code;
+        const codeAffichable = this.code.length % 2 === 0 ?
+            this.code.substring(0, this.code.length / 2) + " " + this.code.substring(this.code.length / 2) : this.code;
 
         // Ligne de separation centrale
         pdf.moveTo(xSeparation, yCadreConsignes).lineTo(xSeparation, yCadreConsignes + 150).lineWidth(0.8).strokeColor('black').stroke();
@@ -89,8 +79,8 @@ export class BenchmarkUnitaireModule extends ModeleLectureBase {
 
             // Cadres d'exemple remplis
             const cadreW = 20;
-            const cadresDepartX = xSeparation - (tailleColonne / 2) - ((cadreW + 4) * this.nbCaractres / 2);
-            for (let i = 0; i < this.nbCaractres; i++) {
+            const cadresDepartX = xSeparation - (tailleColonne / 2) - ((cadreW + 4) * this.code.length / 2);
+            for (let i = 0; i < this.code.length; i++) {
                 const cadreX = cadresDepartX + i * (cadreW + 4);
                 const cadreY = yCadreConsignes + 100;
                 pdf.rect(cadreX, cadreY, cadreW, cadreW * 1.2)
@@ -99,8 +89,8 @@ export class BenchmarkUnitaireModule extends ModeleLectureBase {
                     .stroke();
 
                 // Exemple de lettre dans le cadre
-                if (i < code.length) {
-                    const lettre = code[i] ?? '?';
+                if (i < this.code.length) {
+                    const lettre = this.code[i] ?? '?';
                     pdf.font('Helvetica-Bold')
                         .fontSize(15)
                         .fillColor('black')
@@ -117,16 +107,16 @@ export class BenchmarkUnitaireModule extends ModeleLectureBase {
             const tailleCase = 20;
 
             // Affiche une case 'X' (ne pas faire) et un texte explicatif
-            const renduLigneInstruction = (instruction: string, y: number) => {
+            const renduLigneInstruction = (instruction: string, y: number, c: boolean = true) => {
 
                 // case
                 pdf.rect(xSeparation + margesLaterales, y, tailleCase, tailleCase * 1.2)
                     .lineWidth(0.5)
                     .strokeColor('black')
-                    .stroke()
+                    .stroke();
 
                 // Cercle contenant une croix
-                pdf.circle(xSeparation + margesLaterales + tailleCase - 2, y + tailleCase * 1.2 - 2, 6)
+                if (c) pdf.circle(xSeparation + margesLaterales + tailleCase - 2, y + tailleCase * 1.2 - 2, 6)
                     .fillColor('white')
                     .fill()
                     .circle(xSeparation + margesLaterales + tailleCase - 2, y + tailleCase * 1.2 - 2, 6)
@@ -152,8 +142,8 @@ export class BenchmarkUnitaireModule extends ModeleLectureBase {
 
             // Écrire en majuscules
             pdf.fontSize(15).font('Helvetica-Bold').fillColor('black')
-                .text('e', xSeparation + margesLaterales + 6, yCadreConsignes + debutY + 6.5);
-            renduLigneInstruction('Écrire en majuscules.', yCadreConsignes + debutY);
+                .text('E', xSeparation + margesLaterales + 5, yCadreConsignes + debutY + 7);
+            renduLigneInstruction('Écrire en majuscules.', yCadreConsignes + debutY, false);
 
             // Écrire au stylo noir/bleu
             pdf.fontSize(15).font('Helvetica-Bold').fillColor('#AFAFAF')
@@ -209,18 +199,18 @@ export class BenchmarkUnitaireModule extends ModeleLectureBase {
             const tailleTagPt = mmToPoints(tailleTagMm);
             const gapTags = 10;
 
-            for (let i = 0; i < code.length; i++) {
+            for (let i = 0; i < this.code.length; i++) {
                 const tagX = 105 + i * (tailleTagPt + gapTags);
                 const tagY = 715;
 
-                genererAprilTag(pdf, code.charCodeAt(i), tailleTagMm, tagX, tagY, 8);
+                genererAprilTag(pdf, this.code.charCodeAt(i), tailleTagMm, tagX, tagY, 8);
             }
 
             // Dessiner code barre
             pdf.font(join(__dirname, '../../../../../../resources/font/Libre_Barcode_39/LibreBarcode39-Regular.ttf'));
             pdf.fontSize(35).fillColor('#222');
-            const tailleCodeBarre = pdf.widthOfString(`*${code}*`);
-            pdf.text(`*${code}*`, pdf.page.width - 100 - tailleCodeBarre, 720);
+            const tailleCodeBarre = pdf.widthOfString(`*${this.code}*`);
+            pdf.text(`*${this.code}*`, pdf.page.width - 100 - tailleCodeBarre, 720);
         }
 
         return true;

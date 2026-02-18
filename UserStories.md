@@ -1,7 +1,3 @@
-# User Stories – Application de gestion des examens
-
----
-
 ## Gestion des sessions d’examen
 
 ### 1. Consulter les sessions

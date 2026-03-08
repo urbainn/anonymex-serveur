@@ -1,38 +1,35 @@
-import { lireBordereau } from "../core/lecture/lireBordereau";
+import { lireBordereau } from "../src/core/lecture/lireBordereau";
 import { readFileSync } from "fs";
-import { extraireScans } from "../core/lecture/preparation/extraireScans";
-import { preparerScan } from "../core/lecture/preparation/preparerScan";
-import { ErreurDetectionAprilTags, ErreurDocumentSource } from "../core/lecture/lectureErreurs";
-import { detecterAprilTags } from "../core/lecture/preparation/detecterAprilTags";
-import { orientationCiblesConcentriques } from "../core/lecture/preparation/reorientation/orientationCiblesConcentriques";
-import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
+import { extraireScans } from "../src/core/lecture/preparation/extraireScans";
+import { ErreurDocumentSource } from "../src/core/lecture/lectureErreurs";
 
-// Mock des différentes fonctions appelés
+// TODO: à refaire correctement, introduire des fonctions
+// testables dans les modules utilisés !!!
 
 jest.mock('fs');
 
-jest.mock('../core/lecture/preparation/extraireScans', () => ({
+jest.mock('../src/core/lecture/preparation/extraireScans', () => ({
     extraireScans: jest.fn()
 }));
-jest.mock('../core/lecture/preparation/preparerScan', () => ({
+jest.mock('../src/core/lecture/preparation/preparerScan', () => ({
     preparerScan: jest.fn()
 }));
-jest.mock('../core/lecture/preparation/decouperROIs', () => ({
+jest.mock('../src/core/lecture/preparation/decouperROIs', () => ({
     decouperROIs: jest.fn()
 }));
 
-jest.mock('../core/lecture/OCR/TesseractOCR', () => ({
+jest.mock('../src/core/lecture/OCR/TesseractOCR', () => ({
     TesseractOCR: { configurerModeCaractereUnique: jest.fn(), interroger: jest.fn() }
 }));
-jest.mock('../core/lecture/CNN/TensorFlowCNN', () => ({
+jest.mock('../src/core/lecture/CNN/TensorFlowCNN', () => ({
     TensorFlowCNN: { predire: jest.fn() }
 }));
 
-jest.mock('../core/lecture/preparation/detecterAprilTags', () => ({
+jest.mock('../src/core/lecture/preparation/detecterAprilTags', () => ({
     detecterAprilTags: jest.fn()
 }));
 
-jest.mock('../core/lecture/preparation/reorientation/orientationCiblesConcentriques', () => ({
+jest.mock('../src/core/lecture/preparation/reorientation/orientationCiblesConcentriques', () => ({
     orientationCiblesConcentriques: jest.fn()
 }));
 
@@ -56,7 +53,7 @@ describe('lireBordereau - Tests des erreurs', () => {
 
     describe('extraireScan - Tests des erreurs', () => {
         it('doit lever une ErreurDocumentSource si le type MIME n\'est pas supporté par extraireScans', async () => {
-            const mimeInconnu = 'application/docx' as any; // Force un type non supporté (docx) pour la levée de ErreurDocumentSource
+            const mimeInconnu = 'application/docx' as 'application/pdf'; // Force un type non supporté (docx) pour la levée de ErreurDocumentSource
 
             (extraireScans as jest.Mock).mockImplementation(() => {
                 throw new ErreurDocumentSource(`Type de document source non supporté : ${mimeInconnu}`);

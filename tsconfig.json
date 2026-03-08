@@ -10,6 +10,7 @@
     "module": "nodenext",
     "target": "esnext",
     "types": ["jest"],
+
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
@@ -40,5 +41,6 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-  }
+  },
+  "exclude": ["tests", "dist", "node_modules"]
 }

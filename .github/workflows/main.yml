@@ -1,0 +1,96 @@
+name: CI Anonymex
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Setup fichier .env
+        run: |
+          cat > .env << EOF
+          BDD_USER_NAME=root
+          BDD_PASSWORD=
+          BDD_NAME=anonymex
+          BDD_PORT=3306
+          BDD_HOST=localhost
+          EOF
+
+      - name: Build project
+        run: npm run build
+
+      - name: Cacher les artefacts de build
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: dist/
+          retention-days: 1
+
+  lint:
+    needs: setup
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Linter le code
+        run: npx eslint src/
+
+  test:
+    needs: setup
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Setup fichier .env
+        run: |
+          cat > .env << EOF
+          BDD_USER_NAME=root
+          BDD_PASSWORD=
+          BDD_NAME=anonymex
+          BDD_PORT=3306
+          BDD_HOST=localhost
+          EOF
+
+      - name: Récupérer les artefacts de build
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+
+      - name: Exécuter les tests
+        run: npm test -- --coverage

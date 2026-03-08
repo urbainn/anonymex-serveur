@@ -1,22 +1,12 @@
-export default {
-  // Le preset ts-jest configure déjà le transform pour les fichiers .ts
-  preset: "ts-jest",
+const { createDefaultPreset } = require("ts-jest");
+
+const tsJestTransformCfg = createDefaultPreset().transform;
+
+/** @type {import("jest").Config} **/
+module.exports = {
   testEnvironment: "node",
-  roots: ["<rootDir>/src/tests"],
-  testRegex: "(/__tests__/.*|(\\.|/)(test|spec))\\.ts$",
-  moduleFileExtensions: ["ts", "js", "json", "node"],
-  moduleNameMapper: {
-    "^@/(.*)$": "<rootDir>/src/$1"
+  transform: {
+    ...tsJestTransformCfg,
   },
-  transformIgnorePatterns: [
-    "/node_modules/(?!(pdfjs-dist)/)"
-  ],
-  collectCoverage: true,
-  coverageDirectory: 'coverage',
-  collectCoverageFrom: [
-    "src/**/*.{ts,tsx}",
-    "!src/**/*.d.ts",
-    "!**/node_modules/**",
-    "!**/vendor/**"
-  ]
+  testPathIgnorePatterns: ["/node_modules/", "/dist/"],
 };

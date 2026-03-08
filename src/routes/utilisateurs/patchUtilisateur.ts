@@ -1,6 +1,5 @@
-import { Request, Response } from "express";
 
-export async function patchUtilisateur(req: Request): Promise<{ success: boolean }> {
+export async function patchUtilisateur(): Promise<{ success: boolean }> {
 
     return { success: Math.random() < 0.5 };
 }

@@ -1,4 +1,3 @@
-import { exp } from "@techstark/opencv-js";
 import { ErreurBase } from "../ErreurBase";
 
 export class ErreurXLSX extends ErreurBase { };

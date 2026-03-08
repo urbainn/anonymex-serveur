@@ -1,6 +1,4 @@
 import XLSX from "@e965/xlsx";
-import { readFileSync } from 'fs';
-import { ErreurConversion } from "../lecture/lectureErreurs";
 import { ErreurLectureXLSX } from "./ErreursXLSX";
 
 export interface SheetData {

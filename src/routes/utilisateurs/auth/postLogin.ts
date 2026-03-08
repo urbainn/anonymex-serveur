@@ -18,6 +18,11 @@ export async function postLogin(req: Request): Promise<APIBoolResponse> {
     const estCorrect = await new Promise<boolean>((resolve) => {
         // Compare le mot de passe avec le hash stocké
         // si valide, résoudre la promesse avec true
+        if (typeof utilisateurBrut.passwordHash !== "string") {
+            resolve(false);
+            return;
+        }
+
         compare(infosLogin.motDePasse, utilisateurBrut.passwordHash, (err, result) => {
             if (err) {
                 resolve(false);

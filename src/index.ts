@@ -5,7 +5,6 @@ import { logInfo } from "./utils/logger";
 import cors from "cors";
 import express from "express";
 import cookieParser from "cookie-parser";
-import { lireBordereau } from "./core/lecture/lireBordereau";
 import { genererBordereau } from "./core/generation/bordereau/genererBordereau";
 
 // lireBordereau('debug/pdf/TAS.pdf', 'application/pdf');

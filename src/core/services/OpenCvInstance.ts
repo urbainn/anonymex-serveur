@@ -1,9 +1,11 @@
 import cvPret from "@techstark/opencv-js";
 
-export class OpenCvInstance {
-    private static instance: typeof cvPret | null = null;
+export type CvType = typeof cvPret;
 
-    public static async getInstance(): Promise<typeof cvPret> {
+export class OpenCvInstance {
+    private static instance: CvType | null = null;
+
+    public static async getInstance(): Promise<CvType> {
         if (!OpenCvInstance.instance) {
             OpenCvInstance.instance = await cvPret;
         }

@@ -1,5 +1,5 @@
 import { Mat } from "@techstark/opencv-js";
-import { OpenCvInstance } from "../core/services/OpenCvInstance";
+import { CvType } from "../core/services/OpenCvInstance";
 import sharp from "sharp";
 
 /**
@@ -8,7 +8,7 @@ import sharp from "sharp";
  * @param mat Matrice opencv en BGR
  * @returns 
  */
-export function matToSharp(cv: any, mat: Mat): sharp.Sharp {
+export function matToSharp(cv: CvType, mat: Mat): sharp.Sharp {
     const rgb = new cv.Mat();
     cv.cvtColor(mat, rgb, cv.COLOR_BGR2RGB);
 

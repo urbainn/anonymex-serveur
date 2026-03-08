@@ -6,9 +6,8 @@ import { ConfigManager } from "../ConfigManager";
 import config from "../../../../config/config.json";
 import { Transaction } from "./Transaction";
 
-export interface RowData {
-    [column: string]: any;
-}
+export type QueryValue = string | number | null | boolean | Date | Buffer;
+export type RowData = Record<string, QueryValue>;
 
 /**
  * Wrapper d'accès à la base de données MySQL anonymex.
@@ -54,7 +53,7 @@ export class Database {
      * @param sql Requête SQL.
      * @param params paramètres de la requête 
      */
-    public static async query<T extends { [column: string]: any; }>(sql: string, params?: any[]): Promise<T[]> {
+    public static async query<T extends Record<string, QueryValue>>(sql: string, params?: QueryValue[]): Promise<T[]> {
         const pool = await this.connexion();
         return new Promise<T[]>((resolve, reject) => {
             pool.query<(RowDataPacket & T)[]>(sql, params, (err, results) => {
@@ -72,7 +71,7 @@ export class Database {
      * @param sql Requête SQL.
      * @param params paramètres de la requête
      */
-    public static async execute(sql: string, params?: any[]): Promise<ResultSetHeader> {
+    public static async execute(sql: string, params?: QueryValue[]): Promise<ResultSetHeader> {
         const pool = await this.connexion();
         return new Promise<ResultSetHeader>((resolve, reject) => {
             pool.execute<ResultSetHeader>(sql, params, (err, results) => {
@@ -92,7 +91,7 @@ export class Database {
     private static async importer(): Promise<boolean> {
 
         const results = await this.query<{ nbTables: number }>("SELECT COUNT(*) as nbTables FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema = ?", [ConfigManager.getVarEnv("BDD_NAME")]);
-        if (results.length > 0 && results[0]!.nbTables === 0) {
+        if (results[0] && results[0].nbTables === 0) {
 
             // Fichier sql contenant le schéma de la BDD
             const sqlFilePath = join(__dirname, "..", "..", "..", "..", "config", "schemas", "initial.sql");

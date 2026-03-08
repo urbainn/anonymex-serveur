@@ -3,7 +3,7 @@
  * @param a
  * @param b
  */
-function hamming(a: string, b: string): number {
+export function hamming(a: string, b: string): number {
     if (a.length !== b.length) throw new Error("Les chaînes doivent avoir la même longueur.");
     let dist = 0;
     for (let i = 0; i < a.length; i++) {
@@ -18,11 +18,11 @@ function hamming(a: string, b: string): number {
  * @param length longueur du mot
  * @param alphabet
  */
-function indiceVersMot(index: number, length: number, alphabet: string): string {
+export function indiceVersMot(index: number, length: number, alphabet: string): string {
     let word = "";
     const Q = alphabet.length;
     for (let i = 0; i < length; i++) {
-        const lettre = alphabet[index % Q]!;
+        const lettre = alphabet[index % Q];
         word = lettre + word;
         index = Math.floor(index / Q);
     }

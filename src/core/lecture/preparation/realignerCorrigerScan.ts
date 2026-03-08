@@ -11,7 +11,7 @@ import { CibleConcentriqueDetection } from "./detecterCiblesConcentriques";
 
 type Pt = [number, number];
 
-export type realignerCorrigerOptions = {
+export interface realignerCorrigerOptions {
     /** Taille (diamètre) des cibles concentriques en millimètres */
     tailleCiblesMm: number;
     /** Marge en millimètres autour des cibles */
@@ -19,7 +19,7 @@ export type realignerCorrigerOptions = {
     format: 'A4';
 };
 
-export async function realignerCorrigerScan(image: sharp.Sharp, detections: Array<null | CibleConcentriqueDetection>, options: realignerCorrigerOptions): Promise<Mat> {
+export async function realignerCorrigerScan(image: sharp.Sharp, detections: (null | CibleConcentriqueDetection)[], options: realignerCorrigerOptions): Promise<Mat> {
     const { tailleCiblesMm, margeCiblesMm, format } = options;
     const { formatWidthMm, formatHeightMm } = dimensionsFormats[format];
 
@@ -33,7 +33,6 @@ export async function realignerCorrigerScan(image: sharp.Sharp, detections: Arra
     cv.cvtColor(rgba, mat, cv.COLOR_RGBA2BGR);
     rgba.delete();
 
-    const imgWidth = mat.cols;
     const imgHeight = mat.rows;
 
     // Calculer la taille de sortie du document en pixels

@@ -1,4 +1,5 @@
 import { PoolConnection, RowDataPacket } from "mysql2";
+import { QueryValue } from "./Database";
 
 /**
  * Représente une transaction de base de données.
@@ -11,7 +12,7 @@ export class Transaction {
         this.conn = conn;
     }
 
-    public async query<T extends { [column: string]: any; }>(sql: string, params?: any[]): Promise<T[]> {
+    public async query<T extends Record<string, QueryValue>>(sql: string, params?: QueryValue[]): Promise<T[]> {
         return new Promise<T[]>((resolve, reject) => {
             this.conn.query<(RowDataPacket & T)[]>(sql, params, (err, results) => {
                 if (err) {
@@ -23,7 +24,7 @@ export class Transaction {
         });
     }
 
-    public async execute(sql: string, params?: any[]): Promise<void> {
+    public async execute(sql: string, params?: QueryValue[]): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             this.conn.execute(sql, params, (err) => {
                 if (err) {

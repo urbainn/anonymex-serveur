@@ -7,11 +7,11 @@ import { sessionCache } from "../../cache/sessions/SessionCache";
 import { EpreuveStatut } from "../../contracts/epreuves";
 import { ErreurLigneInvalide, ErreurXLSX } from "./ErreursXLSX";
 import { logInfo } from "../../utils/logger";
-import { Database } from "../services/database/Database";
+import { Database, QueryValue } from "../services/database/Database";
 import { Transaction } from "../services/database/Transaction";
 import { ConvocationData } from "../../cache/convocations/Convocation";
 import { salleCache } from "../../cache/salles/SalleCache";
-import { Salle, SalleData } from "../../cache/salles/Salle";
+import { Salle } from "../../cache/salles/Salle";
 
 const CHAMPS_INTERPRETATION = {
     // nom du champ interprété => nom de la colonne dans le XLSX
@@ -43,7 +43,7 @@ interface InterpretationFiltres {
  * @returns Vrai si succès, faux si l'interprétation a échoué.
  * @note Écrase les données existantes en cas de conflit (une convocation non incluse dans le XLSX est conservée).
  */
-export async function interpretationXLSX(data: Array<Record<string, unknown>>, session: Session, filtres?: InterpretationFiltres): Promise<boolean> {
+export async function interpretationXLSX(data: Record<string, unknown>[], session: Session, filtres?: InterpretationFiltres): Promise<boolean> {
 
     // TEMPORAIRE!! créer la session si non existante
     const s = await sessionCache.getOrFetch(session.id);
@@ -73,7 +73,7 @@ export async function interpretationXLSX(data: Array<Record<string, unknown>>, s
         const newEtudiants: EtudiantData[] = [];
         const newEpreuves: EpreuveData[] = [];
         const newConvocations: ConvocationData[] = [];
-        const newSalles: Omit<SalleData, 'id_salle'>[] = [];
+        //const newSalles: Omit<SalleData, 'id_salle'>[] = [];
 
         for (const [indice, row] of data.entries()) {
 
@@ -147,14 +147,14 @@ export async function interpretationXLSX(data: Array<Record<string, unknown>>, s
 
             const salle = await salleCache.getParNom(nomSalle);
             let idSalle = salle?.idSalle;
-            if(!salle || !idSalle) {
+            if (!salle || !idSalle) {
                 const salleData = {
                     numero_salle: nomSalle,
                     type_salle: 'ABC' // TODO : A modifier par la suite...
                 };
 
                 idSalle = (await salleCache.insert(salleData)).insertId;
-                salleCache.set(idSalle, new Salle({...salleData, id_salle: idSalle}))
+                salleCache.set(idSalle, new Salle({ ...salleData, id_salle: idSalle }))
             }
 
             // Get ou créer la convocation
@@ -194,6 +194,7 @@ export async function interpretationXLSX(data: Array<Record<string, unknown>>, s
 
 /**
  * Insert, via transaction, les éléments par batch de 100 dans la table donnée.
+ * @template D type BRUT éléments à insérer (ex: EtudiantData, EpreuveData, etc.)
  * @param transaction 
  * @param nomTable nom de la table SQL
  * @param elements liste des éléments (sous forme brute, DATA) à insérer
@@ -212,15 +213,16 @@ async function batchInsertion<D>(transaction: Transaction, nomTable: string, ele
         const batchElements = elements.slice(batchIndex * BATCH_SIZE, (batchIndex + 1) * BATCH_SIZE);
 
         // Construire la requête d'insertion multiple
-        const colonnes = Object.keys(batchElements[0]!); // construire le dico des colonnes à partir du premier élément
+        if (!batchElements[0]) continue;
+        const colonnes = Object.keys(batchElements[0]); // construire le dico des colonnes à partir du premier élément
         const placeholders = batchElements.map(() => `(${colonnes.map(() => '?').join(', ')})`).join(', ');
         const sql = `INSERT INTO \`${nomTable}\` (${colonnes.map((col) => `\`${col}\``).join(', ')}) VALUES ${placeholders}`
             + ` ON DUPLICATE KEY UPDATE ${colonnes.map((col) => `\`${col}\` = VALUES(\`${col}\`)`).join(', ')};`;
-        const valeurs: any[] = [];
+        const valeurs: QueryValue[] = [];
 
         for (const element of batchElements) {
             for (const colonne of colonnes) {
-                valeurs.push((element as any)[colonne]);
+                valeurs.push((element)[colonne as keyof D] as QueryValue);
             }
         }
 

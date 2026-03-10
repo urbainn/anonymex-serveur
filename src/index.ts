@@ -3,6 +3,9 @@ import { logInfo } from "./utils/logger";
 import cors from "cors";
 import express from "express";
 import cookieParser from "cookie-parser";
+import { lireBordereau } from "./core/lecture/lireBordereau";
+
+lireBordereau('debug/pdf/REDUIT.pdf', 'application/pdf');
 
 const app = express();
 const port = 3000;

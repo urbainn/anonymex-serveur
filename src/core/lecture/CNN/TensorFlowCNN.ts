@@ -5,7 +5,6 @@ import { resolve } from "path";
 import { ErreurCNN } from "../lectureErreurs";
 
 const EMNIST_INPUT_SIZE = 28;
-const EMNIST_NUM_CLASSES = 26;
 
 export type EmnistImageSource = Tensor3D | Tensor4D | Buffer | Uint8Array;
 type TypesModeles = "EMNIST-Standard";
@@ -39,8 +38,9 @@ export class TensorFlowCNN {
      * Faire une prédiction sur une image donnée avec le modèle spécifié.
      * @param source image à prédire.
      * @param modele Type de modèle à utiliser pour la prédiction.
+     * @param alphabet Alphabet utilisé dans le modèle dans l'ordre des classes
      */
-    public static async predire(source: EmnistImageSource, modele: TypesModeles): Promise<ResultatPrediction> {
+    public static async predire(source: EmnistImageSource, modele: TypesModeles, alphabet: string): Promise<ResultatPrediction> {
         const model = await this.ensureModel(modele);
         const input = this.pretraitement(source);
 
@@ -52,20 +52,28 @@ export class TensorFlowCNN {
                 throw new ErreurCNN("Format de sortie du modèle EMNIST inattendu.");
             }
 
-            const probabilitiesTensor = tf.softmax(logits);
-            const probabilitiesArray = await probabilitiesTensor.data();
+            const sortieArray = Array.from(await logits.data()) as number[];
+            const sortieSembleNormalisee = this.isProbablyNormalizedProbabilities(sortieArray);
+
+            let probabilitiesArray: number[];
+            if (sortieSembleNormalisee) {
+                probabilitiesArray = sortieArray;
+            } else {
+                const probabilitiesTensor = tf.softmax(logits);
+                probabilitiesArray = Array.from(await probabilitiesTensor.data());
+                probabilitiesTensor.dispose();
+            }
 
             logits.dispose();
-            probabilitiesTensor.dispose();
 
-            const probabilities = Array.from(probabilitiesArray) as number[];
+            const probabilities = probabilitiesArray;
             const { index, value } = this.getTopProbability(probabilities);
 
             return {
                 probas: probabilities,
                 indiceClasse: index,
                 confiance: value,
-                caractere: this.indexToChar(index)
+                caractere: alphabet[index] || "?"
             };
         } finally {
             input.dispose();
@@ -165,11 +173,19 @@ export class TensorFlowCNN {
         return { index: bestIndex, value: bestValue };
     }
 
-    private static indexToChar(index: number): string {
-        if (index < 0 || index >= EMNIST_NUM_CLASSES) {
-            return "?";
+    private static isProbablyNormalizedProbabilities(values: number[]): boolean {
+        if (!values.length) {
+            return false;
         }
 
-        return String.fromCharCode("A".charCodeAt(0) + index);
+        let sum = 0;
+        for (const value of values) {
+            if (!Number.isFinite(value) || value < 0 || value > 1) {
+                return false;
+            }
+            sum += value;
+        }
+
+        return Math.abs(sum - 1) < 1e-3;
     }
 }

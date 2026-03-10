@@ -3,11 +3,6 @@ import { logInfo } from "./utils/logger";
 import cors from "cors";
 import express from "express";
 import cookieParser from "cookie-parser";
-import { genererBordereau } from "./core/generation/bordereau/genererBordereau";
-
-// lireBordereau('debug/pdf/TAS.pdf', 'application/pdf');
-
-genererBordereau({ "format": "A4", "longueurCodeAnonymat": 6, "longueurCodeEpreuve": 0, "version": 1 });
 
 const app = express();
 const port = 3000;

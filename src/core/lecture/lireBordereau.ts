@@ -14,27 +14,63 @@ import { OpenCvInstance } from '../services/OpenCvInstance';
 
 type MimeType = 'application/pdf' | 'image/jpeg' | 'image/png';
 
-let total = 0;
-let totalBon = 0;
-let totalBonCnn = 0;
-let totalBonOCR = 0;
-let echecTotal = 0;
-let tempsTotalOCR = 0;
-let tempsTotalCNN = 0;
-let pageIndex = 0;
-const echecsParPage: number[] = [];
-const pagesImpossibles: number[] = [];
-const resultatOCRBenchmark: Record<string, number> = {}; // x: lettre correcte, y: lettre détectée, xy: nombre de fois (ex: AA: 5, AB: 2, ...)
-const resultatCNNBenchmark: Record<string, number> = {}; // idem, pour CNN
-const resultatTotal: Record<string, number> = {}; // idem, pour OCR + CNN
-const jamaisReconnusLettres: Record<string, number> = {}; // lettres jamais reconnues (clé: lettre, valeur: nombre d'échecs complets => OCR + CNN)
+interface RecognitionConfidenceStats {
+    total: number;
+    correctCount: number;
+    incorrectCount: number;
+    sumConfidenceCorrect: number;
+    sumConfidenceIncorrect: number;
+    highConfidenceIncorrect70: number;
+    lowConfidenceCorrect30: number;
+}
+
+interface BenchmarkStats {
+    total: number;
+    totalBonGlobalMaxConf: number;
+    totalBonCnn: number;
+    totalBonOCR: number;
+    echecTotal: number;
+    tempsTotalOCR: number;
+    tempsTotalCNN: number;
+    pageIndex: number;
+    echecsParPage: number[];
+    pagesImpossiblesReportComplet: number[];
+    pagesImpossiblesPlusDeuxLettres: number[];
+    resultatOCRBenchmark: Record<string, number>;
+    resultatCNNBenchmark: Record<string, number>;
+    jamaisReconnusLettres: Record<string, number>;
+    confidenceOCR: RecognitionConfidenceStats;
+    confidenceCNN: RecognitionConfidenceStats;
+    confidenceGlobal: RecognitionConfidenceStats;
+}
 
 export const dimensionsFormats = {
     A4: { formatWidthMm: 210, formatHeightMm: 297 },
 };
 
+const ALPHABET = "BCEFGHIKLNOPQRSTUWXYZ";
+
 // WIP : chemin deviendra buffer/busboy
 export async function lireBordereau(chemin: string, mimeType: MimeType): Promise<void> {
+    const stats: BenchmarkStats = {
+        total: 0,
+        totalBonGlobalMaxConf: 0,
+        totalBonCnn: 0,
+        totalBonOCR: 0,
+        echecTotal: 0,
+        tempsTotalOCR: 0,
+        tempsTotalCNN: 0,
+        pageIndex: 0,
+        echecsParPage: [],
+        pagesImpossiblesReportComplet: [],
+        pagesImpossiblesPlusDeuxLettres: [],
+        resultatOCRBenchmark: {},
+        resultatCNNBenchmark: {},
+        jamaisReconnusLettres: {},
+        confidenceOCR: creerStatsConfiance(),
+        confidenceCNN: creerStatsConfiance(),
+        confidenceGlobal: creerStatsConfiance(),
+    };
 
     const buffer = readFileSync(chemin);
     const uint8 = new Uint8Array(buffer);
@@ -49,13 +85,14 @@ export async function lireBordereau(chemin: string, mimeType: MimeType): Promise
 
         const rois = new BenchmarkUnitaireModule().getZonesLecture().lettresCodeAnonymat;
 
-        await TesseractOCR.configurerModeCaractereUnique('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+        await TesseractOCR.configurerModeCaractereUnique(ALPHABET);
 
         // LIRE ETIQUETTES et transformer en str
         const detections = await detecterAprilTags(scan, matToSharp(await OpenCvInstance.getInstance(), scanPret));
         const code = detections.sort((a, b) => a.center[0] - b.center[0]).map(d => String.fromCharCode(d.id));
 
-        const indexEchoues: number[] = []// indice des cases ayant échouées, pour savoir si une lecture avec redondance aurait été possible
+        const indexEchoues: number[] = [];
+        const pageIndexCourante = stats.pageIndex;
 
         const onRoiExtrait = async (image: sharp.Sharp, index: number) => {
             const bufferImgTraitee = await preprocessPipelines
@@ -71,98 +108,222 @@ export async function lireBordereau(chemin: string, mimeType: MimeType): Promise
             //await preprocessPipelines.emnist(image).png().toFile('debug/rois/roi_emnist_' + index + '.png');
 
             const debutOCR = Date.now();
-            const { text } = await TesseractOCR.interroger(bufferImgTraitee);
-            tempsTotalOCR += (Date.now() - debutOCR);
+            const { text, confidence } = await TesseractOCR.interroger(bufferImgTraitee);
+            stats.tempsTotalOCR += (Date.now() - debutOCR);
 
             const debutCNN = Date.now();
-            const prediction = await TensorFlowCNN.predire(await preprocessPipelines.emnist(image).png().toBuffer(), 'EMNIST-Standard');
-            tempsTotalCNN += (Date.now() - debutCNN);
+            const prediction = await TensorFlowCNN.predire(
+                await preprocessPipelines.emnist(image).png().toBuffer(), 'EMNIST-Standard', ALPHABET
+            );
+            stats.tempsTotalCNN += (Date.now() - debutCNN);
 
             if (code.length <= index) {
                 throw new Error(`Index ${index} non valide dans le code détecté : ${code.join('')}`);
             }
             const lettreAttendue = code[index];
+            const texteOCR = text.trim().toUpperCase();
+            const predictionOcrCorrecte = texteOCR === lettreAttendue;
+            const predictionCnnCorrecte = prediction.caractere === lettreAttendue;
+            const confianceOCR = normaliserConfiancePourcentage(confidence);
+            const confianceCNN = normaliserConfiancePourcentage(prediction.confiance * 100);
+            const confianceMax = Math.max(confianceOCR, confianceCNN);
+            const predictionGlobaleCorrecte = confianceOCR >= confianceCNN ? predictionOcrCorrecte : predictionCnnCorrecte;
 
-            total++;
+            stats.total++;
+            enregistrerConfiance(stats.confidenceOCR, predictionOcrCorrecte, confianceOCR);
+            enregistrerConfiance(stats.confidenceCNN, predictionCnnCorrecte, confianceCNN);
+            enregistrerConfiance(stats.confidenceGlobal, predictionGlobaleCorrecte, confianceMax);
 
             //console.log(`ROI ${index} : ${text.trim()} (${confidence.toFixed(2)}%) -- attendu : ${lettreAttendue}`);
-            if (text.trim().toUpperCase() === lettreAttendue) { totalBon++; totalBonOCR++; }
-            if (prediction.caractere === lettreAttendue) { totalBonCnn++; totalBon++; }
-            if (lettreAttendue && text.trim().toUpperCase() !== lettreAttendue && prediction.caractere !== lettreAttendue) {
-                echecTotal++;
-                echecsParPage[pageIndex] = (echecsParPage[pageIndex] || 0) + 1;
-                jamaisReconnusLettres[lettreAttendue] = (jamaisReconnusLettres[lettreAttendue] || 0) + 1;
+            if (predictionOcrCorrecte) {
+                stats.totalBonOCR++;
+            }
+            if (predictionCnnCorrecte) {
+                stats.totalBonCnn++;
+            }
+            if (predictionGlobaleCorrecte) {
+                stats.totalBonGlobalMaxConf++;
+            }
+            if (lettreAttendue && !predictionOcrCorrecte && !predictionCnnCorrecte) {
+                stats.echecTotal++;
+                stats.echecsParPage[pageIndexCourante] = (stats.echecsParPage[pageIndexCourante] || 0) + 1;
+                stats.jamaisReconnusLettres[lettreAttendue] = (stats.jamaisReconnusLettres[lettreAttendue] || 0) + 1;
                 //console.log('Echec total ROI ' + index + ': attendu ' + lettreAttendue + ', Tesseract a lu "' + text.trim() + '" (conf: ' + confidence.toFixed(2) + '%), CNN a lu "' + prediction.caractere + '" (confiance: ' + (prediction.confiance * 100).toFixed(2) + '%).');
                 indexEchoues.push(index);
 
-                await preprocessPipelines.emnist(image).png().toFile('debug/rois/erreurs/page_' + (pageIndex + 1).toString() + '_' + prediction.caractere + '_' + lettreAttendue + '.png');
+                await preprocessPipelines.emnist(image).png().toFile('debug/rois/erreurs/page_' + (pageIndexCourante + 1).toString() + '_' + prediction.caractere + '_' + lettreAttendue + '.png');
             }
 
             //console.log("PREDICTION CNN :", prediction.caractere, "confiance :", (prediction.confiance * 100).toFixed(2) + '% -- attendu :', lettreAttendue);
 
-            const key = `${lettreAttendue}${text.trim().toUpperCase()}`;
-            resultatOCRBenchmark[key] = (resultatOCRBenchmark[key] || 0) + 1;
+            const key = `${lettreAttendue}${texteOCR}`;
+            stats.resultatOCRBenchmark[key] = (stats.resultatOCRBenchmark[key] || 0) + 1;
             const keyCnn = `${lettreAttendue}${prediction.caractere}`;
-            resultatCNNBenchmark[keyCnn] = (resultatCNNBenchmark[keyCnn] || 0) + 1;
+            stats.resultatCNNBenchmark[keyCnn] = (stats.resultatCNNBenchmark[keyCnn] || 0) + 1;
 
             //console.log(`ROI ${index} découpée et sauvegardée.`);
         }
 
         try {
-            await decouperROIs(scanPret, rois, diametreCiblesMm, margeCiblesMm, 'A4', onRoiExtrait);
+            await decouperROIs(scanPret, rois, diametreCiblesMm, margeCiblesMm, 'A4', onRoiExtrait, { paddingMm: -0.5 });
 
-            // check si lecture impossible
+            // Méthode 1 : report complet (déjà implémentée)
             for (const index of indexEchoues) {
                 if (indexEchoues.some(v => index + 3 === v)) {
-                    pagesImpossibles.push(pageIndex);
+                    stats.pagesImpossiblesReportComplet.push(pageIndexCourante);
                     break;
                 }
             }
 
-            // TEMP pour benchmark!!
-
-            console.log(versCSV(resultatOCRBenchmark));
-            console.log('---------- CNN ----------');
-            console.log(versCSV(resultatCNNBenchmark));
-            console.log('---------- TOTAL ----------');
-
-            // fusion des 2 résultats
-            for (const key of new Set([...Object.keys(resultatOCRBenchmark), ...Object.keys(resultatCNNBenchmark)])) {
-                resultatTotal[key] = (resultatOCRBenchmark[key] || 0) + (resultatCNNBenchmark[key] || 0);
+            // Méthode 2 : échec complet si plus de 2 lettres non lues
+            if (indexEchoues.length > 2) {
+                stats.pagesImpossiblesPlusDeuxLettres.push(pageIndexCourante);
             }
-            console.log(versCSV(resultatTotal));
-            console.log('---------- STATS ----------');
-            console.log('Lettres jamais reconnues (OCR + CNN) :');
-            console.log('\n\n%age de lettres correctes : ' + ((totalBon / (total * 2)) * 100).toFixed(2) + '%');
-            console.log('%age de lettres correctes CNN : ' + ((totalBonCnn / total) * 100).toFixed(2) + '%');
-            console.log('%age de lettres correctes OCR : ' + ((totalBonOCR / total) * 100).toFixed(2) + '%');
-            console.log('Echecs totaux (les 2 méthodes incorrectes) : ' + echecTotal + ' sur ' + total + ' lettres. soit ' + ((echecTotal / total) * 100).toFixed(2) + '%');
-            console.log('---------- TEMPS MOYENS ----------');
-            console.log('Temps moyen OCR par lettre : ' + (tempsTotalOCR / total).toFixed(2) + ' ms');
-            console.log('Temps moyen CNN par lettre : ' + (tempsTotalCNN / total).toFixed(2) + ' ms');
-            console.log('------------------------------');
-            const lettres = Object.keys(jamaisReconnusLettres).sort((a, b) => (jamaisReconnusLettres[b] ?? 0) - (jamaisReconnusLettres[a] ?? 0)).slice(0, 8); // afficher un max de 8 lettres et trier par VALEUR
-            for (const lettre of lettres) {
-                console.log(`Lettre ${lettre} : ${jamaisReconnusLettres[lettre]} échecs complets.`);
-            }
-            console.log('------------------------------');
-            console.log('Echecs par page :');
-            echecsParPage.forEach((echecs, index) => {
-                if (echecs > 3) {
-                    console.log(`Page ${index + 1} : ${echecs} échecs complets.`);
-                }
-            });
-            console.log('pages non lisible par méthode de redondance : ', pagesImpossibles);
-            console.log('------------------------------\n\n');
 
         } catch (err) {
             throw ErreurDecoupeROIs.assigner(err);
         } finally {
             scanPret.delete();
-            pageIndex++;
+            stats.pageIndex++;
         }
     });
 
+    const resultatTotal = fusionnerResultats(stats.resultatOCRBenchmark, stats.resultatCNNBenchmark);
+
+    console.log('---------- MATRICE OCR ----------');
+    console.log(versCSV(stats.resultatOCRBenchmark));
+    console.log('---------- MATRICE CNN ----------');
+    console.log(versCSV(stats.resultatCNNBenchmark));
+    console.log('---------- MATRICE OCR+CNN ----------');
+    console.log(versCSV(resultatTotal));
+
+    console.log('---------- STATS PAR METHODE ----------');
+    afficherStatsMethode('OCR', stats.totalBonOCR, stats.total, stats.confidenceOCR);
+    afficherStatsMethode('CNN', stats.totalBonCnn, stats.total, stats.confidenceCNN);
+    afficherStatsMethode('OCR+CNN (max confiance)', stats.totalBonGlobalMaxConf, stats.total, stats.confidenceGlobal);
+    console.log('Echecs totaux stricts (OCR ET CNN incorrects sur une même case) : ' + stats.echecTotal + ' sur ' + stats.total + ' cases. soit ' + toPercent(stats.echecTotal, stats.total));
+
+    console.log('---------- TEMPS MOYENS ----------');
+    console.log('Temps moyen OCR par lettre : ' + toAverage(stats.tempsTotalOCR, stats.total) + ' ms');
+    console.log('Temps moyen CNN par lettre : ' + toAverage(stats.tempsTotalCNN, stats.total) + ' ms');
+
+    console.log('---------- LETTRES JAMAIS RECONNUES ----------');
+    const lettres = Object.keys(stats.jamaisReconnusLettres)
+        .sort((a, b) => (stats.jamaisReconnusLettres[b] ?? 0) - (stats.jamaisReconnusLettres[a] ?? 0))
+        .slice(0, 8);
+    for (const lettre of lettres) {
+        console.log(`Lettre ${lettre} : ${stats.jamaisReconnusLettres[lettre]} échecs complets.`);
+    }
+
+    console.log('---------- ECHECS PAR PAGE ----------');
+    stats.echecsParPage.forEach((echecs, index) => {
+        if (echecs > 0) {
+            console.log(`Page ${index + 1} : ${echecs} échecs complets.`);
+        }
+    });
+
+    console.log('---------- BENCHMARK ECHEC CODE ----------');
+    console.log(
+        'Méthode report complet (index i et i+3 en échec) -> pages impossibles :',
+        stats.pagesImpossiblesReportComplet.map(index => index + 1)
+    );
+    console.log(
+        'Méthode >2 lettres non lues -> pages impossibles :',
+        stats.pagesImpossiblesPlusDeuxLettres.map(index => index + 1)
+    );
+    console.log('------------------------------\n\n');
+
+}
+
+function fusionnerResultats(
+    resultatOCRBenchmark: Record<string, number>,
+    resultatCNNBenchmark: Record<string, number>
+): Record<string, number> {
+    const resultatTotal: Record<string, number> = {};
+    for (const key of new Set([...Object.keys(resultatOCRBenchmark), ...Object.keys(resultatCNNBenchmark)])) {
+        resultatTotal[key] = (resultatOCRBenchmark[key] || 0) + (resultatCNNBenchmark[key] || 0);
+    }
+    return resultatTotal;
+}
+
+function creerStatsConfiance(): RecognitionConfidenceStats {
+    return {
+        total: 0,
+        correctCount: 0,
+        incorrectCount: 0,
+        sumConfidenceCorrect: 0,
+        sumConfidenceIncorrect: 0,
+        highConfidenceIncorrect70: 0,
+        lowConfidenceCorrect30: 0,
+    };
+}
+
+function normaliserConfiancePourcentage(confiance: number): number {
+    if (!Number.isFinite(confiance)) {
+        return 0;
+    }
+    if (confiance < 0) {
+        return 0;
+    }
+    if (confiance > 100) {
+        return 100;
+    }
+    return confiance;
+}
+
+function enregistrerConfiance(
+    statsConfiance: RecognitionConfidenceStats,
+    estCorrect: boolean,
+    confiancePct: number
+): void {
+    statsConfiance.total++;
+    if (estCorrect) {
+        statsConfiance.correctCount++;
+        statsConfiance.sumConfidenceCorrect += confiancePct;
+        if (confiancePct < 30) {
+            statsConfiance.lowConfidenceCorrect30++;
+        }
+        return;
+    }
+
+    statsConfiance.incorrectCount++;
+    statsConfiance.sumConfidenceIncorrect += confiancePct;
+    if (confiancePct > 70) {
+        statsConfiance.highConfidenceIncorrect70++;
+    }
+}
+
+function afficherStatsMethode(
+    nom: string,
+    totalCorrect: number,
+    totalPredictions: number,
+    confiance: RecognitionConfidenceStats
+): void {
+    console.log(`--- ${nom} ---`);
+    console.log('Précision (taux de réussite) : ' + toPercent(totalCorrect, totalPredictions));
+    console.log('Taux d\'échec : ' + toPercent(totalPredictions - totalCorrect, totalPredictions));
+    console.log('Confiance moyenne (correct) : ' + toAveragePercent(confiance.sumConfidenceCorrect, confiance.correctCount));
+    console.log('Confiance moyenne (incorrect) : ' + toAveragePercent(confiance.sumConfidenceIncorrect, confiance.incorrectCount));
+    console.log('Erreurs à confiance >70% : ' + toPercent(confiance.highConfidenceIncorrect70, confiance.incorrectCount) + ` (${confiance.highConfidenceIncorrect70}/${confiance.incorrectCount})`);
+    console.log('Réussites à confiance <30% : ' + toPercent(confiance.lowConfidenceCorrect30, confiance.correctCount) + ` (${confiance.lowConfidenceCorrect30}/${confiance.correctCount})`);
+}
+
+function toAveragePercent(total: number, count: number): string {
+    return toAverage(total, count) + '%';
+}
+
+function toPercent(numerateur: number, denominateur: number): string {
+    if (!denominateur) {
+        return '0.00%';
+    }
+    return ((numerateur / denominateur) * 100).toFixed(2) + '%';
+}
+
+function toAverage(total: number, count: number): string {
+    if (!count) {
+        return '0.00';
+    }
+    return (total / count).toFixed(2);
 }
 
 function versCSV(resultats: Record<string, number>): string {

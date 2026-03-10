@@ -16,7 +16,7 @@ export class ConfigManager {
     private static configCachee: ConfigCachee | undefined;
 
     /** Variables d'environnement (.env). Chargées uniquement si présentes (utile hors Docker) */
-    private static envConfig = dotenv.config();
+    private static envConfig = dotenv.config({ 'quiet': true });
 
     /**
      * Lire une variable d'environnement ou lève une erreur si elle n'est pas définie.

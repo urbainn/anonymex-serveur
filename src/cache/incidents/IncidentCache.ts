@@ -1,7 +1,7 @@
 import { DatabaseCacheBase } from "../base/DatabaseCacheBase";
 import { Incident, IncidentData } from "./Incident";
 
-export class EpreuveCache extends DatabaseCacheBase<number /*id*/, Incident, IncidentData> {
+export class IncidentCache extends DatabaseCacheBase<number /*id*/, Incident, IncidentData> {
 
     nomTable = "incident";
     colonnesClePrimaire: string[] = ["id_session","id_incident"];

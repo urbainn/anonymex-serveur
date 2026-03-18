@@ -1,5 +1,6 @@
 import { APISession, SessionsStatut } from "../../contracts/sessions"
 import { EpreuveCache } from "../epreuves/EpreuveCache";
+import { IncidentCache } from "../incidents/IncidentCache";
 import { ElementEnCacheBdd } from "../base/ElementEnCacheBdd";
 
 
@@ -18,6 +19,7 @@ export class Session extends ElementEnCacheBdd<SessionData> {
 
     /** Cache des épreuves associées à cette session */
     public epreuves: EpreuveCache;
+    public incidents: IncidentCache;
 
     constructor(data: SessionData) {
         super();
@@ -26,6 +28,7 @@ export class Session extends ElementEnCacheBdd<SessionData> {
         this.annee = data.annee;
         this.statut = data.statut;
         this.epreuves = new EpreuveCache(this.id);
+        this.incidents = new IncidentCache(this.id);
     }
 
     public fromData(data: Partial<SessionData>): this {

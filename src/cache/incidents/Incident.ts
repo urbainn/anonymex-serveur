@@ -7,7 +7,6 @@ export interface IncidentData {
     code_epreuve: string;
     titre: string;
     details: string;
-    resolu: boolean;
     code_anonymat: string | null;
     note_quart: number | null;
 }
@@ -18,7 +17,6 @@ export class Incident extends ElementEnCache {
     public codeEpreuve: string;
     public titre: string;
     public details: string;
-    public resolu: boolean;
     public codeAnonymat: string | null;
     public noteQuart: number | null;
 
@@ -29,7 +27,6 @@ export class Incident extends ElementEnCache {
         this.codeEpreuve = data.code_epreuve;
         this.titre = data.titre;
         this.details = data.details;
-        this.resolu = data.resolu;
         this.codeAnonymat = data.code_anonymat;
         this.noteQuart = data.note_quart;
     }
@@ -41,7 +38,6 @@ export class Incident extends ElementEnCache {
             codeEpreuve: this.codeEpreuve,
             titre: this.titre,
             details: this.details,
-            resolu: this.resolu,
             codeAnonymat: this.codeAnonymat ?? undefined,
             noteQuart: this.noteQuart ?? undefined
         }

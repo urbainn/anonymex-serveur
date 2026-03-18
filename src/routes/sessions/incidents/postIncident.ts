@@ -1,9 +1,6 @@
-import { IncidentCache } from "../../../cache/incidents/IncidentCache";
 import { sessionCache } from "../../../cache/sessions/SessionCache";
-import { APIBoolResponse } from "../../../contracts/common";
-import { APIIncident, APIListIncidents, PartielIncidentSchema } from "../../../contracts/incidents";
+import { APIIncident } from "../../../contracts/incidents";
 import { ErreurRequeteInvalide } from "../../erreursApi";
-import { getIncidents } from "./getIncidents";
 
 export async function postIncident(sessionId: string, codeEpreuve: string, incidentId: string, codeAnonymat: string, noteQuart: string): Promise<{ success: boolean, incidents?: APIIncident[] }> {
 
@@ -21,40 +18,79 @@ export async function postIncident(sessionId: string, codeEpreuve: string, incid
         throw new ErreurRequeteInvalide("La session demandée n'existe pas.");
     }
 
-    const numExiste = true; // TODO: Réaliser la réelle logique.
+    const epreuve = session.epreuves.get(codeEpreuve);
 
-    if (!numExiste) {
-        // Si le numéro d'anonymat n'existe pas, alors on retourne l'échec avec la liste des incidents mise à jour.
+    if (epreuve === undefined) {
+        throw new ErreurRequeteInvalide("L'épreuve demandée n'existe pas.");
+    }
+
+    const convocation = await epreuve.convocations.getOrFetch(codeAnonymat);
+
+    if (convocation === undefined) {
+        throw new ErreurRequeteInvalide("La convocation demandée n'existe pas.");
+    }
+
+    if (epreuve.convocations.getOrFetch(codeAnonymat) === undefined) {
+
+        // Si le numéro d'anonymat n'existe pas, alors on retourne une liste vide (pas de nouvel incident).
         return {
             success: false,
             incidents: []
         };
-    }
-    else {
-        // Si le numéro d'anonymat existe alors on supprime l'incident, et on retourne le succès avec la liste des incidents mise à jour.
-        // TODO: Effectuer également les modifications sur la convocation (note/numéro d'anonymat).
 
+    }
+    else if (convocation.noteQuart === null) {
+
+        // Si le numéro d'anonymat existe alors on supprime l'incident, et on retourne le succès avec la liste des incidents mise à jour.
         const suppressionIncident = await session.incidents.delete(idIncident);
 
-        const incidentsBruts = await session.incidents.getAll();
+        epreuve.convocations.update(
+            codeAnonymat,
+            {
+                code_anonymat: codeAnonymat, 
+                note_quart: quartNote
+            }
+        )
 
-        if (incidentsBruts === undefined) {
-            throw new ErreurRequeteInvalide("Impossible de récupérer les incidents de la session demandée.");
+        return {
+            success: suppressionIncident.affectedRows > 0,
+            incidents: []
+        }
+    } else {
+
+        // Si le numéro d'anonymat existe mais est déjà assigné alors on supprime l'incident, et on retourne le succès avec la liste des incidents mise à jour.
+        const suppressionIncident = await session.incidents.delete(idIncident);
+
+        const incidentData1 = {
+                id_session: idSession,
+                code_epreuve: codeEpreuve,
+                titre: "Doublon",
+                details: "La copie possède le même numéro d'anonymat qu'une autre.",
+                code_anonymat: codeAnonymat,
+                note_quart: quartNote
+            }
+
+        const incidentData2 = {
+            id_session: convocation.idSession,
+            code_epreuve: convocation.codeEpreuve,
+            titre: "Doublon",
+            details: "La copie possède le même numéro d'anonymat qu'une autre.",
+            code_anonymat: convocation.codeAnonymat,
+            note_quart: convocation.noteQuart
         }
 
-        const listeIncidents: APIIncident[] = [];
-        for (const incident of incidentsBruts) {
 
-            const incidentFormatee = incident.toJSON();
-
-            listeIncidents.push(incidentFormatee);
-
+        const insertionIncident1 = await session.incidents.insert(incidentData1);
+        const insertionIncident2 = await session.incidents.insert(incidentData2);
+        
+        if(insertionIncident1.affectedRows < 0 || insertionIncident2.affectedRows < 0) {
+            throw new Error("La création des nouveaux incidents a échouée.");
         }
 
         return {
             success: suppressionIncident.affectedRows > 0,
-            incidents: listeIncidents
+            incidents: []
         }
-    };
+    }
 
-}
+};

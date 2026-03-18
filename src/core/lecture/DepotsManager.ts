@@ -1,7 +1,7 @@
 import { Fichier } from "../../routes/useFile";
 import { CallbackLecture, lireBordereaux } from "./lireBordereaux";
 
-interface Depot {
+export interface Depot {
     codeEpreuve: string;
     fichiers: Fichier[];
     /**
@@ -62,7 +62,7 @@ export class DepotsManager {
      */
     private static async lectureDepot(depot: Depot): Promise<void> {
         try {
-            await lireBordereaux(depot.fichiers, depot.callback);
+            await lireBordereaux(depot.fichiers, () => depot);
         } catch (error) {
             depot.callback?.('error', -1, error instanceof Error ? { message: error.message } : { message: 'Inconnu' });
         } finally {

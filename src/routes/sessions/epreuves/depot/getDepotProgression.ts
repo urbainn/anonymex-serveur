@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
 import { ErreurRequeteInvalide } from "../../../erreursApi";
 import { DepotsManager } from "../../../../core/lecture/DepotsManager";
+import { logInfo } from "../../../../utils/logger";
 
 /**
- * Etablit une connexion SSE pour remonter la progression de la lecture d'un dépôt. \
+ * Etablit une connexion SSE pour remonter la progression de la lecture d'un dépôt.
  */
 export async function getDepotProgression(req: Request, res: Response): Promise<void> {
     if (req.params.session === undefined || req.params.code === undefined || req.params.depot === undefined) {
@@ -31,13 +32,16 @@ export async function getDepotProgression(req: Request, res: Response): Promise<
     res.setHeader("Connection", "keep-alive");
     res.flushHeaders(); // Envoyer les en-têtes immédiatement
 
+    logInfo('depotProgression', 'Client connecté en SSE pour le dépôt #' + depotId + '.');
+
     depot.callback = (event: string, id: number, data: Record<string, unknown>) => {
-        console.log('remontée du message ', event, id, data);
+        console.log(`remontée du message:\nevent: ${event}\ndata: ${JSON.stringify(data)}\n------------`);
         const message = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
         res.write(message);
     };
 
     depot.onComplete = () => {
+        depot.callback?.('ok', 0, {});
         res.end();
     };
 

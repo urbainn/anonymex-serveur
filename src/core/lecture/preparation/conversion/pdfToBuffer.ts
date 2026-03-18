@@ -84,7 +84,8 @@ export async function pdfToBuffer(pdf: PDFDocumentProxy, pageNum: number): Promi
         height: imgObj.height,
         channels: canaux,
         debug: pageNum === 1,
-        raw: true
+        raw: true,
+        nbPages: pdf.numPages
     };
 
     // Statistiques & outils de débuggage

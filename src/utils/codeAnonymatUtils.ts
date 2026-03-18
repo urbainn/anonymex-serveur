@@ -30,7 +30,7 @@ export function indiceVersMot(index: number, length: number, alphabet: string): 
 }
 
 /**
- * Génère les n premiers codes avec distance minimale donnée
+ * Génère les n premiers codes avec distance minimale donnée.
  * @param n nombre de codes à générer
  * @param taille nb. de caractères dans les codes
  * @param minDistance distance minimale entre les codes

@@ -4,20 +4,17 @@ import { ErreurLectureXLSX } from "./ErreursXLSX";
 export interface SheetData {
     DAT_DEB_PES: string,
     HORAIRE: string,
-    COD_SAL: string,
     COD_EPR: string,
-    COD_RES: string,
-    LIC_RES: string,
-    LIB_TYP: string,
-    COD_SES: string,
-    COD_ADM: string,
-    TRI: number,
-    LIB_PR1_IND: string,
+    HEURE_FIN: string,
+    DUREE_EXA: string,
+    COD_SAL: string,
+    LIB_SAL: string,
+    COD_BAT: string,
+    LIB_BAT: string,
+    NUM_PLC_AFF_PSI: string,
     LIB_NOM_PAT_IND: string,
-    COD_ETU_ANO: string,
-    COD_ETU: string,
-    C_COD_ANU: string,
-    C_RES: number
+    LIB_PR1_IND: string,
+    COD_ETU: string
 }
 
 export function lectureXLSX(buffer: Buffer): Record<string, unknown>[] {

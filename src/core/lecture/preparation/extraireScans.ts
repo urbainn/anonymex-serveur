@@ -5,7 +5,7 @@ import { pdfToBuffer } from './conversion/pdfToBuffer';
 import { imgToBuffer } from './conversion/imgToBuffer';
 
 export interface DocumentSource { data: Uint8Array; encoding: string; mimeType: string }
-export interface ScanData { channels: 1 | 3 | 4; debug: boolean; width: number; height: number; raw: boolean }
+export interface ScanData { channels: 1 | 3 | 4; debug: boolean; width: number; height: number; raw: boolean, nbPages: number }
 
 /**
  * Extrait le/les scan(s) d'un document source prêts à la lecture.
@@ -20,8 +20,9 @@ export async function extraireScans(doc: DocumentSource, onScanExtrait: (scan: S
     // Convertir le document source en scans prêts à la lecture
     switch (doc.mimeType) {
         case 'application/pdf': {
-            // Charger le document PDF
-            const pdf = await getDocument(doc.data).promise;
+            // Charger le document PDF depuis le buffer (busboy)
+            const pdfData = new Uint8Array(doc.data.buffer, doc.data.byteOffset, doc.data.byteLength);
+            const pdf = await getDocument({ data: pdfData }).promise;
             const nbPages = Math.min(pdf.numPages, lirenb ?? pdf.numPages);
 
             // Charger et faire un rendu de chaque page

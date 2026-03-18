@@ -17,7 +17,8 @@ export async function imgToBuffer(source: DocumentSource): Promise<ScanData> {
         height: meta.height,
         channels: meta.channels as 1 | 3 | 4,
         debug: true,
-        raw: false
+        raw: false,
+        nbPages: 1
     };
 
     return scanData;

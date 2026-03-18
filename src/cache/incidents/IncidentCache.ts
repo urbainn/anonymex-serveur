@@ -4,7 +4,7 @@ import { Incident, IncidentData } from "./Incident";
 export class IncidentCache extends DatabaseCacheBase<number /*id*/, Incident, IncidentData> {
 
     nomTable = "incident";
-    colonnesClePrimaire: string[] = ["id_session","id_incident"];
+    colonnesClePrimaire: string[] = ["id_session", "code_epreuve", "id_incident"];
 
     /**
      * Instancier un cache pour les épreuves d'une session donnée.

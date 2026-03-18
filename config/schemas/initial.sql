@@ -96,7 +96,6 @@ CREATE TABLE incident (
     code_epreuve CHAR(10) NOT NULL,
     titre VARCHAR(100) NOT NULL,
     details VARCHAR(250) NOT NULL,
-    resolu BIT NOT NULL,
     code_anonymat CHAR(6),
     note_quart TINYINT UNSIGNED,
     CONSTRAINT pk_incident PRIMARY KEY (id_incident),

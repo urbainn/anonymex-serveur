@@ -11,7 +11,7 @@ import { Transaction } from "../services/database/Transaction";
 import { ConvocationData } from "../../cache/convocations/Convocation";
 import { salleCache } from "../../cache/salles/SalleCache";
 import { SalleData } from "../../cache/salles/Salle";
-import { appliquerDecalage, genererCodesHamming, melangerCodes } from "../../utils/codeAnonymatUtils";
+import { appliquerDecalage, genererCodesHamming, classerCodes } from "../../utils/codeAnonymatUtils";
 import { config } from "../../config";
 
 const CHAMPS_INTERPRETATION = {
@@ -63,13 +63,14 @@ export async function interpretationXLSX(data: Record<string, unknown>[], sessio
     const transaction = await Database.creerTransaction();
 
     // Générer les codes d'anonymat avec contrainte de distance de Hamming
+    // Trie aussi les codes sur la plage réservée (permet d'assigner des codes supplémentaires le jour de l'examen)
     const alphabet = config.codesAnonymat.alphabetCodeAnonymat;
     const maxCodesParEpreuve = Math.pow(alphabet.length, 3);
     let indexCode = 0; // Indice du prochain code d'anonymat à attribuer, global pour éviter la prédictibilité
     const codes = {
-        1: melangerCodes(genererCodesHamming(maxCodesParEpreuve, 3, 1, alphabet)),
-        2: melangerCodes(genererCodesHamming(maxCodesParEpreuve, 3, 2, alphabet)),
-        3: melangerCodes(genererCodesHamming(maxCodesParEpreuve, 3, 3, alphabet)),
+        1: classerCodes(genererCodesHamming(maxCodesParEpreuve, 3, 1, alphabet)),
+        2: classerCodes(genererCodesHamming(maxCodesParEpreuve, 3, 2, alphabet)),
+        3: classerCodes(genererCodesHamming(maxCodesParEpreuve, 3, 3, alphabet)),
     }
 
     // En cas d'erreur, rollback la transaction
@@ -218,8 +219,8 @@ export async function interpretationXLSX(data: Record<string, unknown>[], sessio
 
             // Calculer la distance de Hamming optimale à appliquer
             let distanceHamming = 1;
-            if (nbConvocs < codes[3].length) distanceHamming = 3;
-            else if (nbConvocs < codes[2].length) distanceHamming = 2;
+            if (nbConvocs < codes[3].codes.length) distanceHamming = 3;
+            else if (nbConvocs < codes[2].codes.length) distanceHamming = 2;
 
             // Récupérer les codes disponibles
             const codesDisponibles = codes[distanceHamming as 1 | 2 | 3];
@@ -227,12 +228,27 @@ export async function interpretationXLSX(data: Record<string, unknown>[], sessio
 
             // Créer les convocations (et attribuer le code d'anonymat)
             for (const convocation of convocs) {
-                const codeAnonymat = codesDisponibles[indexCode++ % codesDisponibles.length];
+                const codeAnonymat = codesDisponibles.codes[indexCode++ % codesDisponibles.codes.length];
                 if (codeAnonymat) newConvocations.push({
                     ...convocation,
                     code_anonymat: codeAnonymat + appliquerDecalage(codeAnonymat, decalage, alphabet)
                 });
             }
+
+            // Créer les convocations sur la plage réservée
+            // 5% du nombre de convocations : Minimum 5, maximum 20
+            /*const nbConvocsReservees = Math.min(5, Math.max(20, Math.round(convocs.length * 0.05)));
+            for (let i = 0; i++; i < nbConvocsReservees) {
+                const codeAnonymat = codesDisponibles.reserve[indexCode++ % codesDisponibles.reserve.length];
+                if (codeAnonymat) newConvocations.push({
+                    id_session: session.id,
+                    code_epreuve: codeEpreuve,
+                    numero_etudiant: null,
+                    note_quart: null,
+                    code_salle: 
+                    code_anonymat: codeAnonymat + appliquerDecalage(codeAnonymat, decalage, alphabet)
+                });
+            }*/
 
         }
 

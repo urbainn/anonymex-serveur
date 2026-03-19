@@ -3,7 +3,7 @@ import { ElementEnCache } from "../base/ElementEnCacheBase";
 export interface ConvocationData {
     id_session: number,
     code_epreuve: string,
-    numero_etudiant: number,
+    numero_etudiant: number | null,
     code_anonymat: string,
     note_quart: number | null,
     code_salle: string,
@@ -13,7 +13,7 @@ export interface ConvocationData {
 export class Convocation extends ElementEnCache {
     public idSession: number;
     public codeEpreuve: string;
-    public numeroEtudiant: number;
+    public numeroEtudiant: number | null;
     public codeAnonymat: string;
     public noteQuart: number | null;
     public codeSalle: string;

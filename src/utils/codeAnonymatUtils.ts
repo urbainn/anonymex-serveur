@@ -81,16 +81,27 @@ export function appliquerDecalage(codeAnonymat: string, decalages: number[], alp
 }
 
 /**
- * Mélanger les codes
+ * Mélange et classe les codes (ceux qui commencent par Z sont séparés)
  */
-export function melangerCodes(codes: string[]): string[] {
+export function classerCodes(codes: string[]): { codes: string[], reserve: string[] } {
+    const plageSpeciale: string[] = [];
+    const plageStandard: string[] = [];
+
     for (let i = codes.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        const valueI = codes[i];
-        const valueJ = codes[j];
-        if (valueI === undefined || valueJ === undefined) continue;
-        codes[i] = valueJ;
-        codes[j] = valueI;
+        const code = codes[i];
+        if (code) {
+            if (code.startsWith('Z')) plageSpeciale.push(code);
+            else plageStandard.push(code);
+        }
     }
-    return codes;
+
+    for (let i = plageStandard.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const valueI = plageStandard[i];
+        const valueJ = plageStandard[j];
+        if (valueI === undefined || valueJ === undefined) continue;
+        plageStandard[i] = valueJ;
+        plageStandard[j] = valueI;
+    }
+    return { codes: plageStandard, reserve: plageSpeciale };
 }

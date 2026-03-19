@@ -65,24 +65,30 @@ export async function genererCoupons(session: Session, epreuve: Epreuve, res: Re
         doc.moveTo(x, y + hauteurEntete).lineTo(x + largeurCoupon, y + hauteurEntete).stroke();
 
         // Corps : Nom \ Prénom \ N° étudiant
-        const etudiant = etudiantCache.get(convocation.numeroEtudiant);
-        doc.fontSize(13).font('Helvetica-Bold').fillColor('#222')
-            .text(etudiant?.nom.toLocaleUpperCase('fr') || "???", x + 10, y + hauteurEntete + 20,
-                { width: largeurCoupon - 20, align: 'center', ellipsis: true, height: 15 });
+        if (convocation.numeroEtudiant === null) {
+            // code réservé ?
+        } else {
 
-        doc.fontSize(12).font('Helvetica')
-            .text(etudiant?.prenom || "???", x + 10, y + hauteurEntete + 37,
-                { width: largeurCoupon - 20, align: 'center', ellipsis: true, height: 15 });
+            const etudiant = etudiantCache.get(convocation.numeroEtudiant);
+            doc.fontSize(13).font('Helvetica-Bold').fillColor('#222')
+                .text(etudiant?.nom.toLocaleUpperCase('fr') || "???", x + 10, y + hauteurEntete + 20,
+                    { width: largeurCoupon - 20, align: 'center', ellipsis: true, height: 15 });
 
-        const numeroEtudiant = `N° étudiant : ${convocation.numeroEtudiant}`;
-        const xNumeroEtudiant = x + 15;
-        const yNumeroEtudiant = y + hauteurEntete + 12;
-        doc.save();
-        doc.fontSize(10).fillColor('#666').font('Helvetica-Oblique');
-        doc.rotate(90, { origin: [xNumeroEtudiant, yNumeroEtudiant] });
-        doc.text(numeroEtudiant, xNumeroEtudiant, yNumeroEtudiant,
-            { width: hauteurCoupon - hauteurEntete - 24, align: 'center', ellipsis: true, height: 15 });
-        doc.restore();
+            doc.fontSize(12).font('Helvetica')
+                .text(etudiant?.prenom || "???", x + 10, y + hauteurEntete + 37,
+                    { width: largeurCoupon - 20, align: 'center', ellipsis: true, height: 15 });
+
+            const numeroEtudiant = `N° étudiant : ${convocation.numeroEtudiant}`;
+            const xNumeroEtudiant = x + 15;
+            const yNumeroEtudiant = y + hauteurEntete + 12;
+            doc.save();
+            doc.fontSize(10).fillColor('#666').font('Helvetica-Oblique');
+            doc.rotate(90, { origin: [xNumeroEtudiant, yNumeroEtudiant] });
+            doc.text(numeroEtudiant, xNumeroEtudiant, yNumeroEtudiant,
+                { width: hauteurCoupon - hauteurEntete - 24, align: 'center', ellipsis: true, height: 15 });
+            doc.restore();
+
+        }
 
         // Cadre: Code d'anonymat
         doc.fillColor('#222').rect(x + 80, y + hauteurCoupon - 66, largeurCoupon - 160, 45)

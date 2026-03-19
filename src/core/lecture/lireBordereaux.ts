@@ -77,11 +77,11 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
                         else
                             codeLu.push(undefined);
 
-                    });
+                        if (code.join('') === codeLu.join(''))
+                            console.log('OK');
+                            else throw new ErreurCodeAnonymat('Échec de lecture du code anonymat', codeLu.join(''));
 
-                if (code.join('') === codeLu.join(''))
-                    console.log('OK');
-                else throw new ErreurCodeAnonymat('Échec de lecture du code anonymat', codeLu.join(''));
+                    });
 
             } catch (error) {
                 // Erreur lors de la lecture du bordereau : faire remonter l'erreur

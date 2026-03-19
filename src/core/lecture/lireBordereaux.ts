@@ -1,10 +1,10 @@
 import { Fichier } from "../../routes/useFile";
 import { matToSharp } from "../../utils/imgUtils";
-import { ErreurBase } from "../ErreurBase";
 import { BenchmarkUnitaireModule } from "../generation/bordereau/modules/cadre-etudiant/BenchmarkUnitaireModule";
 import { OpenCvInstance } from "../services/OpenCvInstance";
 import { TensorFlowCNN } from "./CNN/TensorFlowCNN";
 import { Depot } from "./DepotsManager";
+import { ErreurCodeAnonymat, ErreurResultatLu } from "./lectureErreurs";
 import { preprocessPipelines } from "./OCR/preprocessPipelines";
 import { TesseractOCR } from "./OCR/TesseractOCR";
 import { decouperROIs } from "./preparation/decouperROIs";
@@ -26,6 +26,10 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
 
     // Récupérer les positions des ROIs du modèle de bordereau
     const rois = new BenchmarkUnitaireModule().getZonesLecture();
+
+    // Récupérer la session et l'épreuve depuis le dépôt
+    const sessionId = getDepot().sessionId;
+    const codeEpreuve = getDepot().codeEpreuve;
 
     let numFichier = 0;
     for (const fichier of fichiers) {
@@ -77,13 +81,23 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
 
                 if (code.join('') === codeLu.join(''))
                     console.log('OK');
+                else throw new ErreurCodeAnonymat('Échec de lecture du code anonymat', codeLu.join(''));
 
             } catch (error) {
-                // Générer un incident (TODO)
-
                 // Erreur lors de la lecture du bordereau : faire remonter l'erreur
-                if (error instanceof ErreurBase) {
-                    getDepot().callback?.('incident', 0, { name: error.name, message: error.message });
+                if (error instanceof ErreurResultatLu) {
+
+                    // Générer un incident (TODO)
+                    getDepot().callback?.('incident', 0, {
+                        idIncident: Math.round(Math.random() * 10000),
+                        idSession: sessionId,
+                        codeEpreuve,
+                        titre: error.name,
+                        details: error.message,
+                        codeAnonymat: error.codeAnonymatLu,
+                        noteQuart: error.noteLue ? error.noteLue * 4 : undefined
+                    });
+
                 } else if (error instanceof Error) {
                     getDepot().callback?.('error', 0, { message: error.message });
                     console.error("Erreur lors de la lecture du bordereau :", error);

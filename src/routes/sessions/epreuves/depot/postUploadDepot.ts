@@ -37,6 +37,6 @@ export async function postUploadDepot(id: string, codeEpreuve: string, fichiers:
         }
     }
 
-    return DepotsManager.creerDepot(codeEpreuve, fichiers);
+    return DepotsManager.creerDepot(idSession, codeEpreuve, fichiers);
 
 }

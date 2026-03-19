@@ -2,6 +2,7 @@ import { Fichier } from "../../routes/useFile";
 import { CallbackLecture, lireBordereaux } from "./lireBordereaux";
 
 export interface Depot {
+    sessionId: number,
     codeEpreuve: string;
     fichiers: Fichier[];
     /**
@@ -31,13 +32,14 @@ export class DepotsManager {
 
     /**
      * Créer un dépôt et l'ajouter.
+     * @param sessionId Id de la session associée au dépôt.
      * @param codeEpreuve Code de l'épreuve associée au dépôt.
      * @param fichiers Fichiers du dépôt.
      * @returns ID du dépôt créé.
      */
-    public static creerDepot(codeEpreuve: string, fichiers: Fichier[]): number {
+    public static creerDepot(sessionId: number, codeEpreuve: string, fichiers: Fichier[]): number {
         const id = this.nextDepotId++;
-        const depot = { codeEpreuve, fichiers };
+        const depot = { sessionId, codeEpreuve, fichiers };
         this.depots.set(id, depot);
         this.ajoutDepot(depot);
         return id;

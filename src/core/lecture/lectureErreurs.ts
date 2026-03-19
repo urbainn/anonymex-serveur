@@ -29,3 +29,17 @@ export class ErreurDecoupeROIs extends ErreurLecture { }
 export class ErreurReconnaissance extends ErreurLecture { }
 export class ErreurOCR extends ErreurReconnaissance { }
 export class ErreurCNN extends ErreurReconnaissance { }
+
+// Erreurs de résultat lu
+export class ErreurResultatLu extends ErreurLecture {
+    public codeAnonymatLu?: string;
+    public noteLue?: number;
+    
+    constructor(message: string, codeAnonymatLu?: string, noteLue?: number) {
+        super(message);
+        this.codeAnonymatLu = codeAnonymatLu;
+        this.noteLue = noteLue;
+    }
+}
+
+export class ErreurCodeAnonymat extends ErreurResultatLu {}

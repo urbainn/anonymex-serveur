@@ -1,5 +1,5 @@
 export const config = {
     codesAnonymat: {
-        alphabetCodeAnonymat: 'ABCDEFGHJKLMNPQRSTUVWXZ',
+        alphabetCodeAnonymat: 'BCEFGHIKLNOPQRSTUWXYZ',
     }
 };

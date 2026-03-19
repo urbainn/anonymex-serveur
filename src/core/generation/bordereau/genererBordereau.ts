@@ -5,6 +5,7 @@ import { genererCiblesConcentriques } from '../common/genererCiblesConcentriques
 import { BenchmarkUnitaireModule } from './modules/cadre-etudiant/BenchmarkUnitaireModule';
 import { genererCodesHamming } from '../../../utils/codeAnonymatUtils';
 import { Response } from 'express';
+import { config } from '../../../config';
 
 export interface BordereauAnonProprietes {
     format: 'A4' | 'A5';
@@ -29,7 +30,7 @@ export function genererBordereau(proprietes: BordereauAnonProprietes, res: Respo
 
     doc.pipe(res);
 
-    const codes = genererCodesHamming(500, 6, 3, "BCEFGHIKLNOPQRSTUWXYZ");
+    const codes = genererCodesHamming(500, 6, 3, config.codesAnonymat.alphabetCodeAnonymat);
     const template = new BenchmarkUnitaireModule();
 
     for (let i = 0; i < 500; i++) {

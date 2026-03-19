@@ -8,10 +8,11 @@ export class ConvocationCache extends DatabaseCacheBase<string /*codeAnonymat*/,
 
     /**
      * Instancier un cache pour les convocations d'une épreuve donnée.
-     * @param codeEpreuve
+     * @param idSession
+     * @param idEpreuve
      */
-    constructor(codeEpreuve: string) {
-        super([codeEpreuve]);
+    constructor(idSession: number, idEpreuve: string) {
+        super([idSession, idEpreuve]);
     }
 
     fromDatabase(data: ConvocationData): Convocation {

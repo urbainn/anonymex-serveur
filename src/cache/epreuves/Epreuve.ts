@@ -42,7 +42,7 @@ export class Epreuve extends ElementEnCache {
         this.dateEpreuve = data.date_epreuve * 60; // convertir en secondes
         this.duree = data.duree;
         this.nbPresents = data.nb_presents;
-        this.convocations = new ConvocationCache(this.codeEpreuve)
+        this.convocations = new ConvocationCache(this.idSession, this.codeEpreuve);
     }
 
     /** Obtenir la session de cette epreuve */

@@ -85,6 +85,10 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
 
                     });
 
+                if (codeLu.includes(undefined)) {
+                    throw new ErreurResultatLu('Échec de lecture du code anonymat', codeLu.join(''));
+                }
+
             } catch (error) {
                 // Erreur lors de la lecture du bordereau : faire remonter l'erreur
                 if (error instanceof ErreurResultatLu) {

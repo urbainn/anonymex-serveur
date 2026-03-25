@@ -1,12 +1,12 @@
 import { z } from "zod";
 
 export enum TypeRecherche {
-    UE = "UE",
-    Salle = "Salle",
-    Heure = "Heure",
-    SalleHeure = "SalleHeure",
-    Action = "Action",
-    Etudiant = "Etudiant"
+    UE = 0,
+    SALLE = 1,
+    HEURE = 2,
+    SALLEHEURE = 3,
+    ACTION = 4,
+    ETUDIANT = 5
 }
 
 const CodeUEData = {
@@ -41,28 +41,28 @@ export const RechercheUESchema = BaseRechercheSchema.extend({
 });
 
 export const RechercheSalleSchema = BaseRechercheSchema.extend({
-    type: z.literal(TypeRecherche.Salle),
+    type: z.literal(TypeRecherche.SALLE),
     ...SalleData
 });
 
 export const RechercheHeureSchema = BaseRechercheSchema.extend({
-    type: z.literal(TypeRecherche.Heure),
+    type: z.literal(TypeRecherche.HEURE),
     ...HeureData
 });
 
 export const RechercheSalleHeureSchema = RechercheSalleSchema.extend({
-    type: z.literal(TypeRecherche.SalleHeure),
+    type: z.literal(TypeRecherche.SALLEHEURE),
     ...SalleData,
     ...HeureData
 });
 
 export const RechercheActionSchema = BaseRechercheSchema.extend({
-    type: z.literal(TypeRecherche.Action),
+    type: z.literal(TypeRecherche.ACTION),
     ...ActionData
 })
 
 export const RechercheEtudiantSchema = BaseRechercheSchema.extend({
-    type: z.literal(TypeRecherche.Etudiant),
+    type: z.literal(TypeRecherche.ETUDIANT),
     ...EtudiantData
 })
 

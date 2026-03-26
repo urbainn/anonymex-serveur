@@ -3,7 +3,7 @@ import { sessionCache } from "../../../../cache/sessions/SessionCache";
 import { APIReponseCorrectionIncident } from "../../../../contracts/incidents";
 import { ErreurRequeteInvalide, ErreurServeur } from "../../../erreursApi";
 
-export async function postIncident(sessionId: string, codeEpreuve: string, incidentId: string, codeAnonymat: string, noteQuart: string): Promise<APIReponseCorrectionIncident> {
+export async function postIncident(sessionId: string, codeEpreuve: string, incidentId: string, codeAnonymat?: string, noteQuart?: string): Promise<APIReponseCorrectionIncident> {
 
     const idSession = parseInt(sessionId ?? '');
     const idIncident = parseInt(incidentId ?? '');
@@ -24,6 +24,7 @@ export async function postIncident(sessionId: string, codeEpreuve: string, incid
     const incident = await epreuve.incidents.getOrFetch(idIncident);
     if (incident === undefined) throw new ErreurRequeteInvalide("L'incident demandé n'existe pas.");
 
+    if (codeAnonymat === undefined) throw new ErreurRequeteInvalide("Le code anonymat est requis pour corriger une copie.");
     const convocation = await epreuve.convocations.getOrFetch(codeAnonymat);
     if (convocation === undefined) {
 

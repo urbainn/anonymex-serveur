@@ -6,11 +6,15 @@ import { deleteSession } from "./deleteSession";
 import { patchSession } from "./patchSession";
 import { postSession } from "./postSession";
 import { postImporterFichierSession } from "./postImporterFichierSession";
+import { recherchesRouteur } from "./recherches";
 
 const sessionsRouter = Router();
 
 // Epreuves
 sessionsRouter.use("/:session/epreuves", epreuvesRouter);
+
+// Recherches
+sessionsRouter.use("/:session/recherches", recherchesRouteur);
 
 // GET /sessions/
 sessionsRouter.get("/", (req, res) =>

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { sessionsRouter } from "./sessions";
 import { utilisateursRouter } from "./utilisateurs";
 import { rolesRouteur } from "./roles";
+import { etudiantsRouter } from "./etudiants";
 import { useFile } from "./useFile";
 import { documentsRouter } from "./documents";
 
@@ -21,7 +22,8 @@ router.use((req, res, next) => {
 
 router.use("/sessions", sessionsRouter);
 router.use("/utilisateurs", utilisateursRouter);
-router.use("/roles", rolesRouteur)
+router.use("/roles", rolesRouteur);
+router.use("/etudiants", etudiantsRouter);
 router.use("/documents", documentsRouter);
 
 export { router as indexRouter };

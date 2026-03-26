@@ -2,10 +2,10 @@ import { Response } from 'express';
 import PDFDocument from 'pdfkit';
 import { Epreuve } from '../../../cache/epreuves/Epreuve';
 import { Session } from '../../../cache/sessions/Session';
-import { Convocation } from '../../../cache/convocations/Convocation';
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
 import { etudiantCache } from '../../../cache/etudiants/EtudiantCache';
+import { Convocation } from '../../../cache/epreuves/convocations/Convocation';
 
 /**
  * Génère (et stream dans la response) les coupons d'identification pour une épreuve donnée.

@@ -1,4 +1,4 @@
-import { ElementEnCache } from "../base/ElementEnCacheBase";
+import { ElementEnCache } from "../../base/ElementEnCacheBase";
 
 export interface ConvocationData {
     id_session: number,

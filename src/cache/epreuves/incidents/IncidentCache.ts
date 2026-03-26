@@ -1,4 +1,4 @@
-import { DatabaseCacheBase } from "../base/DatabaseCacheBase";
+import { DatabaseCacheBase } from "../../base/DatabaseCacheBase";
 import { Incident, IncidentData } from "./Incident";
 
 export class IncidentCache extends DatabaseCacheBase<number /*id*/, Incident, IncidentData> {
@@ -7,11 +7,12 @@ export class IncidentCache extends DatabaseCacheBase<number /*id*/, Incident, In
     colonnesClePrimaire: string[] = ["id_session", "code_epreuve", "id_incident"];
 
     /**
-     * Instancier un cache pour les épreuves d'une session donnée.
+     * Instancier un cache pour les incidents d'une épreuve donnée.
      * @param idSession
+     * @param codeEpreuve
      */
-    constructor(idSession: number) {
-        super([idSession]);
+    constructor(idSession: number, codeEpreuve: string) {
+        super([idSession, codeEpreuve]);
     }
 
     fromDatabase(data: IncidentData): Incident {

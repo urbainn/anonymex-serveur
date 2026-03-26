@@ -8,11 +8,11 @@ import { ErreurLigneInvalide, ErreurXLSX } from "./ErreursXLSX";
 import { logInfo } from "../../utils/logger";
 import { Database } from "../services/database/Database";
 import { Transaction } from "../services/database/Transaction";
-import { ConvocationData } from "../../cache/convocations/Convocation";
 import { salleCache } from "../../cache/salles/SalleCache";
 import { SalleData } from "../../cache/salles/Salle";
 import { appliquerDecalage, genererCodesHamming, classerCodes } from "../../utils/codeAnonymatUtils";
 import { config } from "../../config";
+import { ConvocationData } from "../../cache/epreuves/convocations/Convocation";
 
 const CHAMPS_INTERPRETATION = {
     // nom du champ interprété => nom de la colonne dans le XLSX

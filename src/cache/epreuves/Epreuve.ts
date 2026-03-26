@@ -2,7 +2,8 @@ import { ElementEnCache } from "../base/ElementEnCacheBase";
 import { Session } from "../sessions/Session";
 import { sessionCache } from "../sessions/SessionCache";
 import { APIEpreuve, EpreuveStatut } from "../../contracts/epreuves";
-import { ConvocationCache } from "../convocations/ConvocationCache";
+import { ConvocationCache } from "./convocations/ConvocationCache";
+import { IncidentCache } from "./incidents/IncidentCache";
 
 export interface EpreuveData {
     id_session: number,
@@ -27,7 +28,10 @@ export class Epreuve extends ElementEnCache {
     public duree: number;
     public copies = 0;//todo
     public nbPresents: number | null;
-    public incidents = 0;//todo
+    public nbIncidents = 0;//todo
+
+    /** Cache des incidents de l'épreuve */
+    public incidents: IncidentCache;
 
     /** Cache des convocations associées à cette épreuve */
     public convocations: ConvocationCache;
@@ -43,6 +47,7 @@ export class Epreuve extends ElementEnCache {
         this.duree = data.duree;
         this.nbPresents = data.nb_presents;
         this.convocations = new ConvocationCache(this.idSession, this.codeEpreuve);
+        this.incidents = new IncidentCache(this.idSession, this.codeEpreuve);
     }
 
     /** Obtenir la session de cette epreuve */
@@ -62,7 +67,7 @@ export class Epreuve extends ElementEnCache {
             date: this.dateEpreuve,
             duree: this.duree,
             copies: this.copies,
-            incidents: this.incidents
+            incidents: this.nbIncidents
         }
     }
 }

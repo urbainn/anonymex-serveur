@@ -6,19 +6,20 @@ export const IncidentSchema = z.object({
     idSession: z.number().int().positive(),
     codeEpreuve: z.string(),
     titre: z.string(),
-    details: z.string(), 
+    details: z.string(),
     codeAnonymat: z.string().optional(),
     noteQuart: z.number().int().positive().optional(),
 });
 
 export const ListIncidentsSchema = z.object({
-    incidents: z.array(IncidentSchema.pick({ idIncident: true, titre: true, details: true, resolu: true }))
+    incidents: z.array(IncidentSchema.pick({ idIncident: true, titre: true, details: true }))
 });
 
-export const PartielIncidentSchema = IncidentSchema.pick({ idIncident:true, codeAnonymat: true, noteQuart: true });
+export const PartielIncidentSchema = IncidentSchema.pick({ idIncident: true, codeAnonymat: true, noteQuart: true });
 
 // --- Types ---
 export type APIIncident = z.infer<typeof IncidentSchema>;
 export type APIListIncidents = z.infer<typeof ListIncidentsSchema>;
 export type APIPartielIncident = z.infer<typeof PartielIncidentSchema>;
 
+export interface APIReponseCorrectionIncident { success: boolean, message?: string, incidents?: APIIncident[] }

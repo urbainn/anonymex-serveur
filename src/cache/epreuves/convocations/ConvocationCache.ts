@@ -1,4 +1,4 @@
-import { DatabaseCacheBase } from "../base/DatabaseCacheBase";
+import { DatabaseCacheBase } from "../../base/DatabaseCacheBase";
 import { Convocation, ConvocationData } from "./Convocation";
 
 export class ConvocationCache extends DatabaseCacheBase<string /*codeAnonymat*/, Convocation, ConvocationData> {

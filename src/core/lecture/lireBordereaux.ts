@@ -12,6 +12,7 @@ import { decouperROIs } from "./preparation/decouperROIs";
 import { detecterAprilTags } from "./preparation/detecterAprilTags";
 import { extraireScans } from "./preparation/extraireScans";
 import { preparerScan } from "./preparation/preparerScan";
+import { sessionCache } from "../../cache/sessions/SessionCache";
 
 const MARGE_CIBLES_MM = 10;
 const DIAMETRE_CIBLES_MM = 8;
@@ -31,6 +32,14 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
     // Récupérer la session et l'épreuve depuis le dépôt
     const sessionId = getDepot().sessionId;
     const codeEpreuve = getDepot().codeEpreuve;
+
+    // Récupérer les instances
+    const session = await sessionCache.getOrFetch(sessionId);
+    const epreuve = await session?.epreuves.getOrFetch(codeEpreuve);
+    if (!session || !epreuve) {
+        getDepot().callback?.('error', 0, { message: 'Session ou épreuve introuvable' });
+        return;
+    }
 
     let numFichier = 0;
     for (const fichier of fichiers) {
@@ -92,6 +101,8 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
             } catch (error) {
                 // Erreur lors de la lecture du bordereau : faire remonter l'erreur
                 if (error instanceof ErreurResultatLu) {
+
+
 
                     // Générer un incident (TODO)
                     getDepot().callback?.('incident', 0, {

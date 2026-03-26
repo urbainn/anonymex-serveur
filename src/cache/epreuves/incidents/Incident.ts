@@ -1,5 +1,5 @@
-import { ElementEnCache } from "../base/ElementEnCacheBase";
-import { APIIncident } from "../../contracts/incidents";
+import { ElementEnCache } from "../../base/ElementEnCacheBase";
+import { APIIncident } from "../../../contracts/incidents";
 
 export interface IncidentData {
     id_incident: number;

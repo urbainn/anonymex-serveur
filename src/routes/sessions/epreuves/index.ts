@@ -4,10 +4,16 @@ import { getEpreuves } from "./getEpreuves";
 import { getEpreuve } from "./getEpreuve";
 import { patchEpreuve } from "./patchEpreuve";
 import { depotRouter } from "./depot";
+import { incidentsRouter } from "./incidents";
+import { sessionsRouter } from "..";
 
 const epreuvesRouter = Router({ mergeParams: true });
 
+// Dépôts
 epreuvesRouter.use("/:code/depot", depotRouter);
+
+// Incidents
+sessionsRouter.use("/:code/incidents", incidentsRouter);
 
 // GET /sessions/:session/epreuves/:code/
 epreuvesRouter.get<{ session: string, code: string }>

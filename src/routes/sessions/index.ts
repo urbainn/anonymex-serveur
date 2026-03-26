@@ -2,7 +2,6 @@ import { Router } from "express";
 import { getSessions } from "./getSessions";
 import { useRest } from "../useRest";
 import { epreuvesRouter } from "./epreuves";
-import { incidentsRouter } from "./incidents"
 import { deleteSession } from "./deleteSession";
 import { patchSession } from "./patchSession";
 import { postSession } from "./postSession";
@@ -12,9 +11,6 @@ const sessionsRouter = Router();
 
 // Epreuves
 sessionsRouter.use("/:session/epreuves", epreuvesRouter);
-
-// Incidents
-sessionsRouter.use("/:session/incidents", incidentsRouter);
 
 // GET /sessions/
 sessionsRouter.get("/", (req, res) =>

@@ -29,7 +29,7 @@ export abstract class DatabaseCacheBase<I extends string | number, T extends Ele
     protected readonly valeursComposantesParent: (string | number)[] | undefined;
 
     /** Tous les éléments ont-ils été récupérés depuis la BDD? */
-    private tousRecuperes = false;
+    protected tousRecuperes = false;
 
     /** Fonction de D vers T, c'est à dire d'un objet de la BDD en une instance de T */
     abstract fromDatabase(data: D): T;

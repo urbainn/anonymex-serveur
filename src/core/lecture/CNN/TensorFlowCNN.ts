@@ -73,7 +73,7 @@ export class TensorFlowCNN {
                 probas: probabilities,
                 indiceClasse: index,
                 confiance: value,
-                caractere: alphabet[index] || "?"
+                caractere: alphabet[index] ?? ''
             };
         } finally {
             input.dispose();

@@ -29,48 +29,50 @@ export async function getRecherche(sessionId: string, query: string): Promise<AP
         };
     }
 
-    // Recherche par date et heure (priorité 2)
-    const parseDate = chrono.fr.parse(queryBrute); // Utilisation de chrono-node pour récupérer et interpréter la date
+    // Recherche par salle et/ou date (priorité 2 & 3)
+    const parseDate = chrono.fr.parse(queryBrute)[0]; // On extrait la date grâce à chrono-node (on prend le premier résultat renvoyé)
+    
+    // Si jamais on a réussi à extraire une date, alors on la met de côté
+    const horodatageMinutes = parseDate
+        ? Math.floor(parseDate.start.date().getTime() / 60000).toString() // On transforme la date en timestamp
+        : null;
 
-    if (parseDate.length > 0 && parseDate[0]) {
+    // Si une date a été trouvée, on cherche la salle sur le texte restant, si aucune date trouvée on cherche directement sur la query brute
+    const salleExtraite = parseDate
+        ? queryBrute.replace(parseDate.text, "").trim() // On extrait le nom de la salle en retirant la date trouvée précédement
+        : queryBrute;
 
-        const dateTrouvee = parseDate[0];
-        const dateRef = dateTrouvee.start.date();
+    let codesSalles: string[] = [];
 
-        const horodatageMinutes = Math.floor(dateRef.getTime() / 60000).toString(); // Conversion de la date en timestamp
-        const salleExtraite = queryBrute.replace(dateTrouvee.text, "").trim(); // On extrait la salle en supprimant la date trouvée de la recherche
-
-        // Si on a trouvé une salle dans la recherche alors on fait d'abord une requête de la salle dans le cache, sinon directement à travers la query
-        if (salleExtraite.length > 0) {
-
-            const sallesEnCache = await salleCache.getOrFetch(salleExtraite);
-
-            if (sallesEnCache != undefined) {
-                return {
-                    resultats: [{
-                        type: TypeRecherche.SALLEHEURE,
-                        codeSalle: sallesEnCache.codeSalle,
-                        horodatage: horodatageMinutes
-                    }]
-                }
-            }
-            const sallesEnQuery = await Database.query<{ code_salle: string }>(
+    if (salleExtraite) {
+        // Tentative de recherche via Cache
+        const salleEnCache = await salleCache.getOrFetch(salleExtraite);
+        if (salleEnCache) {
+            codesSalles = [salleEnCache.codeSalle];
+        } else {
+            // Tentative de recherche via la base de données
+            const sallesEnDB = await Database.query<{ code_salle: string }>(
                 "SELECT code_salle FROM salle WHERE code_salle LIKE ?;",
                 [`${salleExtraite}%`]
             );
-
-            if (sallesEnQuery.length > 0) {
-                return {
-                    resultats: sallesEnQuery.map(salle => ({
-                        type: TypeRecherche.SALLEHEURE,
-                        codeSalle: salle.code_salle,
-                        horodatage: horodatageMinutes
-                    }))
-                };
-            }
+            codesSalles = sallesEnDB.map(salle => salle.code_salle);
         }
+    }
 
-        // Si on a une date mais pas de salle correspondante
+    // On a plusieurs cas :
+    // Cas 1 : On a trouvé une salle et un horodatage
+    if (codesSalles.length > 0 && horodatageMinutes) {
+        return {
+            resultats: codesSalles.map(code => ({
+                type: TypeRecherche.SALLEHEURE,
+                codeSalle: code,
+                horodatage: horodatageMinutes
+            }))
+        };
+    }
+
+    // Cas B : On a uniquement un horodatage
+    if (horodatageMinutes) {
         return {
             resultats: [{
                 type: TypeRecherche.HEURE,
@@ -79,17 +81,12 @@ export async function getRecherche(sessionId: string, query: string): Promise<AP
         };
     }
 
-    // Recherche par salle seule (priorité 3)
-    const sallesSeules = await Database.query<{ code_salle: string }>(
-        "SELECT code_salle FROM salle WHERE code_salle LIKE ?;",
-        [`${queryBrute}%`]
-    );
-
-    if (sallesSeules.length > 0) {
+    // Cas C : On a uniquement trouvé une ou des salles
+    if (codesSalles.length > 0) {
         return {
-            resultats: sallesSeules.map(salle => ({
+            resultats: codesSalles.map(code => ({
                 type: TypeRecherche.SALLE,
-                codeSalle: salle.code_salle
+                codeSalle: code
             }))
         };
     }
@@ -110,8 +107,8 @@ export async function getRecherche(sessionId: string, query: string): Promise<AP
     const queryAction = queryBrute.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // On nettoie la recherche pour supprimer les accents
 
     const listeActions = [
-        { id: 1, motsCles: ["télécharger", "bordereau"] },
-        { id: 2, motsCles: ["déposer", "copies"] },
+        { id: 1, motsCles: ["telecharger", "bordereau"] },
+        { id: 2, motsCles: ["deposer", "copies"] },
         { id: 3, motsCles: ["changer", "session"] },
     ];
 

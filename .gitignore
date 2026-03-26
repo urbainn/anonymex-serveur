@@ -13,3 +13,6 @@ dist/
 
 # Rapport de couverture Jest
 coverage/
+
+# Médias stockés
+/media

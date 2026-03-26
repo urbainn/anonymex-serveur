@@ -15,6 +15,8 @@ import { preparerScan } from "./preparation/preparerScan";
 import { sessionCache } from "../../cache/sessions/SessionCache";
 import { IncidentData } from "../../cache/epreuves/incidents/Incident";
 import { config } from "../../config";
+import { MediaService } from "../services/MediaService";
+import { logInfo } from "../../utils/logger";
 
 const MARGE_CIBLES_MM = 10;
 const DIAMETRE_CIBLES_MM = 8;
@@ -98,7 +100,7 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
 
             } catch (error) {
                 // Erreur lors de la lecture du bordereau : faire remonter l'erreur
-                if (error instanceof ErreurResultatLu && error.incident) {
+                if (error instanceof ErreurResultatLu && error.incident && scanPret) {
 
                     // Créer un incident
                     const incidentData: Omit<IncidentData, 'id_incident'> = {
@@ -122,6 +124,11 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
                     const nvIncidentData = { ...incidentData, id_incident: incidentId };
                     const incident = epreuve.incidents.fromDatabase(nvIncidentData);
                     epreuve.incidents.set(incidentId, incident);
+
+                    // Enregistrer le scan sur le disque
+                    await MediaService.enregistrerMat(scanPret, 'incidents/', `${incidentId}.webp`);
+
+                    logInfo('Incident', "Incident créé lors de la lecture d'un bordereau.");
 
                     // Remonter l'incident au client
                     getDepot().callback?.('incident', 0, nvIncidentData);

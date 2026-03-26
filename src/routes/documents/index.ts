@@ -2,6 +2,7 @@ import { Router } from "express";
 import { useFullRest } from "../useRest";
 import { getBordereau } from "./getBordereau";
 import { getCoupons } from "./getCoupons";
+import { getScanIncident } from "./getScanIncident";
 
 const documentsRouter = Router();
 
@@ -14,5 +15,12 @@ documentsRouter.get("/session/:sessionId/epreuve/:codeEpreuve/coupons.pdf", (req
     const salles = (req.query.salles as string)?.split(",") ?? [];
     return useFullRest(() => getCoupons(sessionId, codeEpreuve, salles, res), req, res);
 });
+
+// GET /documents/incidents/:idIncident/scan.webp
+documentsRouter.get("/incidents/:idIncident/scan.webp", (req, res) => {
+    const { idIncident } = req.params;
+    return useFullRest(() => getScanIncident(idIncident, res), req, res);
+});
+
 
 export { documentsRouter as documentsRouter };

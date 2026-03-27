@@ -22,4 +22,4 @@ export type APIIncident = z.infer<typeof IncidentSchema>;
 export type APIListIncidents = z.infer<typeof ListIncidentsSchema>;
 export type APIPartielIncident = z.infer<typeof PartielIncidentSchema>;
 
-export interface APIReponseCorrectionIncident { success: boolean, message?: string, incidents?: APIIncident[] }
+export interface APIReponseCorrectionIncident { success: boolean, message?: string, incidents?: APIIncident[], suggestions?: string[] }

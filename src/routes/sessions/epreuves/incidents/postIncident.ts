@@ -31,7 +31,8 @@ export async function postIncident(sessionId: string, codeEpreuve: string, incid
         // Si le numéro d'anonymat n'existe pas, alors on retourne une liste vide (pas de nouvel incident).
         return {
             success: false,
-            message: "Le numéro d'anonymat n'existe pas."
+            message: "Le numéro d'anonymat n'existe pas.",
+            suggestions: await epreuve.incidents.suggererCodesAnonymat(codeAnonymat)
         };
 
     }

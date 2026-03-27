@@ -131,7 +131,7 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
                     logInfo('Incident', "Incident créé lors de la lecture d'un bordereau.");
 
                     // Remonter l'incident au client
-                    getDepot().callback?.('incident', 0, nvIncidentData);
+                    getDepot().callback?.('incident', 0, incident.toJSON());
 
                 } else if (error instanceof Error) {
                     getDepot().callback?.('error', 0, { message: error.message });

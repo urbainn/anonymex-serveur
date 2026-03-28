@@ -74,7 +74,7 @@ export class Database {
     public static async execute(sql: string, params?: unknown[]): Promise<ResultSetHeader> {
         const pool = await this.connexion();
         return new Promise<ResultSetHeader>((resolve, reject) => {
-            pool.execute<ResultSetHeader>(sql, params, (err, results) => {
+            pool.execute<ResultSetHeader>(sql, params as string[] /* cast obligatoire à cause d'un bug dans la bibliothèque */, (err, results) => {
                 if (err) {
                     reject(err);
                 } else {

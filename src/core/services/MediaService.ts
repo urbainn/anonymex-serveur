@@ -12,6 +12,36 @@ export class MediaService {
     /** Liste des répertoires vérifiés. */
     private static dirsVerifies = new Set<string>();
 
+    /** Medias mis en cache. Null si le média n'existe pas. */
+    private static mediasEnCache = new Map<string, Buffer[] | null>();
+
+    /**
+     * Récupérer un média en cache ou le lire depuis le disque. 
+     * Si un média n'existe pas, renvoit null et le met en cache.
+     * @param dirnames les sous-dossiers dans lesquels se trouve le fichier (ex: "incidents/1/")
+     * @param filename le nom du fichier (ex: "scan.webp")
+     * @param force forcer la lecture depuis le disque même si mis en cache
+     * @returns medias en buffers, ou null si inexistant
+     */
+    static async getCachedMedia(dirnames: string, filename: string, force: boolean): Promise<Buffer[] | null> {
+        const cacheKey = `${dirnames}/${filename}`;
+
+        // Vérifier si le média est en cache
+        const mediaCache = this.mediasEnCache.get(cacheKey);
+        if (mediaCache && !force) return mediaCache;
+
+        // Sinon, lire le média depuis le disque
+        try {
+            const media = await this.lireMedia(dirnames, filename);
+            this.mediasEnCache.set(cacheKey, media);
+            return media;
+        } catch {
+            // Si le média n'existe pas, le mettre en cache comme null pour éviter les lectures futures
+            this.mediasEnCache.set(cacheKey, null);
+            return null;
+        }
+    }
+
     /**
      * Encoder une Mat en Sharp
      */

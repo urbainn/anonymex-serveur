@@ -12,9 +12,9 @@ export async function getDepotProgression(req: Request, res: Response): Promise<
     }
 
     // Récuperer et vérifier les paramètres de la requête
-    const sessionId = parseInt(req.params.session);
+    const sessionId = parseInt(req.params.session as string);
     const code = req.params.code;
-    const depotId = parseInt(req.params.depot);
+    const depotId = parseInt(req.params.depot as string);
 
     if (isNaN(sessionId) || isNaN(depotId)) {
         throw new ErreurRequeteInvalide("Paramètres de requête invalides : sessionId et depotId doivent être des nombres");

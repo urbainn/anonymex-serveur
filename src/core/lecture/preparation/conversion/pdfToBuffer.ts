@@ -32,18 +32,26 @@ export async function pdfToBuffer(pdf: PDFDocumentProxy, pageNum: number): Promi
         if (ops.fnArray[j] === OPS.paintImageXObject) {
             const args = ops.argsArray[j] as unknown[];
             const imgName = args[0] as string;
-            const imgObj = page.objs.get(imgName) as NodeJS.Dict<unknown>;
-            const { width, height, data: imgData } = imgObj;
 
-            if (!((imgData instanceof Uint8ClampedArray) || (imgData instanceof Uint8Array)) // image est un buffer?
-                || typeof width !== 'number' || typeof height !== 'number') continue; // format incompatible
+            await new Promise<void>((resolve) =>
+                page.objs.get(imgName, (imgObj: NodeJS.Dict<unknown>) => {
+                    const { width, height, data: imgData } = imgObj;
 
-            // Est l'image la plus grande ?
-            const imgAire = width * height;
-            if (imgAire > largestImgAire) {
-                largestImgAire = imgAire;
-                largestImgNom = imgName;
-            }
+                    if (!((imgData instanceof Uint8ClampedArray) || (imgData instanceof Uint8Array)) // image est un buffer?
+                        || typeof width !== 'number' || typeof height !== 'number') {
+                        // Format non supporté, on ignore l'image
+                        resolve();
+                        return;
+                    }
+
+                    // Est l'image la plus grande ?
+                    const imgAire = width * height;
+                    if (imgAire > largestImgAire) {
+                        largestImgAire = imgAire;
+                        largestImgNom = imgName;
+                    }
+                    resolve();
+                }));
         }
     }
 

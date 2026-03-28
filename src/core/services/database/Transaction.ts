@@ -25,7 +25,7 @@ export class Transaction {
 
     public async execute(sql: string, params?: unknown[]): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.conn.execute(sql, params, (err) => {
+            this.conn.execute(sql, params as string[] /* cast obligatoire à cause d'un bug dans la bibliothèque */, (err) => {
                 if (err) {
                     reject(err);
                 } else {

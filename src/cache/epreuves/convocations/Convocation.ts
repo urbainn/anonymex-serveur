@@ -1,3 +1,4 @@
+import { APIConvocation } from "../../../contracts/convocations";
 import { ElementEnCache } from "../../base/ElementEnCacheBase";
 
 export interface ConvocationData {
@@ -28,5 +29,17 @@ export class Convocation extends ElementEnCache {
         this.noteQuart = data.note_quart;
         this.codeSalle = data.code_salle;
         this.rang = data.rang;
+    }
+
+    public toJSON(): APIConvocation {
+        return {
+            idSession: this.idSession,
+            codeEpreuve: this.codeEpreuve,
+            numeroEtudiant: this.numeroEtudiant ?? undefined,
+            rang: this.rang ?? undefined,
+            codeAnonymat: this.codeAnonymat,
+            noteQuart: this.noteQuart ?? undefined,
+            codeSalle: this.codeSalle
+        }
     }
 }

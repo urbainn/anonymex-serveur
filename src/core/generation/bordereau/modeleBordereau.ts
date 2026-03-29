@@ -71,7 +71,7 @@ export class ModeleBordereau extends ModeleLectureBase {
         // Case Erreur
         const caseErreur: LayoutPosition = {
             x: 335,
-            y: 573,
+            y: 575,
             largeur: caseLargeur,
             hauteur: caseHauteur,
         };

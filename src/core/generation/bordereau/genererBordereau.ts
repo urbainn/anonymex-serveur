@@ -97,12 +97,12 @@ export async function genererPageBordereau(doc: typeof PDFDocument): Promise<voi
     const caseErreur = positionsNotes.caseErreur;
     if (caseErreur) {
         doc.roundedRect(caseErreur.x, caseErreur.y, caseErreur.largeur, caseErreur.hauteur, 3).stroke();
-        doc.font("Helvetica").fontSize(10).fillColor("#333").text("Erreur", caseErreur.x + 20, caseErreur.y + 2);
+        doc.font("Helvetica").fontSize(10).fillColor("#333").text("Erreur", caseErreur.x + 20, caseErreur.y + 1);
     }
 
     // Texte instructions correcteur
     doc.font("Helvetica-Bold").fontSize(9).fillColor("#444")
-        .text("Reporter la note", 335, cadreCorrecteurY + 25, { continued: true })
+        .text("Reporter la note", 335, cadreCorrecteurY + 23, { continued: true })
         .font("Helvetica")
         .text(" en noircissant\nentièrement les cases correspondantes.\n\n"
             + "Pour une note avec décimale,cochez la\nnote et la fraction associée.\n\n"

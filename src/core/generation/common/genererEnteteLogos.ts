@@ -21,6 +21,8 @@ export async function genererEnteteLogos(doc: PDFKit.PDFDocument): Promise<void>
     const facTaille = faculte ? 140 : 200;
     const totalTaille = univTaille + facTaille + gapLogos;
 
+    doc.font("Helvetica-Oblique");
+
     if (universite) {
         const x = (doc.page.width - totalTaille) / 2;
         doc.image(universite.buffer, x, margeHaut, { width: universite.width, height: universite.height, fit: [140, 80] });

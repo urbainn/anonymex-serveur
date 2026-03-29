@@ -12,7 +12,7 @@ export const IncidentSchema = z.object({
 });
 
 export const ListIncidentsSchema = z.object({
-    incidents: z.array(IncidentSchema.pick({ idIncident: true, titre: true, details: true }))
+    incidents: z.array(IncidentSchema)
 });
 
 export const PartielIncidentSchema = IncidentSchema.pick({ idIncident: true, codeAnonymat: true, noteQuart: true });

@@ -6,6 +6,7 @@ import { patchConvocation } from "./patchConvocation";
 import { deleteConvocations } from "./deleteConvocations";
 import { getConvocationsSupplementaires } from "./getConvocationsSupplementaires";
 import { patchConvocationSupplementaire } from "./patchConvocationSupplementaire";
+import { postConvocationsTransfert } from "./postConvocationsTransfert";
 
 const convocationsRouteur = Router({ mergeParams: true });
 
@@ -26,5 +27,8 @@ convocationsRouteur.post<{ session: string, code: string }>("/presents", (req, r
 
 convocationsRouteur.post<{ session: string, code: string, codeAnonymat: string }>("/supplementaires/:codeAnonymat", (req, res) => 
     useRest(() => patchConvocationSupplementaire(req.params.session, req.params.code, req.params.codeAnonymat, req.body.numeroEtudiant), req, res));
+
+convocationsRouteur.post<{ session: string, code: string }>("/transfert", (req, res) =>
+    useRest(() => postConvocationsTransfert(req.params.session, req.params.code, req.body), req, res));
 
 export { convocationsRouteur as convocationsRouteur };

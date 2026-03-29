@@ -43,17 +43,21 @@ export async function patchConvocationSupplementaire(sessionId: string, epreuveC
         ("SELECT c.code_anonymat as code FROM convocation c WHERE c.numero_etudiant = ? AND c.id_session = ? "
             + "AND c.code_epreuve = ?;", [numeroEtudiant, idSession, epreuveCode]);
 
-    const ancienneConvocation = await epreuve.convocations.getOrFetch(resultats[0]?.code ?? '');
+    const ancienCode = resultats[0]?.code;
 
-    if (ancienneConvocation?.noteQuart != null) {
-        throw new ErreurServeur("L'étudiant possède déjà une note.");
-    } else {
-        await epreuve.convocations.delete(resultats[0]?.code ?? '');
+    if (ancienCode) {
+        const ancienneConvocation = await epreuve.convocations.getOrFetch(ancienCode);
+
+        if (ancienneConvocation && ancienneConvocation.noteQuart != null) {
+            throw new ErreurServeur("L'étudiant possède déjà une note sur son ancienne convocation.");
+        }
+
+        await epreuve.convocations.delete(ancienCode);
     }
 
     nouvelleConvoc.numeroEtudiant = numeroEtudiant;
     epreuve.convocations.set(codeAnonymat, nouvelleConvoc);
     const nouvelleAssignation = await epreuve.convocations.update(codeAnonymat, { numero_etudiant: numeroEtudiant });
 
-    return { success: nouvelleAssignation.affectedRows > 0 }
+    return { success: nouvelleAssignation.affectedRows > 0 };
 }

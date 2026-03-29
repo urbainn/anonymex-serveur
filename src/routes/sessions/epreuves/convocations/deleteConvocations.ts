@@ -35,11 +35,11 @@ export async function deleteConvocations(sessionId: string, epreuveCode: string,
 
     let resultatSuppression = 0;
 
-    for(const codeAno in listeCodeAno) {
+    for(const codeAno of listeCodeAno) {
         const suppression = await epreuve.convocations.delete(codeAno);
 
         resultatSuppression += suppression.affectedRows;
     }
-    
+
     return { success : resultatSuppression > 0 }
 }

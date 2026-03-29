@@ -3,6 +3,7 @@ import { useFullRest } from "../useRest";
 import { getBordereau } from "./getBordereau";
 import { getCoupons } from "./getCoupons";
 import { getScanIncident } from "./getScanIncident";
+import { getBordereauTemp } from "./getBordereauTEMP";
 
 const documentsRouter = Router();
 
@@ -20,6 +21,12 @@ documentsRouter.get("/session/:sessionId/epreuve/:codeEpreuve/coupons.pdf", (req
 documentsRouter.get("/incidents/:idIncident/scan.webp", (req, res) => {
     const { idIncident } = req.params;
     return useFullRest(() => getScanIncident(idIncident, res), req, res);
+});
+
+// GET /documents/magacha/:sessionId/:codeEpreuve/:nbIncidents
+documentsRouter.get("/magacha/:sessionId/:codeEpreuve/:nbIncidents", (req, res) => {
+    const { sessionId, codeEpreuve, nbIncidents } = req.params;
+    return useFullRest(() => getBordereauTemp(sessionId, codeEpreuve, nbIncidents, res), req, res);
 });
 
 

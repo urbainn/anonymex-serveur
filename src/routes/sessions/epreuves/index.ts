@@ -5,6 +5,7 @@ import { getEpreuve } from "./getEpreuve";
 import { patchEpreuve } from "./patchEpreuve";
 import { depotRouter } from "./depot";
 import { incidentsRouter } from "./incidents";
+import { convocationsRouteur } from "./convocations";
 
 const epreuvesRouter = Router({ mergeParams: true });
 
@@ -13,6 +14,9 @@ epreuvesRouter.use("/:code/depot", depotRouter);
 
 // Incidents
 epreuvesRouter.use("/:code/incidents", incidentsRouter);
+
+// Convocations
+epreuvesRouter.use("/:code/convocations", convocationsRouteur);
 
 // GET /sessions/:session/epreuves/:code/
 epreuvesRouter.get<{ session: string, code: string }>

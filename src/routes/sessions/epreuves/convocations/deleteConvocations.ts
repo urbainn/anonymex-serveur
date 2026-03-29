@@ -33,13 +33,13 @@ export async function deleteConvocations(sessionId: string, epreuveCode: string,
         throw new ErreurRequeteInvalide("L'épreuve demandé n'existe pas.");
     }
 
-    let resultatSuppression = false;
+    let resultatSuppression = 0;
 
     for(const codeAno in listeCodeAno) {
         const suppression = await epreuve.convocations.delete(codeAno);
 
-        resultatSuppression = suppression.affectedRows > 0;
+        resultatSuppression += suppression.affectedRows;
     }
-
-    return { success : resultatSuppression }
+    
+    return { success : resultatSuppression > 0 }
 }

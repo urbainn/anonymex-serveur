@@ -1,8 +1,8 @@
 import { sessionCache } from "../../../../cache/sessions/SessionCache";
-import { APIConvocation, APIListeConvocations } from "../../../../contracts/convocations";
+import { APIConvocation, APIConvocationsSupplementairesMap } from "../../../../contracts/convocations";
 import { ErreurRequeteInvalide } from "../../../erreursApi";
 
-export async function getConvocationsSupplementaires(sessionId: string, epreuveCode: string): Promise<APIListeConvocations> {
+export async function getConvocationsSupplementaires(sessionId: string, epreuveCode: string): Promise<APIConvocationsSupplementairesMap> {
 
     const idSession = parseInt(sessionId ?? '');
 
@@ -26,14 +26,19 @@ export async function getConvocationsSupplementaires(sessionId: string, epreuveC
 
     await epreuve.convocations.getAll();
 
-    const listeConvocations: APIConvocation[] = [];
+    const convocsParSalle: Record<string, APIConvocation[]> = {};
     for (const convocation of epreuve.convocations.convocationsSupplementaires.values()) {
 
         const convocationFormatee = convocation.toJSON();
-        listeConvocations.push(convocationFormatee);
+
+        if (!convocsParSalle[convocation.codeSalle]) {
+            convocsParSalle[convocation.codeSalle] = [];
+        }
+
+        convocsParSalle[convocation.codeSalle]?.push(convocationFormatee);
 
     }
 
-    return { convocations: listeConvocations };
+    return convocsParSalle;
 
 }

@@ -23,12 +23,9 @@ export class Epreuve extends ElementEnCache {
     public nom: string;
     public idDecalage: number;
     public statut: EpreuveStatut;
-    public salles: string[] = [];//todo
     public dateEpreuve: number;
     public duree: number;
-    public copies = 0;//todo
     public nbPresents: number | null;
-    public nbIncidents: number;
 
     /** Cache des incidents de l'épreuve */
     public incidents: IncidentCache;
@@ -48,7 +45,6 @@ export class Epreuve extends ElementEnCache {
         this.nbPresents = data.nb_presents;
         this.convocations = new ConvocationCache(this.idSession, this.codeEpreuve);
         this.incidents = new IncidentCache(this.idSession, this.codeEpreuve);
-        this.nbIncidents = this.incidents.size();
     }
 
     /** Obtenir la session de cette epreuve */
@@ -64,11 +60,13 @@ export class Epreuve extends ElementEnCache {
             code: this.codeEpreuve,
             nom: this.nom,
             statut: this.statut,
-            salles: this.salles,
+            salles: Array.from(this.convocations.salles),
             date: this.dateEpreuve,
             duree: this.duree,
-            copies: this.copies,
-            incidents: this.nbIncidents
+            copies: this.convocations.nbDepots,
+            incidents: this.incidents.size(),
+            copiesTotal: this.convocations.size(),
+            nbPresents: this.nbPresents ?? undefined
         }
     }
 }

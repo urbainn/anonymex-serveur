@@ -19,7 +19,8 @@ export const EpreuveSchema = z.object({
     duree: z.number().int().positive(), // durée en minutes
     copies: z.number().int().nonnegative().optional(), // nombre de copies déposées
     copiesTotal: z.number().int().positive().optional(), // nombre total de copies attendues
-    incidents: z.number().int().nonnegative().optional() // nombre d'incidents de lecture
+    incidents: z.number().int().nonnegative().optional(), // nombre d'incidents de lecture
+    nbPresents: z.number().int().nonnegative().optional() // nombre de présents, si saisi
 });
 
 export const ListEpreuvesSchema = z.object({
@@ -29,7 +30,13 @@ export const ListEpreuvesSchema = z.object({
 
 export const UpdateEpreuveSchema = EpreuveSchema.pick({ nom: true, salles: true, date: true, duree: true }).partial();
 
+export const SallesEpreuveSchema = z.array(z.object({
+    codeSalle: z.string(),
+    convocations: z.number().int().nonnegative()
+}));
+
 // --- Types ---
 export type APIEpreuve = z.infer<typeof EpreuveSchema>;
 export type APIUpdateEpreuve = z.infer<typeof UpdateEpreuveSchema>;
 export type APIListEpreuves = z.infer<typeof ListEpreuvesSchema>;
+export type APISallesEpreuve = z.infer<typeof SallesEpreuveSchema>;

@@ -6,6 +6,7 @@ import { patchEpreuve } from "./patchEpreuve";
 import { depotRouter } from "./depot";
 import { incidentsRouter } from "./incidents";
 import { convocationsRouteur } from "./convocations";
+import { getEpreuveSalles } from "./getEpreuveSalles";
 
 const epreuvesRouter = Router({ mergeParams: true });
 
@@ -17,6 +18,10 @@ epreuvesRouter.use("/:code/incidents", incidentsRouter);
 
 // Convocations
 epreuvesRouter.use("/:code/convocations", convocationsRouteur);
+
+// GET /sessions/:session/epreuves/:code/salles
+epreuvesRouter.get<{ session: string, code: string }>
+    ("/:code/salles", (req, res) => useRest(() => getEpreuveSalles(req.params.session, req.params.code), req, res));
 
 // GET /sessions/:session/epreuves/:code/
 epreuvesRouter.get<{ session: string, code: string }>

@@ -1,3 +1,4 @@
+import { etudiantCache } from "../../../../cache/etudiants/EtudiantCache";
 import { sessionCache } from "../../../../cache/sessions/SessionCache";
 import { APIConvocation, APIListeConvocations } from "../../../../contracts/convocations";
 import { ErreurRequeteInvalide } from "../../../erreursApi";
@@ -25,11 +26,17 @@ export async function getConvocations(sessionId: string, epreuveCode: string): P
     }
 
     const convocationsBrutes = await epreuve.convocations.getAll();
+    await etudiantCache.getAll();
 
     const listeConvocations: APIConvocation[] = [];
     for (const convocation of convocationsBrutes) {
 
         const convocationFormatee = convocation.toJSON();
+        if (convocationFormatee.numeroEtudiant !== undefined) {
+            const etudiant = await etudiantCache.getOrFetch(convocationFormatee.numeroEtudiant);
+            convocationFormatee.prenom = etudiant?.prenom;
+            convocationFormatee.nom = etudiant?.nom;
+        }
         listeConvocations.push(convocationFormatee);
 
     }

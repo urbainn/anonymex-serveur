@@ -81,6 +81,8 @@ describe('getEpreuve', () => {
                 duree: 120,
                 copies: 0,
                 incidents: 0,
+                nbPresents: 90,
+                copiesTotal: 0,
                 salles: []
             });
 

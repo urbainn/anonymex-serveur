@@ -1,7 +1,6 @@
 import { Fichier } from "../../routes/useFile";
 import { Mat } from "@techstark/opencv-js";
 //import { matToSharp } from "../../utils/imgUtils";
-import { BenchmarkUnitaireModule } from "../generation/bordereau-test/modules/cadre-etudiant/BenchmarkUnitaireModule";
 //import { OpenCvInstance } from "../services/OpenCvInstance";
 import { TensorFlowCNN } from "./CNN/TensorFlowCNN";
 import { Depot } from "./DepotsManager";
@@ -17,9 +16,10 @@ import { IncidentData } from "../../cache/epreuves/incidents/Incident";
 import { config } from "../../config";
 import { MediaService } from "../services/MediaService";
 import { logInfo } from "../../utils/logger";
+import { ModeleBordereau } from "../generation/bordereau/modeleBordereau";
 
-const MARGE_CIBLES_MM = 10;
-const DIAMETRE_CIBLES_MM = 8;
+const MARGE_CIBLES_MM = 17;
+const DIAMETRE_CIBLES_MM = 9;
 
 export type CallbackLecture = (event: string, id: number, data: Record<string, unknown>) => void;
 
@@ -29,7 +29,7 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
     await TesseractOCR.configurerModeCaractereUnique(config.codesAnonymat.alphabetCodeAnonymat);
 
     // Récupérer les positions des ROIs du modèle de bordereau
-    const rois = new BenchmarkUnitaireModule().getZonesLecture();
+    const roisCodeAno = ModeleBordereau.getPositionsCadresAnonymat();
 
     // Récupérer la session et l'épreuve depuis le dépôt
     const sessionId = getDepot().sessionId;
@@ -54,15 +54,11 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
                 // Préparer et ajuste le scan (découpage, rotation, ...).
                 scanPret = await preparerScan(scan, buffer);
 
-                // TEMPORAIRE (BENCHMARK) : détecter les April Tags pour récupérer le code de l'épreuve
-                //const detections = await detecterAprilTags(scan, matToSharp(await OpenCvInstance.getInstance(), scanPret));
-                //const code = detections.sort((a, b) => a.center[0] - b.center[0]).map(d => String.fromCharCode(d.id));
-
                 // Code lu ('' = échec de lecture)
                 const codeLu: string[] = [];
 
                 // Découper les lettres du code d'anonymat, et les lire
-                await decouperROIs(scanPret, rois.lettresCodeAnonymat, DIAMETRE_CIBLES_MM, MARGE_CIBLES_MM, "A4",
+                await decouperROIs(scanPret, roisCodeAno, DIAMETRE_CIBLES_MM, MARGE_CIBLES_MM, "A4",
                     async (roiAnonymat) => {
 
                         // Pré-processing de la ROI

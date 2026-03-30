@@ -67,7 +67,7 @@ export class EpreuveCache extends DatabaseCacheBase<string /*code*/, Epreuve, Ep
         }
 
         logInfo('Incidents', styles.fg.cyan + incidentsPackets.length + styles.fg.white + ' incidents mis en cache.');
-        logInfo('Convocations', styles.fg.cyan + convocsPackets.length + styles.fg.white + ' convocations mis en cache.');
+        logInfo('Convocations', styles.fg.cyan + convocsPackets.length + styles.fg.white + ' convocations mises en cache.');
 
         return res;
     }

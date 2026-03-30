@@ -7,11 +7,11 @@ import { getEtudiant } from "./getEtudiant";
 const etudiantsRouter = Router();
 
 // GET /etudiants/:numero/
-etudiantsRouter.get("/:numero", (req, res) => 
+etudiantsRouter.get("/:numero", (req, res) =>
     useRest(() => getEtudiant(req.params.numero), req, res));
 
 // POST /etudiants/
-etudiantsRouter.patch("/", (req, res) =>
+etudiantsRouter.post("/", (req, res) =>
     useRest(() => postEtudiant(req.body), req, res));
 
 // PATCH /etudiants/:numero/

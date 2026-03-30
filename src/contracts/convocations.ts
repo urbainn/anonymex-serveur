@@ -8,7 +8,9 @@ export const ConvocationSchema = z.object({
     rang: z.number().int().positive().optional(),
     codeAnonymat: z.string(),
     noteQuart: z.number().int().positive().optional(),
-    codeSalle: z.string()
+    codeSalle: z.string(),
+    prenom: z.string().optional(),
+    nom: z.string().optional()
 });
 
 export const ListConvocationsSchema = z.object({

@@ -2,7 +2,6 @@ import { readFileSync } from 'fs';
 import { extraireScans, ScanData } from './preparation/extraireScans';
 import { preparerScan } from './preparation/preparerScan';
 import { decouperROIs } from './preparation/decouperROIs';
-import sharp from 'sharp';
 import { ErreurDecoupeROIs } from './lectureErreurs';
 import { preprocessPipelines } from './OCR/preprocessPipelines';
 import { TesseractOCR } from './OCR/TesseractOCR';
@@ -12,6 +11,7 @@ import { detecterAprilTags } from './preparation/detecterAprilTags';
 import { matToSharp } from '../../utils/imgUtils';
 import { OpenCvInstance } from '../services/OpenCvInstance';
 import { config } from '../../config';
+import { Mat } from '@techstark/opencv-js';
 
 type MimeType = 'application/pdf' | 'image/jpeg' | 'image/png';
 
@@ -92,10 +92,12 @@ export async function lireBordereau(chemin: string, mimeType: MimeType): Promise
 
         const indexEchoues: number[] = [];
         const pageIndexCourante = stats.pageIndex;
+        const cv = await OpenCvInstance.getInstance();
 
-        const onRoiExtrait = async (image: sharp.Sharp, index: number) => {
+        const onRoiExtrait = async (image: Mat, index: number) => {
+            const shrp = matToSharp(cv, image);
             const bufferImgTraitee = await preprocessPipelines
-                .initial(image.clone())
+                .initial(shrp.clone())
                 .resize({
                     width: 128, height: 128, fit: "contain", background: { r: 255, g: 255, b: 255 },
                     kernel: "lanczos3"
@@ -112,7 +114,7 @@ export async function lireBordereau(chemin: string, mimeType: MimeType): Promise
 
             const debutCNN = Date.now();
             const prediction = await TensorFlowCNN.predire(
-                await preprocessPipelines.emnist(image).png().toBuffer(), 'EMNIST-Standard', config.codesAnonymat.alphabetCodeAnonymat
+                await preprocessPipelines.emnist(shrp).png().toBuffer(), 'EMNIST-Standard', config.codesAnonymat.alphabetCodeAnonymat
             );
             stats.tempsTotalCNN += (Date.now() - debutCNN);
 
@@ -150,7 +152,7 @@ export async function lireBordereau(chemin: string, mimeType: MimeType): Promise
                 //console.log('Echec total ROI ' + index + ': attendu ' + lettreAttendue + ', Tesseract a lu "' + text.trim() + '" (conf: ' + confidence.toFixed(2) + '%), CNN a lu "' + prediction.caractere + '" (confiance: ' + (prediction.confiance * 100).toFixed(2) + '%).');
                 indexEchoues.push(index);
 
-                await preprocessPipelines.emnist(image).png().toFile('debug/rois/erreurs/page_' + (pageIndexCourante + 1).toString() + '_' + prediction.caractere + '_' + lettreAttendue + '.png');
+                await preprocessPipelines.emnist(shrp).png().toFile('debug/rois/erreurs/page_' + (pageIndexCourante + 1).toString() + '_' + prediction.caractere + '_' + lettreAttendue + '.png');
             }
 
             //console.log("PREDICTION CNN :", prediction.caractere, "confiance :", (prediction.confiance * 100).toFixed(2) + '% -- attendu :', lettreAttendue);

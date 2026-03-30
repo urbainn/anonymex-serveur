@@ -1,8 +1,6 @@
-import sharp from "sharp";
 import { Mat } from "@techstark/opencv-js";
 import { dimensionsFormats } from "../lireBordereau";
 import { OpenCvInstance } from "../../services/OpenCvInstance";
-import { matToSharp } from "../../../utils/imgUtils";
 import { LayoutPosition } from "../../generation/ModeleLectureBase";
 
 
@@ -23,7 +21,7 @@ export async function decouperROIs(
     diametreCiblesMm: number,
     margeCiblesMm: number,
     format: 'A4',
-    onDecoupe: (roiImage: sharp.Sharp, index: number) => Promise<void>,
+    onDecoupe: (roiImage: Mat, index: number) => Promise<void>,
     options: DecouperROIsOptions = {}
 ): Promise<void> {
 
@@ -81,9 +79,6 @@ export async function decouperROIs(
         const rect = new cv.Rect(left, top, widthPx, heightPx);
         const roiView = documentMat.roi(rect);
 
-        const roiSharp = matToSharp(cv, roiView); // todo: trop de conversions.. passer toute l'extraction d'un scan par sharp sans repasser par cv.Mat
-        roiView.delete();
-
-        await onDecoupe(roiSharp, roiIndex);
+        await onDecoupe(roiView, roiIndex);
     }
 }

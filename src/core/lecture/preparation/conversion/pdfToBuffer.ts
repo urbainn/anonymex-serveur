@@ -79,8 +79,10 @@ export async function pdfToBuffer(pdf: PDFDocumentProxy, pageNum: number): Promi
         for (let i = 0; i < imgData.length; i++) {
             const byte = imgData[i] ?? 0;
             for (let bit = 0; bit < 8; bit++) {
+                const index = i * 8 + bit;
+                if (index >= data.length) break;
                 const pixel = (byte >> (7 - bit)) & 1;
-                data[i * 8 + bit] = pixel * 255; // 1bpp -> 8bpp
+                data[index] = pixel * 255; // 1bpp -> 8bpp
             }
         }
     } else {

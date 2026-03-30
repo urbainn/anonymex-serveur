@@ -35,7 +35,6 @@ export async function getDepotProgression(req: Request, res: Response): Promise<
     logInfo('depotProgression', 'Client connecté en SSE pour le dépôt #' + depotId + '.');
 
     depot.callback = (event: string, id: number, data: Record<string, unknown>) => {
-        console.log(`remontée du message:\nevent: ${event}\ndata: ${JSON.stringify(data)}\n------------`);
         const message = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
         res.write(message);
     };

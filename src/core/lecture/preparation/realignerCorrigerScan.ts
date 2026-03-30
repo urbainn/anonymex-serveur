@@ -24,11 +24,7 @@ export async function realignerCorrigerScan(image: Mat, detections: (null | Cibl
 
     const cv = await OpenCvInstance.getInstance();
 
-    // Convert RGBA Mat to BGR
-    const mat = new cv.Mat();
-    cv.cvtColor(image, mat, cv.COLOR_RGBA2BGR);
-
-    const imgHeight = mat.rows;
+    const imgHeight = image.rows;
 
     // Calculer la taille de sortie du document en pixels
     const sortieH = imgHeight;
@@ -44,8 +40,8 @@ export async function realignerCorrigerScan(image: Mat, detections: (null | Cibl
     function ptsToMat32FC2(pts: Pt[]) {
         // pts = [[x0,y0],[x1,y1],[x2,y2],[x3,y3],...]
         const data = new Float32Array(pts.flat());
-        // 4x1 CV_32FC2 est ce qu'opencv attend pour les points 2D
-        return cv.matFromArray(4, 1, cv.CV_32FC2, data);
+        // Nx1 CV_32FC2 est ce qu'opencv attend pour les points 2D
+        return cv.matFromArray(pts.length, 1, cv.CV_32FC2, data);
     }
 
     // Points d'ancrage SOURCE (dans l'image d'ORIGINE)
@@ -78,6 +74,9 @@ export async function realignerCorrigerScan(image: Mat, detections: (null | Cibl
     if (srcPts.length < 3) {
         throw new ErreurRealignement(`Impossible de réaligner le document, trop peu de points d'ancrage (3 nécessaires, ${srcPts.length} obtenus)`);
     }
+    if (srcPts.length !== 4) {
+        throw new ErreurRealignement(`Transformation homographique requiert 4 points. ${srcPts.length} points obtenus.`);
+    }
 
     //await visualiserGeometrieAncrage(image, srcPoints, dstPoints);
 
@@ -90,26 +89,21 @@ export async function realignerCorrigerScan(image: Mat, detections: (null | Cibl
     const size = new cv.Size(Math.round(maxX - minX), Math.round(maxY - minY));
 
     const srcMat = ptsToMat32FC2(srcPts);
-    const dstMat = ptsToMat32FC2(dst0);
+    const dstMat = ptsToMat32FC2(dst0.slice(0, srcPts.length));
     const dstMatImg = new cv.Mat(size.height, size.width, cv.CV_8UC3);
 
     let transformationOk = false;
     try {
-        if (srcPts.length === 4) {
-            // Homographie
-            const H = cv.getPerspectiveTransform(srcMat, dstMat);
-            try {
-                cv.warpPerspective(mat, dstMatImg, H, size, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar(255, 255, 255, 255));
-                transformationOk = true;
-            } finally {
-                H.delete();
-            }
-        } else if (srcPts.length === 3) {
-            // TODO: affine ou estimation du 4e point et homographie
-            throw new ErreurRealignement(`Transformation affine pas encore implémentée. Les 4 coins doivent être visibles.`);
+        // Homographie
+        const H = cv.getPerspectiveTransform(srcMat, dstMat);
+        try {
+            cv.warpPerspective(image, dstMatImg, H, size, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar(255, 255, 255, 255));
+            transformationOk = true;
+        } finally {
+            H.delete();
         }
     } finally {
-        mat.delete();
+        image.delete();
         srcMat.delete();
         dstMat.delete();
 

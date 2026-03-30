@@ -14,48 +14,75 @@ import { OpenCvInstance } from "../../services/OpenCvInstance";
  */
 export async function preparerScan(scanProps: ScanData, buffer: Uint8ClampedArray | Uint8Array): Promise<Mat> {
 
-    // transformer le buffer en Mat OpenCV
-    const scan = new Mat(scanProps.height, scanProps.width, scanProps.channels === 1 ? 0 : (scanProps.channels === 3 ? 16 : 24));
-    scan.data.set(buffer);
-
-    // Libérer la mémoire du scan brut
-    // eslint-disable-next-line no-useless-assignment
-    buffer = new Uint8Array(0);
-
-    const detectionCibles = await detecterCiblesConcentriques(scanProps, scan, { tailleCibleMm: 8 });
-    const orientationDeg = orientationCiblesConcentriques(detectionCibles);
-
-    if (orientationDeg === -1) {
-        // TODO!!! à réimplémenter proprement en tant que fallback si cibles concentriques illisibles
-        // Reconnaissance des april tags.
-        //const detectionsAprilTags = await detecterAprilTags(scanProps, scan)
-        //    .catch((err) => { throw ErreurDetectionAprilTags.assigner(err) });
-
-        // Orienter correctement le document
-        //const { orientation, ordreTags } = orientationAprilTags(scanProps, detectionsAprilTags);
-        throw new Error('cibles concentriques illisibles.');
-    }
-
-    // Appliquer la rotation nécessaire pour réorienter le scan
     const cv = await OpenCvInstance.getInstance();
-    const centreRotation = new cv.Point(scanProps.width / 2, scanProps.height / 2);
-    const matriceRotation = cv.getRotationMatrix2D(centreRotation, orientationDeg, 1);
-    cv.warpAffine(scan, scan, matriceRotation, new cv.Size(scanProps.width, scanProps.height), cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar(255, 255, 255));
+    const channels = scanProps.channels;
 
-    console.log(`Rotation appliquée: ${orientationDeg}°`);
+    // Transformer le buffer en Mat OpenCV
+    const cvType = channels === 1 ? cv.CV_8UC1 : (channels === 3 ? cv.CV_8UC3 : cv.CV_8UC4);
+    let scan = new cv.Mat(scanProps.height, scanProps.width, cvType);
+    const dataLengthAttendue = scanProps.width * scanProps.height * channels;
+    if (buffer.length < dataLengthAttendue) {
+        scan.delete();
+        throw new Error(`Buffer image invalide: taille reçue ${buffer.length}, attendu au moins ${dataLengthAttendue}.`);
+    }
+    scan.data.set(buffer.subarray(0, dataLengthAttendue));
 
-    // Remapper les détections d'april tags en fonction de la rotation appliquée
-    //const detectionsRemap = remapperDetections(detectionsAprilTags, orientation, scanProps.width, scanProps.height);
+    let scanTransmis = false;
+    try {
+        // Passer en couleurs BGR (si nécessaire)
+        if (channels === 4) {
+            const scanBGR = new cv.Mat();
+            cv.cvtColor(scan, scanBGR, cv.COLOR_RGBA2BGR);
+            scan.delete();
+            scan = scanBGR;
+        } else if (channels === 1) {
+            const scanBGR = new cv.Mat();
+            cv.cvtColor(scan, scanBGR, cv.COLOR_GRAY2BGR);
+            scan.delete();
+            scan = scanBGR;
+        }
 
-    const detectionsRemap = remapperCiblesConcentriques(detectionCibles, orientationDeg, scanProps.width, scanProps.height);
+        const detectionCibles = await detecterCiblesConcentriques(scanProps, scan, { tailleCibleMm: 8 });
+        const orientationDeg = orientationCiblesConcentriques(detectionCibles);
 
-    // Scan prêt : réaligner et corriger le scan
-    const scanPret = await realignerCorrigerScan(scan, detectionsRemap, {
-        tailleCiblesMm: 6,
-        margeCiblesMm: 7,
-        format: 'A4'
-    });
+        if (orientationDeg === -1) {
+            // TODO!!! à réimplémenter proprement en tant que fallback si cibles concentriques illisibles
+            // Reconnaissance des april tags.
+            //const detectionsAprilTags = await detecterAprilTags(scanProps, scan)
+            //    .catch((err) => { throw ErreurDetectionAprilTags.assigner(err) });
 
-    return scanPret;
+            // Orienter correctement le document
+            //const { orientation, ordreTags } = orientationAprilTags(scanProps, detectionsAprilTags);
+            throw new Error('cibles concentriques illisibles.');
+        }
+
+        // Appliquer la rotation nécessaire pour réorienter le scan
+        const centreRotation = new cv.Point(scanProps.width / 2, scanProps.height / 2);
+        const matriceRotation = cv.getRotationMatrix2D(centreRotation, orientationDeg, 1);
+        try {
+            cv.warpAffine(scan, scan, matriceRotation, new cv.Size(scanProps.width, scanProps.height), cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar(255, 255, 255));
+        } finally {
+            matriceRotation.delete();
+        }
+
+        // Remapper les détections d'april tags en fonction de la rotation appliquée
+        //const detectionsRemap = remapperDetections(detectionsAprilTags, orientation, scanProps.width, scanProps.height);
+
+        const detectionsRemap = remapperCiblesConcentriques(detectionCibles, orientationDeg, scanProps.width, scanProps.height);
+
+        // Scan prêt : réaligner et corriger le scan
+        scanTransmis = true;
+        const scanPret = await realignerCorrigerScan(scan, detectionsRemap, {
+            tailleCiblesMm: 6,
+            margeCiblesMm: 7,
+            format: 'A4'
+        });
+
+        return scanPret;
+    } finally {
+        if (!scanTransmis) {
+            scan.delete();
+        }
+    }
 
 }

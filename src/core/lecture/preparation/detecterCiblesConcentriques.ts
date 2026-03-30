@@ -55,10 +55,24 @@ export async function detecterCiblesConcentriques(scan: ScanData, img: Mat, opti
         [scan.width, scan.height]  // bas droite
     ]
 
+    // Conversion en niveaux de gris (adaptiveThreshold exige CV_8UC1)
+    const gris = new cv.Mat();
+    const imgChannels = img.channels();
+    if (imgChannels === 1) {
+        img.copyTo(gris);
+    } else if (imgChannels === 3) {
+        cv.cvtColor(img, gris, cv.COLOR_BGR2GRAY);
+    } else if (imgChannels === 4) {
+        cv.cvtColor(img, gris, cv.COLOR_RGBA2GRAY);
+    } else {
+        gris.delete();
+        throw new ErreurDetectionCiblesConcentriques(`Format image non supporté pour la détection des cibles (channels=${imgChannels}).`);
+    }
+
     // flou gaussien (réduction du bruit)
     const flou = new cv.Mat();
-    cv.GaussianBlur(img, flou, new cv.Size(5, 5), 0);
-    img.delete();
+    cv.GaussianBlur(gris, flou, new cv.Size(5, 5), 0);
+    gris.delete();
 
     // seuillage adaptatif (binarisation)
     const seuillage = new cv.Mat();
@@ -171,8 +185,9 @@ export async function detecterCiblesConcentriques(scan: ScanData, img: Mat, opti
             }
         }
 
-        if (coinMeilleurCandidats.length < RING_ID_LOOKUP.size - 1) {
-            throw new ErreurDetectionCiblesConcentriques(`Détection des cibles incomplète (${coinMeilleurCandidats.length}/${RING_ID_LOOKUP.size}).`);
+        const nbCiblesDetectees = coinMeilleurCandidats.filter(c => c !== null).length;
+        if (nbCiblesDetectees < RING_ID_LOOKUP.size - 1) {
+            throw new ErreurDetectionCiblesConcentriques(`Détection des cibles incomplète (${nbCiblesDetectees}/${RING_ID_LOOKUP.size}).`);
         }
 
         //await visualiserGeometrieCibles(imageSharp, coinMeilleurCandidats, contours);

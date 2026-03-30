@@ -22,7 +22,24 @@ export const preprocessPipelines = {
 
     /** CNN EMNIST */
     emnist: (img: Sharp) => img
-        .gamma(3)
-        .threshold(200),
+        .grayscale()
+        .normalise()
+        .gamma(1.35)
+        .median(1)
+        .threshold(170)
+        .flatten({ background: "#ffffff" })
+        .trim({ threshold: 8, background: "#ffffff" })
+        .extend({
+            top: 4,
+            bottom: 4,
+            left: 4,
+            right: 4,
+            background: "#ffffff"
+        })
+        .resize(28, 28, {
+            fit: "contain",
+            background: { r: 255, g: 255, b: 255 },
+            kernel: "lanczos3"
+        }),
 
 };

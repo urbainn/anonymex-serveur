@@ -1,9 +1,7 @@
-import sharp from "sharp";
 import { ScanData } from "./extraireScans";
 import { OpenCvInstance } from "../../../core/services/OpenCvInstance";
 import { dimensionsFormats } from "../lireBordereau";
 import { ErreurDetectionCiblesConcentriques } from "../lectureErreurs";
-import { visualiserGeometrieCibles } from "../../debug/visualiseurs/visualiserGeometrieCibles";
 import { StatistiquesDebug } from "../../debug/StatistiquesDebug";
 import { EtapeLecture } from "../../debug/EtapesDeTraitementDicts";
 import { Mat } from "@techstark/opencv-js";
@@ -30,13 +28,12 @@ const RING_ID_LOOKUP = new Map<number, number>(
     CIBLES_NB_RINGS.map((nbRings, idx) => [nbRings, idx])
 );
 
-export async function detecterCiblesConcentriques(scan: ScanData, imageSharp: sharp.Sharp, options?: DetecterCiblesConcentriquesOptions): Promise<(null | CibleConcentriqueDetection)[]> {
+export async function detecterCiblesConcentriques(scan: ScanData, img: Mat, options?: DetecterCiblesConcentriquesOptions): Promise<(null | CibleConcentriqueDetection)[]> {
 
     const tempsDebut = Date.now();
 
     // Convertir le scan en buffer utilisable par OpenCV
     const cv = await OpenCvInstance.getInstance();
-    const { data, info } = await imageSharp.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
 
     // Format et dimensions
     const { format, tailleCibleMm } = options || {};
@@ -45,30 +42,23 @@ export async function detecterCiblesConcentriques(scan: ScanData, imageSharp: sh
     // résolution en pixels par mm. Pas représentatif (approximation), surtout en cas de rognage important.
     // en clair; on suppose que l'image couvre un maximum de la surface du format attendu afin de calculer la résolution.
     // on prend en compte l'orientation, qui invertit largeur/hauteur si paysage.
-    const estOrientationPaysage = info.width >= info.height ? true : false;
-    const ppmX = info.width / (estOrientationPaysage ? formatDims.formatHeightMm : formatDims.formatWidthMm);
-    const ppmY = info.height / (estOrientationPaysage ? formatDims.formatWidthMm : formatDims.formatHeightMm);
+    const estOrientationPaysage = scan.width >= scan.height ? true : false;
+    const ppmX = scan.width / (estOrientationPaysage ? formatDims.formatHeightMm : formatDims.formatWidthMm);
+    const ppmY = scan.height / (estOrientationPaysage ? formatDims.formatWidthMm : formatDims.formatHeightMm);
     const pixelsParMm = (ppmX + ppmY) / 2;
 
     // Position des coins dans l'image (HG, HD, BG, BD) en pixels. Non dépendant de l'orientation (permet de réorienter plus tard)
     const positionCoins = [
         [0, 0], // haut gauche
-        [info.width, 0], // haut droite
-        [0, info.height], // bas gauche
-        [info.width, info.height]  // bas droite
+        [scan.width, 0], // haut droite
+        [0, scan.height], // bas gauche
+        [scan.width, scan.height]  // bas droite
     ]
-
-    // transformer en niveaux de gris
-    const rgba = cv.matFromArray(info.height, info.width, cv.CV_8UC4,
-        new Uint8Array(data.buffer, data.byteOffset, data.byteLength));
-    const gray = new cv.Mat();
-    cv.cvtColor(rgba, gray, cv.COLOR_RGBA2GRAY);
-    rgba.delete();
 
     // flou gaussien (réduction du bruit)
     const flou = new cv.Mat();
-    cv.GaussianBlur(gray, flou, new cv.Size(5, 5), 0);
-    gray.delete();
+    cv.GaussianBlur(img, flou, new cv.Size(5, 5), 0);
+    img.delete();
 
     // seuillage adaptatif (binarisation)
     const seuillage = new cv.Mat();
@@ -144,9 +134,9 @@ export async function detecterCiblesConcentriques(scan: ScanData, imageSharp: sh
                 const center: [number, number] = [propsCercle.cercle.center.x, propsCercle.cercle.center.y];
                 // Trouver le coin le plus proche
                 const distanceHaut = center[1];
-                const distanceBas = info.height - center[1];
+                const distanceBas = scan.height - center[1];
                 const distanceGauche = center[0];
-                const distanceDroite = info.width - center[0];
+                const distanceDroite = scan.width - center[0];
 
                 const estADroite = distanceDroite < distanceGauche; // plus à droite qu'à gauche..?
                 const estEnBas = distanceBas < distanceHaut; // plus en bas qu'en haut..?
@@ -185,7 +175,7 @@ export async function detecterCiblesConcentriques(scan: ScanData, imageSharp: sh
             throw new ErreurDetectionCiblesConcentriques(`Détection des cibles incomplète (${coinMeilleurCandidats.length}/${RING_ID_LOOKUP.size}).`);
         }
 
-        await visualiserGeometrieCibles(imageSharp, coinMeilleurCandidats, contours);
+        //await visualiserGeometrieCibles(imageSharp, coinMeilleurCandidats, contours);
         StatistiquesDebug.ajouterTempsExecution(EtapeLecture.DETECTION_CIBLES, Date.now() - tempsDebut);
 
         return coinMeilleurCandidats;

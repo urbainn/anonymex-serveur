@@ -1,10 +1,10 @@
-import sharp from "sharp";
 import { Mat } from "@techstark/opencv-js";
 import { ScanData } from "./extraireScans";
 import { realignerCorrigerScan } from "./realignerCorrigerScan";
 import { detecterCiblesConcentriques } from "./detecterCiblesConcentriques";
 import { orientationCiblesConcentriques } from "./reorientation/orientationCiblesConcentriques";
 import { remapperCiblesConcentriques } from "./reorientation/remapperCiblesConcentriques";
+import { OpenCvInstance } from "../../services/OpenCvInstance";
 
 /**
  * Prépare et ajuste le scan (découpage, rotation, ...).
@@ -14,14 +14,9 @@ import { remapperCiblesConcentriques } from "./reorientation/remapperCiblesConce
  */
 export async function preparerScan(scanProps: ScanData, buffer: Uint8ClampedArray | Uint8Array): Promise<Mat> {
 
-    // Transformer l'image dans un format lisible par les outils de traitement d'images
-    const scan = scanProps.raw ? sharp(buffer, {
-        raw: {
-            width: scanProps.width,
-            height: scanProps.height,
-            channels: scanProps.channels
-        }
-    }) : sharp(buffer);
+    // transformer le buffer en Mat OpenCV
+    const scan = new Mat(scanProps.height, scanProps.width, scanProps.channels === 1 ? 0 : (scanProps.channels === 3 ? 16 : 24));
+    scan.data.set(buffer);
 
     // Libérer la mémoire du scan brut
     // eslint-disable-next-line no-useless-assignment
@@ -41,7 +36,12 @@ export async function preparerScan(scanProps: ScanData, buffer: Uint8ClampedArra
         throw new Error('cibles concentriques illisibles.');
     }
 
-    scan.rotate(orientationDeg);
+    // Appliquer la rotation nécessaire pour réorienter le scan
+    const cv = await OpenCvInstance.getInstance();
+    const centreRotation = new cv.Point(scanProps.width / 2, scanProps.height / 2);
+    const matriceRotation = cv.getRotationMatrix2D(centreRotation, orientationDeg, 1);
+    cv.warpAffine(scan, scan, matriceRotation, new cv.Size(scanProps.width, scanProps.height), cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar(255, 255, 255));
+
     console.log(`Rotation appliquée: ${orientationDeg}°`);
 
     // Remapper les détections d'april tags en fonction de la rotation appliquée

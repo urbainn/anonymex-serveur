@@ -1,7 +1,6 @@
-import sharp from "sharp";
 import { Mat } from "@techstark/opencv-js";
 import { ErreurRealignement } from "../lectureErreurs";
-import { visualiserGeometrieAncrage } from "../../../core/debug/visualiseurs/visualiserGeometrieAncrage";
+//import { visualiserGeometrieAncrage } from "../../../core/debug/visualiseurs/visualiserGeometrieAncrage";
 import { visualiserRegionsOfInterests } from "../../../core/debug/visualiseurs/visualiserRegionsOfInterests";
 import { CadreEtudiantBenchmarkModule } from "../../generation/bordereau-test/modules/cadre-etudiant/CadreEtudiantBenchmarkModule";
 import { OpenCvInstance } from "../../../core/services/OpenCvInstance";
@@ -19,19 +18,15 @@ export interface realignerCorrigerOptions {
     format: 'A4';
 };
 
-export async function realignerCorrigerScan(image: sharp.Sharp, detections: (null | CibleConcentriqueDetection)[], options: realignerCorrigerOptions): Promise<Mat> {
+export async function realignerCorrigerScan(image: Mat, detections: (null | CibleConcentriqueDetection)[], options: realignerCorrigerOptions): Promise<Mat> {
     const { tailleCiblesMm, margeCiblesMm, format } = options;
     const { formatWidthMm, formatHeightMm } = dimensionsFormats[format];
 
     const cv = await OpenCvInstance.getInstance();
 
-    // sharp -> matrice opencv
-    const { data, info } = await image.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-    const rgba = cv.matFromArray(info.height, info.width, cv.CV_8UC4,
-        new Uint8Array(data.buffer, data.byteOffset, data.byteLength));
+    // Convert RGBA Mat to BGR
     const mat = new cv.Mat();
-    cv.cvtColor(rgba, mat, cv.COLOR_RGBA2BGR);
-    rgba.delete();
+    cv.cvtColor(image, mat, cv.COLOR_RGBA2BGR);
 
     const imgHeight = mat.rows;
 
@@ -84,7 +79,7 @@ export async function realignerCorrigerScan(image: sharp.Sharp, detections: (nul
         throw new ErreurRealignement(`Impossible de réaligner le document, trop peu de points d'ancrage (3 nécessaires, ${srcPts.length} obtenus)`);
     }
 
-    await visualiserGeometrieAncrage(image, srcPoints, dstPoints);
+    //await visualiserGeometrieAncrage(image, srcPoints, dstPoints);
 
     // Ancrer le document en (0,0) pour éviter les problèmes de bord lors de la transformation
     const xs = dstPts.map(p => p[0]), ys = dstPts.map(p => p[1]);

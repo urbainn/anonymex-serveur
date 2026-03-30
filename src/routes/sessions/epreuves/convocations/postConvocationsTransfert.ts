@@ -34,22 +34,32 @@ export async function postConvocationsTransfert(sessionId: string, epreuveCode: 
     if (data.sallesDepart && data.sallesDepart.length > 0) {
 
         const listeSalles = data.sallesDepart.map(() => "?").join(",");
-
         const resultat = await Database.execute(`UPDATE convocation SET code_salle = ? WHERE id_session = ? AND code_epreuve = ? AND code_salle IN (${listeSalles})`, [data.salleTransfert, idSession, epreuveCode, ...data.sallesDepart]);
-    
+
+        for (const convocation of epreuve.convocations.values()) {
+            if (data.sallesDepart?.includes(convocation.codeSalle)) {
+                convocation.codeSalle = data.salleTransfert;
+            }
+        }
+
         validation = resultat.affectedRows > 0
     }
 
     if (data.codesAnonymats && data.codesAnonymats.length > 0) {
 
         const listeCodes = data.codesAnonymats.map(() => "?").join(",");
-
         const resultat = await Database.execute(`UPDATE convocation SET code_salle = ? WHERE id_session = ? AND code_epreuve = ? AND code_anonymat IN (${listeCodes})`, [data.salleTransfert, idSession, epreuveCode, ...data.codesAnonymats]);
-    
+
+        for (const convocation of epreuve.convocations.values()) {
+            if (data.codesAnonymats?.includes(convocation.codeAnonymat)) {
+                convocation.codeSalle = data.salleTransfert;
+            }
+        }
+
         validation = resultat.affectedRows > 0
     }
 
     await epreuve.convocations.getAll();
 
-    return { success: validation};
+    return { success: validation };
 }

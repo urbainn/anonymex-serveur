@@ -4,6 +4,7 @@ import { getBordereau } from "./getBordereau";
 import { getCoupons } from "./getCoupons";
 import { getScanIncident } from "./getScanIncident";
 import { getBordereauTemp } from "./getBordereauTEMP";
+import { getNotesXLSX } from "./getNotesXLSX";
 
 const documentsRouter = Router();
 
@@ -29,5 +30,20 @@ documentsRouter.get("/magacha/:sessionId/:codeEpreuve/:nbIncidents", (req, res) 
     return useFullRest(() => getBordereauTemp(sessionId, codeEpreuve, nbIncidents, res), req, res);
 });
 
+// GET /documents/session/:sessionId/epreuve/:codeEpreuve/notes.xlsx
+documentsRouter.get("/session/:sessionId/epreuve/:codeEpreuve/notes.xlsx", (req, res) => {
+    const { sessionId, codeEpreuve } = req.params;
+    
+    return useFullRest(async () => {
+        const buffer = await getNotesXLSX(sessionId, codeEpreuve);
+
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="export-notes-${codeEpreuve}.xlsx"`
+        );
+
+        res.send(buffer);
+    }, req, res);
+});
 
 export { documentsRouter as documentsRouter };

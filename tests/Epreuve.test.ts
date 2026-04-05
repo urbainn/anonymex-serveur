@@ -227,7 +227,7 @@ describe('patchEpreuve', () => {
 
     describe('Cas de succès', () => {
         it("doit mettre à jour le cache et retourner les données parsées si tout est valide", async () => {
-            const donneesUpdate = { nom: "Nouveau Nom", date: 120 };
+            const donneesUpdate = { nom: "Nouveau Nom", date_epreuve: 120 };
 
             const mockSession = {
                 epreuves: {

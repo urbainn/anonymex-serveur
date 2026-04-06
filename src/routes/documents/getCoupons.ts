@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { ErreurRequeteInvalide } from '../erreursApi';
 import { sessionCache } from '../../cache/sessions/SessionCache';
-import { genererCoupons } from '../../core/generation/coupon/genererCoupons';
+import { genererDocCoupons } from '../../core/generation/coupon/genererDocCoupons';
 
 /**
  * Génère (et stream dans la response) les coupons d'identification pour une épreuve donnée.
@@ -22,5 +22,5 @@ export async function getCoupons(sessionId: string, codeEpreuve: string, salles:
     const epreuve = await session.epreuves.getOrFetch(codeEpreuve);
     if (epreuve === undefined) throw new ErreurRequeteInvalide("L'épreuve demandée n'existe pas.");
 
-    genererCoupons(session, epreuve, res);
+    genererDocCoupons(session, epreuve, res);
 }

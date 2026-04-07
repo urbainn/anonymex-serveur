@@ -5,6 +5,7 @@ import { rolesRouteur } from "./roles";
 import { etudiantsRouter } from "./etudiants";
 import { useFile } from "./useFile";
 import { documentsRouter } from "./documents";
+import { sallesRouteur } from "./salles";
 
 const router = Router();
 
@@ -23,6 +24,7 @@ router.use((req, res, next) => {
 router.use("/sessions", sessionsRouter);
 router.use("/utilisateurs", utilisateursRouter);
 router.use("/roles", rolesRouteur);
+router.use("/salles", sallesRouteur);
 router.use("/etudiants", etudiantsRouter);
 router.use("/documents", documentsRouter);
 

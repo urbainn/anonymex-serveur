@@ -1,3 +1,4 @@
+import { APISalle } from "../../contracts/salles";
 import { ElementEnCache } from "../base/ElementEnCacheBase";
 
 export interface SalleData {
@@ -19,5 +20,14 @@ export class Salle extends ElementEnCache {
         this.libelleSalle = data.libelle_salle;
         this.codeBatiment = data.code_batiment;
         this.libelleBatiment = data.libelle_batiment;
+    }
+
+    public toJSON(): APISalle {
+        return {
+            codeSalle: this.codeSalle,
+            libelleSalle: this.libelleSalle,
+            codeBatiment: this.codeBatiment,
+            libelleBatiment: this.libelleBatiment
+        }
     }
 }

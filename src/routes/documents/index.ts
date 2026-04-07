@@ -33,17 +33,7 @@ documentsRouter.get("/magacha/:sessionId/:codeEpreuve/:nbIncidents", (req, res) 
 // GET /documents/session/:sessionId/epreuve/:codeEpreuve/notes.xlsx
 documentsRouter.get("/session/:sessionId/epreuve/:codeEpreuve/notes.xlsx", (req, res) => {
     const { sessionId, codeEpreuve } = req.params;
-    
-    return useFullRest(async () => {
-        const buffer = await getNotesXLSX(sessionId, codeEpreuve);
-
-        res.setHeader(
-            'Content-Disposition',
-            `attachment; filename="export-notes-${codeEpreuve}.xlsx"`
-        );
-
-        res.send(buffer);
-    }, req, res);
+    return useFullRest(async () => await getNotesXLSX(sessionId, codeEpreuve, res), req, res);
 });
 
 export { documentsRouter as documentsRouter };

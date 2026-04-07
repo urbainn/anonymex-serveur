@@ -12,4 +12,9 @@ export abstract class ElementEnCache {
     public getInstancieTime(): number {
         return this.instancieTime;
     }
+
+    /**
+     * Sérialiser l'instance en format BINAIRE pour les backups.
+     */
+    public abstract serialize(): Buffer;
 }

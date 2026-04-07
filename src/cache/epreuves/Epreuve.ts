@@ -69,4 +69,7 @@ export class Epreuve extends ElementEnCache {
             nbPresents: this.nbPresents ?? undefined
         }
     }
+
+    public serialize(): Buffer {
+    }
 }

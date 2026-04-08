@@ -5,6 +5,7 @@ import { DatabaseCacheBase } from "../../base/DatabaseCacheBase";
 import { Incident, IncidentData } from "./Incident";
 import { Database } from "../../../core/services/database/Database";
 import { sessionCache } from "../../sessions/SessionCache";
+import { Serialiseur } from "../../base/Serialiseur";
 
 export class IncidentCache extends DatabaseCacheBase<number /*id*/, Incident, IncidentData> {
 
@@ -13,6 +14,16 @@ export class IncidentCache extends DatabaseCacheBase<number /*id*/, Incident, In
 
     private idSession: number;
     private codeEpreuve: string;
+
+    static serialiseur = new Serialiseur<IncidentData>([
+        { nom: 'id_incident', type: 'uint16' },
+        { nom: 'id_session', type: 'uint16' },
+        { nom: 'code_epreuve', type: 'string' },
+        { nom: 'titre', type: 'string' },
+        { nom: 'details', type: 'string' },
+        { nom: 'code_anonymat', type: 'string', nullable: true },
+        { nom: 'note_quart', type: 'uint16', nullable: true },
+    ]);
 
     /**
      * Instancier un cache pour les incidents d'une épreuve donnée.
@@ -89,6 +100,20 @@ export class IncidentCache extends DatabaseCacheBase<number /*id*/, Incident, In
 
     getComposanteCache(element: Incident): number {
         return element.idIncident;
+    }
+
+    serialize(): Buffer {
+        const buffers: Buffer[] = [];
+        for (const incident of this.values()) {
+            buffers.push(IncidentCache.serialiseur.serialize(incident.toData()));
+        }
+
+        return Buffer.concat(buffers);
+    }
+
+    public static deserialize(buffer: Buffer): Incident[] {
+        const res = IncidentCache.serialiseur.deserializeMany(buffer);
+        return res.map(data => new Incident(data));
     }
 
 }

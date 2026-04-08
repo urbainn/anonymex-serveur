@@ -5,5 +5,5 @@ import { ElementEnCache } from "./ElementEnCacheBase";
  * @template D Type des données brutes (issues de la base de données) utilisées pour construire l'élément en cache.
  */
 export abstract class ElementEnCacheBdd<D> extends ElementEnCache {
-    abstract fromData(data: Partial<D>): this;
+    abstract toData(): D;
 }

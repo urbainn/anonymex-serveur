@@ -30,13 +30,6 @@ export class Role extends ElementEnCacheBdd<RoleData> {
         this.permissions = data.permissions;
     }
 
-    public fromData(data: Partial<RoleData>): this {
-        if (data.id_role !== undefined) this.id = data.id_role;
-        if (data.nom !== undefined) this.nom = data.nom;
-        if (data.permissions !== undefined) this.permissions = data.permissions;
-        return this;
-    }
-
     /**
      * Vérifier si une permission est accordée à ce rôle.
      * @param permission Permission(s) à vérifier.

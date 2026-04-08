@@ -13,7 +13,11 @@ export async function patchSession(id: string, data: Record<string, unknown>): P
 
     const dataParsees = UpdateSessionSchema.parse(data);
     await sessionCache.update(idSession, dataParsees);
-    sessionCache.get(idSession)?.fromData(dataParsees); // Mettre à jour le cache avec les nouvelles données
+
+    // Patcher les données
+    if (dataParsees.nom !== undefined) session.nom = dataParsees.nom;
+    if (dataParsees.annee !== undefined) session.annee = dataParsees.annee;
+    if (dataParsees.statut !== undefined) session.statut = dataParsees.statut;
 
     return dataParsees;
 }

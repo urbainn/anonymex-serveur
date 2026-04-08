@@ -1,9 +1,9 @@
-import { ElementEnCache } from "../base/ElementEnCacheBase";
 import { Session } from "../sessions/Session";
 import { sessionCache } from "../sessions/SessionCache";
 import { APIEpreuve, EpreuveStatut } from "../../contracts/epreuves";
 import { ConvocationCache } from "./convocations/ConvocationCache";
 import { IncidentCache } from "./incidents/IncidentCache";
+import { ElementEnCacheBdd } from "../base/ElementEnCacheBdd";
 
 export interface EpreuveData {
     id_session: number,
@@ -17,7 +17,7 @@ export interface EpreuveData {
     nb_presents: number | null,
 }
 
-export class Epreuve extends ElementEnCache {
+export class Epreuve extends ElementEnCacheBdd<EpreuveData> {
     public idSession: number;
     public codeEpreuve: string;
     public nom: string;

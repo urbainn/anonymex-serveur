@@ -189,4 +189,10 @@ export abstract class DatabaseCacheBase<I extends string | number, T extends Ele
         super.clear();
         this.tousRecuperes = false;
     }
+
+    /**
+     * Sérialiser les éléments du cache en un buffer. \
+     * Utilisé pour les backups en `.anonymex`.
+     */
+    abstract serialize(): Buffer;
 }

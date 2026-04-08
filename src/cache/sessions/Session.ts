@@ -28,14 +28,6 @@ export class Session extends ElementEnCacheBdd<SessionData> {
         this.epreuves = new EpreuveCache(this.id);
     }
 
-    public fromData(data: Partial<SessionData>): this {
-        if (data.id_session !== undefined) this.id = data.id_session;
-        if (data.nom !== undefined) this.nom = data.nom;
-        if (data.annee !== undefined) this.annee = data.annee;
-        if (data.statut !== undefined) this.statut = data.statut;
-        return this;
-    }
-
     public toJSON(): APISession {
         return {
             id: this.id,

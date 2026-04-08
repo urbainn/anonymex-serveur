@@ -84,11 +84,7 @@ export class EpreuveCache extends DatabaseCacheBase<string /*code*/, Epreuve, Ep
         return res;
     }
 
-    /**
-     * Sérialiser les épreuves de la session au format binaire.
-     */
     public serialize(): Buffer {
-
         const buffers: Buffer[] = [];
         for (const epreuve of this.values()) {
             buffers.push(EpreuveCache.serialiseur.serialize(epreuve.toData()));
@@ -97,11 +93,6 @@ export class EpreuveCache extends DatabaseCacheBase<string /*code*/, Epreuve, Ep
         return Buffer.concat(buffers);
     }
 
-    /**
-     * Désérialiser les épreuves à partir d'un buffer binaire.
-     * @param buffer Buffer contenant les données sérialisées
-     * @returns Tableau d'épreuves désérialisées
-     */
     public static deserialize(buffer: Buffer): Epreuve[] {
         const res = EpreuveCache.serialiseur.deserializeMany(buffer);
         return res.map(data => {

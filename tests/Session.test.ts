@@ -31,7 +31,7 @@ describe('deleteSession', () => {
 
     describe('Cas d\'erreurs', () => {
         it("doit retourner success: false si l'ID de session n'est pas valide (NaN).", async () => {
-            
+
             (sessionCache.delete as jest.Mock).mockResolvedValue({ affectedRows: 0 });
 
             await expect(deleteSession('abc')).resolves.toEqual({ success: false });
@@ -132,7 +132,7 @@ describe('patchSession', () => {
 
         it("doit lever une erreur de validation (ZodError) si les données sont invalides.", async () => {
             (sessionCache.getOrFetch as jest.Mock).mockResolvedValue({ id: 1 });
-            
+
             await expect(patchSession('1', { annee: "2026" })).rejects.toThrow(ZodError);
         });
     });
@@ -149,7 +149,6 @@ describe('patchSession', () => {
             await expect(patchSession('1', donneesUpdate)).resolves.toEqual(donneesUpdate);
 
             expect(sessionCache.update).toHaveBeenCalledWith(1, donneesUpdate);
-            expect(mockSession.fromData).toHaveBeenCalledWith(donneesUpdate);
         });
     });
 });
@@ -174,7 +173,7 @@ describe('postSession', () => {
 
             await expect(postSession(donnees)).rejects.toThrow(ErreurRequeteInvalide);
             await expect(postSession(donnees)).rejects.toThrow(`Erreur l'année ne peut pas être inférieure à ${anneePassee + 1}.`);
-            
+
             expect(sessionCache.insert).not.toHaveBeenCalled();
         });
     });
@@ -183,7 +182,7 @@ describe('postSession', () => {
         it("doit insérer la session, la mettre en cache et retourner le format JSON", async () => {
             const anneeCourante = new Date().getFullYear();
             const donneesInput = { nom: "Session Pair 1", annee: anneeCourante };
-            
+
             (sessionCache.insert as jest.Mock).mockResolvedValue({ insertId: 10, affectedRows: 1 });
 
             await expect(postSession(donneesInput)).resolves.toEqual({

@@ -114,68 +114,6 @@ describe('getEpreuves', () => {
             expect(sessionCache.getOrFetch).toHaveBeenCalledWith(1);
         });
     });
-
-    /*
-    DECOMMENTER QUAND ON ENLEVERA LE MOCK (date, salle, statut, durée) DANS L'API !!
-
-    describe('Cas de succès', () => {
-        it("doit retourner les listes d'épreuves triées par catégories.", async () => {
-            const ep1 = new Epreuve({
-                id_session: 1,
-                code_epreuve: "HAI604I",
-                nom: "Programmation Multi-tâches",
-                statut: 0,
-                date_epreuve: 1,
-                duree: 120,
-                nb_presents: 90
-            });
-            const ep2 = new Epreuve({
-                id_session: 1,
-                code_epreuve: "HAI601I",
-                nom: "Analyse Syntaxique et Interprétation",
-                statut: 0,
-                date_epreuve: 2,
-                duree: 120,
-                nb_presents: 90
-            });
-
-            const mockSession = {
-                epreuves: {
-                    getAll: jest.fn().mockResolvedValue([ep1, ep2])
-                }
-            };
-
-            (sessionCache.getOrFetch as jest.Mock).mockResolvedValue(mockSession);
-
-            await expect(getEpreuves('1')).resolves.toEqual({
-                epreuvesAvenir: [{
-                    session: 1,
-                    code: "HAI604I",
-                    nom: "Programmation Multi-tâches",
-                    statut: 0,
-                    date: 60,
-                    duree: 120,
-                    copies: 0,
-                    incidents: 0,
-                    salles: []
-                }],
-                epreuvesPassees: [{
-                    session: 1,
-                    code: "HAI601I",
-                    nom: "Analyse Syntaxique et Interprétation",
-                    statut: 0,
-                    date: 120,
-                    duree: 120,
-                    copies: 0,
-                    incidents: 0,
-                    salles: []
-                }]
-            });
-
-            expect(sessionCache.getOrFetch).toHaveBeenCalledWith(1);
-            expect(mockSession.epreuves.getAll).toHaveBeenCalled();
-        });
-    })*/
 });
 
 // -- patchEpreuve --

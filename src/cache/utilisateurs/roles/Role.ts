@@ -39,6 +39,14 @@ export class Role extends ElementEnCacheBdd<RoleData> {
         return ((this.permissions & permission) === permission) || (this.permissions === RolePermissions.ADMINISTRATEUR);
     }
 
+    public toData(): RoleData {
+        return {
+            id_role: this.id,
+            nom: this.nom,
+            permissions: this.permissions
+        }
+    }
+
     public toJSON(): APIRole {
         return {
             idRole: this.id,

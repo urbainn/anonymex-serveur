@@ -14,6 +14,10 @@ class RoleCache extends DatabaseCacheBase<number /*id*/, Role, RoleData> {
         return element.id;
     }
 
+    serialize(): Buffer {
+        return Buffer.alloc(0); // Pas besoin de sérialisation pour les rôles (ne peuvent pas être exportés)
+    }
+
 }
 
 export const roleCache = new RoleCache();

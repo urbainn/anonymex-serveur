@@ -1,5 +1,5 @@
 import { APIConvocation } from "../../../contracts/convocations";
-import { ElementEnCache } from "../../base/ElementEnCacheBase";
+import { ElementEnCacheBdd } from "../../base/ElementEnCacheBdd";
 
 export interface ConvocationData {
     id_session: number,
@@ -11,7 +11,7 @@ export interface ConvocationData {
     rang: number | null
 }
 
-export class Convocation extends ElementEnCache {
+export class Convocation extends ElementEnCacheBdd<ConvocationData> {
     public idSession: number;
     public codeEpreuve: string;
     public numeroEtudiant: number | null;
@@ -29,6 +29,18 @@ export class Convocation extends ElementEnCache {
         this.noteQuart = data.note_quart;
         this.codeSalle = data.code_salle;
         this.rang = data.rang;
+    }
+
+    public toData(): ConvocationData {
+        return {
+            id_session: this.idSession,
+            code_epreuve: this.codeEpreuve,
+            numero_etudiant: this.numeroEtudiant,
+            code_anonymat: this.codeAnonymat,
+            note_quart: this.noteQuart,
+            code_salle: this.codeSalle,
+            rang: this.rang
+        }
     }
 
     public toJSON(): APIConvocation {

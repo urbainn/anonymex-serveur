@@ -1,4 +1,4 @@
-import { ElementEnCache } from "../base/ElementEnCacheBase";
+import { ElementEnCacheBdd } from "../base/ElementEnCacheBdd";
 
 export interface EtudiantData {
     numero_etudiant: number,
@@ -6,7 +6,7 @@ export interface EtudiantData {
     prenom: string
 }
 
-export class Etudiant extends ElementEnCache {
+export class Etudiant extends ElementEnCacheBdd<EtudiantData> {
     public numeroEtudiant: number;
     public nom: string;
     public prenom: string;
@@ -17,6 +17,15 @@ export class Etudiant extends ElementEnCache {
         if (data.prenom !== undefined) this.prenom = data.prenom;
         return this;
     }
+
+    public toData(): EtudiantData {
+        return {
+            numero_etudiant: this.numeroEtudiant,
+            nom: this.nom,
+            prenom: this.prenom
+        }
+    }
+
 
     constructor(data: EtudiantData) {
         super();

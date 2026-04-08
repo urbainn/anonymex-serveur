@@ -1,6 +1,7 @@
 import { ResultSetHeader } from "mysql2";
 import { DatabaseCacheBase } from "../../base/DatabaseCacheBase";
 import { Convocation, ConvocationData } from "./Convocation";
+import { Serialiseur } from "../../base/Serialiseur";
 
 export class ConvocationCache extends DatabaseCacheBase<string /*codeAnonymat*/, Convocation, ConvocationData> {
 
@@ -18,6 +19,16 @@ export class ConvocationCache extends DatabaseCacheBase<string /*codeAnonymat*/,
 
     /** Nombre de copies déposées et reconnues */
     nbDepots = 0;
+
+    static serialiseur = new Serialiseur<ConvocationData>([
+        { nom: 'id_session', type: 'uint16' },
+        { nom: 'code_epreuve', type: 'string' },
+        { nom: 'numero_etudiant', type: 'uint64', nullable: true },
+        { nom: 'code_anonymat', type: 'string' },
+        { nom: 'note_quart', type: 'uint8', nullable: true },
+        { nom: 'code_salle', type: 'string' },
+        { nom: 'rang', type: 'uint16', nullable: true }
+    ]);
 
     /**
      * Instancier un cache pour les convocations d'une épreuve donnée.
@@ -127,6 +138,23 @@ export class ConvocationCache extends DatabaseCacheBase<string /*codeAnonymat*/,
 
     getComposanteCache(element: Convocation): string {
         return element.codeAnonymat;
+    }
+
+    serialize(): Buffer {
+        const buffers: Buffer[] = [];
+        for (const convoc of this.values()) {
+            buffers.push(ConvocationCache.serialiseur.serialize(convoc.toData()));
+        }
+
+        return Buffer.concat(buffers);
+    }
+
+    public static deserialize(buffer: Buffer): Convocation[] {
+        const res = this.serialiseur.deserializeMany(buffer);
+        return res.map(data => {
+            data.numero_etudiant = Number(data.numero_etudiant); // convertir en bigint (todo: string préférable?)
+            return new Convocation(data);
+        });
     }
 
 }

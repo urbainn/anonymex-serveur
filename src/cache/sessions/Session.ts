@@ -1,6 +1,7 @@
 import { APISession, SessionsStatut } from "../../contracts/sessions"
 import { EpreuveCache } from "../epreuves/EpreuveCache";
 import { ElementEnCacheBdd } from "../base/ElementEnCacheBdd";
+import { SessionCache } from "./SessionCache";
 
 
 export interface SessionData {
@@ -26,6 +27,19 @@ export class Session extends ElementEnCacheBdd<SessionData> {
         this.annee = data.annee;
         this.statut = data.statut;
         this.epreuves = new EpreuveCache(this.id);
+    }
+
+    public serialize(): Buffer {
+        return SessionCache.serialiseur.serialize(this.toData());
+    }
+
+    public toData(): SessionData {
+        return {
+            id_session: this.id,
+            nom: this.nom,
+            annee: this.annee,
+            statut: this.statut
+        }
     }
 
     public toJSON(): APISession {

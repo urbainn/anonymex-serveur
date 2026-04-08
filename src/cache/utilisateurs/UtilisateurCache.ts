@@ -29,6 +29,10 @@ class UtilisateurCache extends DatabaseCacheBase<number /*id*/, Utilisateur, Uti
         return this.aucunUtilisateurEnregistre;
     }
 
+    serialize(): Buffer {
+        return Buffer.alloc(0); // Pas besoin de sérialisation pour les utilisateurs (ne peuvent pas être exportés)
+    }
+
 }
 
 export const utilisateurCache = new UtilisateurCache();

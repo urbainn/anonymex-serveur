@@ -12,4 +12,5 @@ export abstract class ElementEnCache {
     public getInstancieTime(): number {
         return this.instancieTime;
     }
+
 }

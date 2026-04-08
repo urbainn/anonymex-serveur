@@ -1,6 +1,7 @@
 import { Database } from "../../core/services/database/Database";
 import { logInfo, styles } from "../../utils/logger";
 import { DatabaseCacheBase } from "../base/DatabaseCacheBase";
+import { Serialiseur } from "../base/Serialiseur";
 import { ConvocationData } from "./convocations/Convocation";
 import { Epreuve, EpreuveData } from "./Epreuve";
 import { IncidentData } from "./incidents/Incident";
@@ -11,6 +12,17 @@ export class EpreuveCache extends DatabaseCacheBase<string /*code*/, Epreuve, Ep
     colonnesClePrimaire: string[] = ["id_session", "code_epreuve"];
 
     private idSession: number;
+
+    static serialiseur = new Serialiseur<EpreuveData>([
+        { nom: 'id_session', type: 'uint16' },
+        { nom: 'code_epreuve', type: 'string' },
+        { nom: 'nom', type: 'string' },
+        { nom: 'statut', type: 'uint8' },
+        { nom: 'id_decalage', type: 'uint16' },
+        { nom: 'date_epreuve', type: 'uint64' },
+        { nom: 'duree', type: 'uint16' },
+        { nom: 'nb_presents', type: 'uint16', nullable: true },
+    ]);
 
     /**
      * Instancier un cache pour les épreuves d'une session donnée.
@@ -72,4 +84,29 @@ export class EpreuveCache extends DatabaseCacheBase<string /*code*/, Epreuve, Ep
         return res;
     }
 
+    /**
+     * Sérialiser les épreuves de la session au format binaire.
+     */
+    public serialize(): Buffer {
+
+        const buffers: Buffer[] = [];
+        for (const epreuve of this.values()) {
+            buffers.push(EpreuveCache.serialiseur.serialize(epreuve.toData()));
+        }
+
+        return Buffer.concat(buffers);
+    }
+
+    /**
+     * Désérialiser les épreuves à partir d'un buffer binaire.
+     * @param buffer Buffer contenant les données sérialisées
+     * @returns Tableau d'épreuves désérialisées
+     */
+    public static deserialize(buffer: Buffer): Epreuve[] {
+        const res = EpreuveCache.serialiseur.deserializeMany(buffer);
+        return res.map(data => {
+            data.date_epreuve = Number(data.date_epreuve); // bigint -> number
+            return new Epreuve(data);
+        });
+    }
 }

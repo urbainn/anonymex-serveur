@@ -54,6 +54,19 @@ export class Epreuve extends ElementEnCache {
         return session;
     }
 
+    public toData(): EpreuveData {
+        return {
+            id_session: this.idSession,
+            code_epreuve: this.codeEpreuve,
+            nom: this.nom,
+            statut: this.statut,
+            id_decalage: this.idDecalage,
+            date_epreuve: Math.floor(this.dateEpreuve / 60), // convertir en minutes
+            duree: this.duree,
+            nb_presents: this.nbPresents,
+        }
+    }
+
     public toJSON(): APIEpreuve {
         return {
             session: this.idSession,

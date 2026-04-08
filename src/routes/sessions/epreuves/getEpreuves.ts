@@ -1,6 +1,7 @@
 import { APIEpreuve, APIListEpreuves, EpreuveStatut } from "../../../contracts/epreuves";
 import { sessionCache } from "../../../cache/sessions/SessionCache";
 import { ErreurRequeteInvalide } from "../../erreursApi";
+import { EpreuveCache } from "../../../cache/epreuves/EpreuveCache";
 
 export async function getEpreuves(sessionId: string): Promise<APIListEpreuves> {
     const idSession = parseInt(sessionId ?? '');
@@ -19,6 +20,15 @@ export async function getEpreuves(sessionId: string): Promise<APIListEpreuves> {
 
     if (epreuvesBrutes === undefined) {
         throw new ErreurRequeteInvalide("Impossible de récupérer les épreuves de la session demandée.");
+    }
+
+    // test!!
+    const epreuves = session.epreuves.serialize();
+    console.log(`EPREUVES SERIALISEES (taille ${epreuves.length} bytes, soit environ ${Math.round(epreuves.length / 1024)} KB) :`, epreuves);
+
+    const epr = EpreuveCache.deserialize(epreuves);
+    for (const epreuve of epr) {
+        console.log(epreuve.nom, epreuve.statut, epreuve.nbPresents, epreuve.dateEpreuve, epreuve.duree);
     }
 
     const now = Date.now();

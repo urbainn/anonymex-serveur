@@ -5,6 +5,7 @@ import { getCoupons } from "./getCoupons";
 import { getScanIncident } from "./getScanIncident";
 import { getBordereauTemp } from "./getBordereauTEMP";
 import { getNotesXLSX } from "./getNotesXLSX";
+import { getCorrespondance } from "./getCorrespondance";
 
 const documentsRouter = Router();
 
@@ -35,6 +36,13 @@ documentsRouter.get("/session/:sessionId/epreuve/:codeEpreuve/notes", (req, res)
     const { sessionId, codeEpreuve } = req.params;
     const format = req.query.format as string;
     return useFullRest(async () => await getNotesXLSX(sessionId, codeEpreuve, format, res), req, res);
+});
+
+// GET /documents/session/:sessionId/correspondance?format=csv
+documentsRouter.get("/session/:sessionId/correspondance", (req, res) => {
+    const { sessionId } = req.params;
+    const format = req.query.format as string;
+    return useFullRest(async () => await getCorrespondance(sessionId, format, res), req, res);
 });
 
 export { documentsRouter as documentsRouter };

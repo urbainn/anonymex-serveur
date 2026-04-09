@@ -111,8 +111,8 @@ export async function interpretationXLSX(data: Record<string, unknown>[], sessio
 
         for (const [indice, row] of data.entries()) {
 
-            const dateEpreuve = (row[CHAMPS_INTERPRETATION.date] as string).replaceAll(' ', '');
-            const horaire = (row[CHAMPS_INTERPRETATION.heure] as string).replaceAll(' ', '');
+            const dateEpreuve = (row[CHAMPS_INTERPRETATION.date] as string)?.replaceAll(' ', '');
+            const horaire = (row[CHAMPS_INTERPRETATION.heure] as string)?.replaceAll(' ', '');
             const codeSalle = row[CHAMPS_INTERPRETATION.salle] as string;
             const codeEpreuve = row[CHAMPS_INTERPRETATION.codeEpreuve] as string;
             const nomEpreuve = row[CHAMPS_INTERPRETATION.nomEpreuve] as string;
@@ -127,8 +127,8 @@ export async function interpretationXLSX(data: Record<string, unknown>[], sessio
             const heureFin = row[CHAMPS_INTERPRETATION.heureFin] as string;
 
             // Vérifications basiques
-            if (!dateEpreuve || !horaire || !codeSalle || !codeEpreuve || !nomEpreuve || !prenomEtudiant || !nomEtudiant || !codeEtudiant
-                || !libelleSalle || !codeBatiment || !libelleBatiment || numPlace === undefined || !duree || !heureFin) {
+            if (!dateEpreuve || !horaire || !codeSalle || !codeEpreuve || !nomEpreuve || !prenomEtudiant ||
+                !nomEtudiant || !codeEtudiant || numPlace === undefined || !duree || !heureFin) {
                 throw new ErreurLigneInvalide(indice + 1, 'champ obligatoire manquant')
             }
 
@@ -137,10 +137,9 @@ export async function interpretationXLSX(data: Record<string, unknown>[], sessio
             }
 
             if (typeof dateEpreuve !== 'string' || typeof horaire !== 'string' || typeof codeSalle !== 'string' || typeof codeEpreuve !== 'string' ||
-                typeof nomEpreuve !== 'string' || typeof prenomEtudiant !== 'string' || typeof nomEtudiant !== 'string' || typeof libelleSalle !== 'string' ||
-                typeof codeBatiment !== 'string' || typeof libelleBatiment !== 'string' || typeof duree !== 'string' || typeof heureFin !== 'string') {
-                throw new ErreurLigneInvalide(indice + 1, 'un champ obligatoire est du mauvais type (texte attendu)')
-
+                typeof nomEpreuve !== 'string' || typeof prenomEtudiant !== 'string' || typeof nomEtudiant !== 'string' ||
+                typeof duree !== 'string' || typeof heureFin !== 'string') {
+                throw new ErreurLigneInvalide(indice + 1, 'un champ obligatoire est du mauvais type (texte attendu).')
             }
 
             // Parser l'horaire
@@ -196,7 +195,8 @@ export async function interpretationXLSX(data: Record<string, unknown>[], sessio
 
             // Get ou créer l'épreuve
             const epreuve = session.epreuves.get(codeEpreuve);
-            const decalageEpreuve = epreuve ? epreuve.idDecalage : decalageGlobal++;
+            const decalageExistant = decalagesEpreuves.get(codeEpreuve);
+            const decalageEpreuve = decalageExistant ?? (epreuve ? epreuve.idDecalage : decalageGlobal++);
             if (!epreuve) {
                 newEpreuves.push({
                     id_session: session.id,
@@ -219,9 +219,9 @@ export async function interpretationXLSX(data: Record<string, unknown>[], sessio
             if (!salle) {
                 const salleData = {
                     code_salle: codeSalle,
-                    libelle_salle: libelleSalle,
-                    code_batiment: codeBatiment,
-                    libelle_batiment: libelleBatiment
+                    libelle_salle: libelleSalle ?? '',
+                    code_batiment: codeBatiment ?? '',
+                    libelle_batiment: libelleBatiment ?? ''
                 };
                 newSalles.push(salleData);
             }

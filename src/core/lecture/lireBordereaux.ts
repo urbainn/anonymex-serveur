@@ -19,6 +19,7 @@ import { logInfo } from "../../utils/logger";
 import { ModeleBordereau } from "../generation/bordereau/modeleBordereau";
 import * as tf from "@tensorflow/tfjs-node";
 import { CvType } from "../services/OpenCvInstance";
+import { lireGrilleNote } from "./lireGrilleNote";
 
 const MARGE_CIBLES_MM = 17;
 const DIAMETRE_CIBLES_MM = 9;
@@ -228,6 +229,10 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
                             codeLu.push('');
 
                     });
+
+                // Lire la note
+                const noteLue = await lireGrilleNote(scanPret);
+                console.log("Note lue :", noteLue);
 
                 for (let i = 0; i < codeLu.length; i++) {
                     const lettre = codeLu[i] ?? '';

@@ -77,7 +77,7 @@ describe('getEpreuve', () => {
                 code: "HAI604I",
                 nom: "Programmation Multi-tâches",
                 statut: 0,
-                date: 1 * 60,
+                date: 1 * 60 * 1000,
                 duree: 120,
                 copies: 0,
                 incidents: 0,

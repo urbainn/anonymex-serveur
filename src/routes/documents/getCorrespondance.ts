@@ -41,8 +41,7 @@ export async function getCorrespondance(sessionId: string, format: string, res: 
             const codeAnonymatExport = convocation.codeAnonymat;
             const numeroEtudiantExport = convocation.numeroEtudiant?.toString() ?? "";
             const codeEpreuveExport = convocation.codeEpreuve;
-            const noteExport = convocation.noteQuart ? convocation.noteQuart / 4 : null;
-
+            const noteExport = typeof convocation.noteQuart === 'number' ? convocation.noteQuart / 4 : null;            
             tableauExport.push({
                 code_anonymat: codeAnonymatExport,
                 numero_etudiant: numeroEtudiantExport,

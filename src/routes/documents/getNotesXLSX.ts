@@ -7,7 +7,7 @@ import { Response } from 'express';
 export interface formatExport {
     code_anonymat: string,
     numero_etudiant: string,
-    note: number
+    note: number | string
 }
 
 export async function getNotesXLSX(sessionId: string, codeEpreuve: string, format: string, res: Response): Promise<void> {
@@ -32,17 +32,15 @@ export async function getNotesXLSX(sessionId: string, codeEpreuve: string, forma
 
     for (const convocation of totalConvocations) {
 
-        const noteExport = convocation.noteQuart;
+        const noteExport = typeof convocation.noteQuart === 'number' ? convocation.noteQuart / 4 : "";
         const codeAnonymatExport = convocation.codeAnonymat;
         const numeroEtudiantExport = convocation.numeroEtudiant?.toString() ?? "";
 
-        if (noteExport == null) {
-            tableauExport.push({
-                code_anonymat: codeAnonymatExport,
-                numero_etudiant: numeroEtudiantExport,
-                note: 0 // noteExport / 4
-            });
-        }
+        tableauExport.push({
+            code_anonymat: codeAnonymatExport,
+            numero_etudiant: numeroEtudiantExport,
+            note: noteExport
+        });
     }
 
     if (tableauExport.length === 0) {

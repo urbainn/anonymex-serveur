@@ -7,7 +7,7 @@ export const ConvocationSchema = z.object({
     numeroEtudiant: z.number().int().positive().optional(),
     rang: z.number().int().positive().optional(),
     codeAnonymat: z.string(),
-    noteQuart: z.number().int().positive().optional(),
+    noteQuart: z.number().int().nonnegative().optional(),
     codeSalle: z.string(),
     prenom: z.string().optional(),
     nom: z.string().optional()
@@ -21,7 +21,7 @@ export const ConvocationsSupplementairesMapSchema = z.record(z.string(), z.array
 
 export const UpdateConvocationSchema = z.object({
     rang: z.number().int().positive().optional(),
-    note_quart: z.number().int().positive().optional(),
+    note_quart: z.number().int().nonnegative().optional(),
     code_salle: z.string().optional()
 });
 

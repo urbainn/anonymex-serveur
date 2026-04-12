@@ -47,11 +47,12 @@ export class Convocation extends ElementEnCacheBdd<ConvocationData> {
         return {
             idSession: this.idSession,
             codeEpreuve: this.codeEpreuve,
+            codeAnonymat: this.codeAnonymat,
+            codeSalle: this.codeSalle,
             numeroEtudiant: this.numeroEtudiant ?? undefined,
             rang: this.rang ?? undefined,
-            codeAnonymat: this.codeAnonymat,
             noteQuart: this.noteQuart ?? undefined,
-            codeSalle: this.codeSalle
+            
         }
     }
 }

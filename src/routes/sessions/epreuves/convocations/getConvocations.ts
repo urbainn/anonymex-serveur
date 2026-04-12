@@ -36,7 +36,6 @@ export async function getConvocations(sessionId: string, epreuveCode: string): P
         const convocationFormatee = convocation.toJSON();
         
         if (convocationFormatee.numeroEtudiant !== undefined) {
-            // 3. On pioche dans la Map (opération synchrone et ultra rapide)
             const etudiant = etudiantsMap.get(convocationFormatee.numeroEtudiant);
             convocationFormatee.prenom = etudiant?.prenom;
             convocationFormatee.nom = etudiant?.nom;

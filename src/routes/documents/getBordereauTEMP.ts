@@ -84,12 +84,21 @@ function ensureCanvasGlobalsSupport(): void {
 }
 
 function remplirDonneesBordereau(doc: PDFKit.PDFDocument, codeAnonymat: string, incident: boolean): void {
+
+    // si incident, choisir le type d'incident:
+    // 0 = code invalide
+    // 1 = plusieurs notes
+    // 2 = absence de note
+    // 3 = coche "erreur"
+    // 4 = plueurs fractionsc
+    const typeIncident = incident ? Math.floor(Math.random() * 5) : null;
+
     const positions = ModeleBordereau.getPositionsCadresAnonymat();
     for (let i = 0; i < codeAnonymat.length && i < positions.length; i++) {
         const char = codeAnonymat[i];
         const pos = positions[i];
 
-        if (char && pos && (!incident || (i !== 4 && i !== 1))) {
+        if (char && pos && (!(typeIncident === 0) || (i !== 4 && i !== 1))) {
             doc.font("Helvetica-Bold")
                 .fontSize(25)
                 .fillColor("#222")
@@ -100,16 +109,39 @@ function remplirDonneesBordereau(doc: PDFKit.PDFDocument, codeAnonymat: string, 
     const positionsNotes = ModeleBordereau.getPositionsCasesNote();
     const note = Math.floor(Math.random() * 21);
 
-    if (positionsNotes.notes[note]) {
-        const caseNote = positionsNotes.notes[note];
-        doc.roundedRect(caseNote.x, caseNote.y, caseNote.largeur, caseNote.hauteur, 3).fill("#333");
+    if (typeIncident !== 2) {
+        if (positionsNotes.notes[note]) {
+            const caseNote = positionsNotes.notes[note];
+            doc.roundedRect(caseNote.x, caseNote.y, caseNote.largeur, caseNote.hauteur, 3).fill("#333");
+
+            if (typeIncident === 1) {
+                const autreNote = note > 10 ? note - 5 : note + 5;
+                if (positionsNotes.notes[autreNote]) {
+                    const caseAutreNote = positionsNotes.notes[autreNote];
+                    doc.roundedRect(caseAutreNote.x, caseAutreNote.y, caseAutreNote.largeur, caseAutreNote.hauteur, 3).fill("#333");
+                }
+            }
+        }
     }
 
     const fraction = Math.round(Math.random() * 3);
     if (note < 20 && Math.random() < 0.3 && positionsNotes.fractions[fraction]) {
         const caseFraction = positionsNotes.fractions[fraction];
         doc.roundedRect(caseFraction.x, caseFraction.y, caseFraction.largeur, caseFraction.hauteur, 3).fill("#333");
+        if (typeIncident === 4) {
+            const autreFraction = fraction === 0 ? 1 : 0;
+            if (positionsNotes.fractions[autreFraction]) {
+                const caseAutreFraction = positionsNotes.fractions[autreFraction];
+                doc.roundedRect(caseAutreFraction.x, caseAutreFraction.y, caseAutreFraction.largeur, caseAutreFraction.hauteur, 3).fill("#333");
+            }
+        }
     }
+
+    if (typeIncident === 3) {
+        const caseErreur = positionsNotes.caseErreur;
+        doc.roundedRect(caseErreur.x, caseErreur.y, caseErreur.largeur, caseErreur.hauteur, 3).fill("#333");
+    }
+
 }
 
 async function pdfDocumentToBuffer(doc: PDFKit.PDFDocument): Promise<Buffer> {

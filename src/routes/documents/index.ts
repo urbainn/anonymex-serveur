@@ -12,11 +12,12 @@ const documentsRouter = Router();
 // GET /documents/bordereau.pdf
 documentsRouter.get("/bordereau.pdf", (req, res) => useFullRest(() => getBordereau(res), req, res));
 
-// GET /documents/session/:sessionId/epreuve/:codeEpreuve/coupons.pdf?salles=SALLE1,SALLE2
+// GET /documents/session/:sessionId/epreuve/:codeEpreuve/coupons.pdf?salles=SALLE1,SALLE2&codes=CODE1,CODE2
 documentsRouter.get("/session/:sessionId/epreuve/:codeEpreuve/coupons.pdf", (req, res) => {
     const { sessionId, codeEpreuve } = req.params;
     const salles = (req.query.salles as string)?.split(",") ?? [];
-    return useFullRest(() => getCoupons(sessionId, codeEpreuve, salles, res), req, res);
+    const codesAno = (req.query.codes as string)?.split(",") ?? [];
+    return useFullRest(() => getCoupons(sessionId, codeEpreuve, codesAno, salles, res), req, res);
 });
 
 // GET /documents/incidents/:idIncident/scan.webp

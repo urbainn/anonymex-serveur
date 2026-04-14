@@ -45,7 +45,12 @@ const MOIS = {
     "SEP": "09",
     "OCT": "10",
     "NOV": "11",
-    "DEC": "12"
+    "DEC": "12",
+    // Français
+    "FEV": "02",
+    "AVR": "04",
+    "AOÛ": "08",
+    "AOU": "08",
 } as Record<string, string>;
 
 const customParseFormat = require('dayjs/plugin/customParseFormat');

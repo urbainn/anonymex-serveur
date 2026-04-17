@@ -127,8 +127,8 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
                     }
                 }
 
-                // Trouver la convocation correspondante
-                const convocation = epreuve.convocations.get(codeAnonymatFinal);
+                // Trouver la convocation correspondante (normale ou supplémentaire)
+                const convocation = epreuve.convocations.get(codeAnonymatFinal) ?? epreuve.convocations.convocationsSupplementaires.get(codeAnonymatFinal);
                 if (!convocation) {
                     throw new ErreurResultatLu(`Code d'anonymat non reconnu.`, codeAnonymatFinal, noteLue ?? undefined);
                 }

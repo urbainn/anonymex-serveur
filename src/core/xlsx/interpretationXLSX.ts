@@ -112,6 +112,11 @@ export async function interpretationXLSX(data: Record<string, unknown>[], sessio
         const newConvocations: ConvocationData[] = [];
         const newSalles: SalleData[] = [];
 
+        // Set des éléments déjà créés (afin de ne pas INSERT plusieurs fois)
+        const existSalles = new Set<string>();
+        const existEpreuves = new Set<string>();
+        const existEtudiants = new Set<number>();
+
         // Map des convocations par code d'épreuve, pour attribuer les codes d'anonymat après coup
         const convocationsEpreuves = new Map<string, Omit<ConvocationData, 'code_anonymat'>[]>();
 
@@ -195,19 +200,21 @@ export async function interpretationXLSX(data: Record<string, unknown>[], sessio
 
             // Get ou créer l'étudiant
             const etudiant = etudiantCache.get(codeEtudiant);
-            if (!etudiant) {
+            if (!etudiant && !existEtudiants.has(codeEtudiant)) {
                 newEtudiants.push({
                     numero_etudiant: codeEtudiant,
                     nom: nomEtudiant,
                     prenom: prenomEtudiant
                 });
+
+                existEtudiants.add(codeEtudiant);
             }
 
             // Get ou créer l'épreuve
             const epreuve = session.epreuves.get(codeEpreuve);
             const decalageExistant = decalagesEpreuves.get(codeEpreuve);
             const decalageEpreuve = decalageExistant ?? (epreuve ? epreuve.idDecalage : decalageGlobal++);
-            if (!epreuve) {
+            if (!epreuve && !existEpreuves.has(codeEpreuve)) {
                 newEpreuves.push({
                     id_session: session.id,
                     code_epreuve: codeEpreuve,
@@ -218,6 +225,8 @@ export async function interpretationXLSX(data: Record<string, unknown>[], sessio
                     id_decalage: decalageEpreuve,
                     nb_presents: null,
                 });
+
+                existEpreuves.add(codeEpreuve);
             }
 
             if (!decalagesEpreuves.has(codeEpreuve)) {
@@ -226,7 +235,7 @@ export async function interpretationXLSX(data: Record<string, unknown>[], sessio
 
             // Get ou créer la salle
             const salle = salleCache.get(codeSalle);
-            if (!salle) {
+            if (!salle && !existSalles.has(codeSalle)) {
                 const salleData = {
                     code_salle: codeSalle,
                     libelle_salle: libelleSalle ?? '',
@@ -234,6 +243,7 @@ export async function interpretationXLSX(data: Record<string, unknown>[], sessio
                     libelle_batiment: libelleBatiment ?? ''
                 };
                 newSalles.push(salleData);
+                existSalles.add(codeSalle);
             }
 
             // Get ou créer la convocation

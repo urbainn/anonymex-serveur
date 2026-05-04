@@ -1,11 +1,7 @@
 import { Mat } from "@techstark/opencv-js";
 import { ErreurRealignement } from "../lectureErreurs";
-//import { visualiserGeometrieAncrage } from "../../../core/debug/visualiseurs/visualiserGeometrieAncrage";
-import { visualiserRegionsOfInterests } from "../../../core/debug/visualiseurs/visualiserRegionsOfInterests";
-import { CadreEtudiantBenchmarkModule } from "../../generation/bordereau-test/modules/cadre-etudiant/CadreEtudiantBenchmarkModule";
 import { OpenCvInstance } from "../../../core/services/OpenCvInstance";
 import { dimensionsFormats } from "../lireBordereau";
-import { matToSharp } from "../../../utils/imgUtils";
 import { CibleConcentriqueDetection } from "./detecterCiblesConcentriques";
 
 type Pt = [number, number];
@@ -78,7 +74,8 @@ export async function realignerCorrigerScan(image: Mat, detections: (null | Cibl
         throw new ErreurRealignement(`Transformation homographique requiert 4 points. ${srcPts.length} points obtenus.`);
     }
 
-    //await visualiserGeometrieAncrage(image, srcPoints, dstPoints);
+    // DEBUG - Visualiser les points d'ancrage détectés et attendus
+    // await visualiserGeometrieAncrage(matToSharp(cv, image), srcPoints, dstPoints);
 
     // Ancrer le document en (0,0) pour éviter les problèmes de bord lors de la transformation
     const xs = dstPts.map(p => p[0]), ys = dstPts.map(p => p[1]);
@@ -113,10 +110,11 @@ export async function realignerCorrigerScan(image: Mat, detections: (null | Cibl
     }
 
     // Visualisations debug (Sharp uniquement pour le debug)
-    const roisGroupes = [new CadreEtudiantBenchmarkModule('ABCDEFGHIJKLMNOPQRSTUVWXYZ').getZonesLecture().lettresCodeAnonymat];
+    /*const zones = new ModeleBordereau().getZonesLecture();
+    const roisGroupes = [zones.lettresCodeAnonymat, [zones.caseErreur], zones.casesFraction, zones.casesNote];
     const imageOutSharp = matToSharp(cv, dstMatImg);
-    const margesDistanceMm = margeCiblesMm + (tailleCiblesMm / 2);
-    await visualiserRegionsOfInterests(imageOutSharp, roisGroupes, { marginsMm: { left: margesDistanceMm, top: margesDistanceMm, right: margesDistanceMm, bottom: margesDistanceMm } });
+    const margesDistanceMm = margeCiblesMm + (tailleCiblesMm) + 8.5;
+    await visualiserRegionsOfInterests(imageOutSharp, roisGroupes, { marginsMm: { left: margesDistanceMm, top: margesDistanceMm, right: margesDistanceMm, bottom: margesDistanceMm } });*/
 
     return dstMatImg;
 }

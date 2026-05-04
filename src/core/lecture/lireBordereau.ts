@@ -152,7 +152,7 @@ export async function lireBordereau(chemin: string, mimeType: MimeType): Promise
                 //console.log('Echec total ROI ' + index + ': attendu ' + lettreAttendue + ', Tesseract a lu "' + text.trim() + '" (conf: ' + confidence.toFixed(2) + '%), CNN a lu "' + prediction.caractere + '" (confiance: ' + (prediction.confiance * 100).toFixed(2) + '%).');
                 indexEchoues.push(index);
 
-                await preprocessPipelines.emnist(shrp).png().toFile('debug/rois/erreurs/page_' + (pageIndexCourante + 1).toString() + '_' + prediction.caractere + '_' + lettreAttendue + '.png');
+                //await preprocessPipelines.emnist(shrp).png().toFile('debug/rois/erreurs/page_' + (pageIndexCourante + 1).toString() + '_' + prediction.caractere + '_' + lettreAttendue + '.png');
             }
 
             //console.log("PREDICTION CNN :", prediction.caractere, "confiance :", (prediction.confiance * 100).toFixed(2) + '% -- attendu :', lettreAttendue);

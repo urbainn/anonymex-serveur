@@ -93,7 +93,7 @@ export async function pdfToBuffer(pdf: PDFDocumentProxy, pageNum: number): Promi
         width: imgObj.width,
         height: imgObj.height,
         channels: canaux,
-        debug: pageNum === 1,
+        debug: false,
         raw: true,
         nbPages: pdf.numPages
     };

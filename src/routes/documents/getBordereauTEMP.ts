@@ -207,7 +207,7 @@ async function genererImagePageBordereau(codeAnonymat: string, incident: boolean
     console.log('ok rendu pdf');
     const pagePngBuffer = await rendrePdfEnPng(pagePdfBuffer);
     console.log('ok rendu png');
-    const rotation = getRotationDeg(pageIndex);
+    const rotation = getRotationDeg(pageIndex) + 5;
 
     return sharp(pagePngBuffer)
         .flatten({ background: "#ffffff" })

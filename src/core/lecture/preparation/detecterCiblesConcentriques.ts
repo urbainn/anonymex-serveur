@@ -6,6 +6,8 @@ import { StatistiquesDebug } from "../../debug/StatistiquesDebug";
 import { EtapeLecture } from "../../debug/EtapesDeTraitementDicts";
 import { Mat } from "@techstark/opencv-js";
 import { CIBLES_NB_RINGS } from "../../generation/common/genererCiblesConcentriques";
+import { visualiserGeometrieCibles } from "../../debug/visualiseurs/visualiserGeometrieCibles";
+import { matToSharp } from "../../../utils/imgUtils";
 
 type FormatId = keyof typeof dimensionsFormats;
 type CoinIndice = 0 | 1 | 2 | 3;
@@ -190,7 +192,7 @@ export async function detecterCiblesConcentriques(scan: ScanData, img: Mat, opti
             throw new ErreurDetectionCiblesConcentriques(`Détection des cibles incomplète (${nbCiblesDetectees}/${RING_ID_LOOKUP.size}).`);
         }
 
-        //await visualiserGeometrieCibles(imageSharp, coinMeilleurCandidats, contours);
+        if (scan.debug) await visualiserGeometrieCibles(matToSharp(cv, img), coinMeilleurCandidats);
         StatistiquesDebug.ajouterTempsExecution(EtapeLecture.DETECTION_CIBLES, Date.now() - tempsDebut);
 
         return coinMeilleurCandidats;

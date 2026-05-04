@@ -16,7 +16,7 @@ export async function imgToBuffer(source: DocumentSource): Promise<ScanData> {
         width: meta.width,
         height: meta.height,
         channels: meta.channels as 1 | 3 | 4,
-        debug: true,
+        debug: false,
         raw: false,
         nbPages: 1
     };

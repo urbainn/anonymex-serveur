@@ -36,7 +36,7 @@ export async function genererPageBordereau(doc: typeof PDFDocument): Promise<voi
     genererCiblesConcentriques(doc, 9, 17);
 
     // Code Anonymat
-    const codeAnonymatY = 212;
+    const codeAnonymatY = 180;
 
     doc.font("Helvetica-Bold")
         .fontSize(23)
@@ -54,15 +54,19 @@ export async function genererPageBordereau(doc: typeof PDFDocument): Promise<voi
         doc.rect(cadre.x, cadre.y, cadre.largeur, cadre.hauteur).stroke();
     }
 
+    // Saisie de l'épreuve
+    const epreuveY = 350;
+    doc.font("Helvetica").fontSize(12).fillColor("#222").text("Épreuve : .........................................................................", 0, epreuveY, { align: "center" });
+
     // Cadre correcteur
-    const cadreCorrecteurY = 458;
-    const cadreCorrecteurHauteur = 240;
+    const cadreCorrecteurY = 515;
+    const cadreCorrecteurHauteur = 205;
 
     const titreCadre = "Réservé au correcteur";
     doc.font("Helvetica-Oblique").fontSize(13);
-    doc.rect(85, cadreCorrecteurY, doc.page.width - 170, cadreCorrecteurHauteur).stroke();
-    doc.rect(105, cadreCorrecteurY - 5, doc.widthOfString(titreCadre) + 10, 10).fill("#FFF");
-    doc.fillColor("#333").text(titreCadre, 110, cadreCorrecteurY - 5);
+    doc.rect(70, cadreCorrecteurY, doc.page.width - 140, cadreCorrecteurHauteur).stroke();
+    doc.rect(90, cadreCorrecteurY - 5, doc.widthOfString(titreCadre) + 10, 10).fill("#FFF");
+    doc.fillColor("#333").text(titreCadre, 95, cadreCorrecteurY - 5);
 
     function renduCaseNote(caseNote: LayoutPosition, libelle: string) {
         doc.roundedRect(caseNote.x, caseNote.y, caseNote.largeur, caseNote.hauteur, 3).stroke();
@@ -83,48 +87,43 @@ export async function genererPageBordereau(doc: typeof PDFDocument): Promise<voi
         }
     }
 
-    // Ligne sépration note | fractions
-    const note20 = positionsNotes.notes[20];
-    const frac01 = positionsNotes.fractions[0];
-    if (note20 && frac01) {
-        const ligneX = ((note20.x + note20.largeur) + frac01.x) / 2;
-        doc.moveTo(ligneX, note20.y - 8).lineTo(ligneX, frac01.y + frac01.hauteur + 2).stroke();
-    }
 
     // Ligne de séparation grille / case erreur + champ "note"
-    doc.moveTo(315, cadreCorrecteurY).lineTo(315, cadreCorrecteurY + cadreCorrecteurHauteur).stroke();
+    doc.moveTo(350, cadreCorrecteurY).lineTo(350, cadreCorrecteurY + cadreCorrecteurHauteur).stroke();
 
     const caseErreur = positionsNotes.caseErreur;
-    if (caseErreur) {
-        doc.roundedRect(caseErreur.x, caseErreur.y, caseErreur.largeur, caseErreur.hauteur, 3).stroke();
-        doc.font("Helvetica").fontSize(10).fillColor("#333").text("Erreur", caseErreur.x + 20, caseErreur.y + 1);
-    }
+    doc.roundedRect(caseErreur.x, caseErreur.y, caseErreur.largeur, caseErreur.hauteur, 3).stroke();
+    doc.font("Helvetica").fontSize(10).fillColor("#333").text("Erreur", caseErreur.x + 20, caseErreur.y + 1);
 
     // Texte instructions correcteur
-    doc.font("Helvetica-Bold").fontSize(9).fillColor("#444")
-        .text("Reporter la note", 335, cadreCorrecteurY + 23, { continued: true })
+    doc.font("Helvetica-Bold").fontSize(8.5).fillColor("#444")
+        .text("Reporter la note", 365, cadreCorrecteurY + 20, { continued: true })
         .font("Helvetica")
         .text(" en noircissant\nentièrement les cases correspondantes.\n\n"
-            + "Pour une note avec décimale,cochez la\nnote et la fraction associée.\n\n"
+            + "Pour une note avec décimale, cochez la\nnote et la fraction associée.\n\n"
             + "En cas d'erreur de report, noircir la\ncase ci-dessous :");
 
     // Cadre saisie note
-    doc.moveTo(315, cadreCorrecteurY + 148).lineTo(doc.page.width - 85, cadreCorrecteurY + 148).stroke();
+    const cadreSaisieNoteY = 135;
+    doc.lineWidth(1)
+        .moveTo(350, cadreCorrecteurY + cadreSaisieNoteY)
+        .lineTo(doc.page.width - 70, cadreCorrecteurY + cadreSaisieNoteY).stroke();
 
     doc.font("Helvetica-Bold").fontSize(10).fillColor("#444")
-        .text("Note", 335, cadreCorrecteurY + 168, { continued: true })
-        .font("Helvetica-Oblique").fontSize(9).fillColor("#666").text(" (en chiffres)");
+        .text("Note", 365, cadreCorrecteurY + cadreSaisieNoteY + 15, { continued: true })
+        .font("Helvetica").fillColor("#666").text(" / 20", { continued: true })
+        .font("Helvetica-Bold").fillColor("#444").text(" : ");
 
     const barreDeSaisie = (x: number, y: number, width: number) => {
         doc.moveTo(x, y).lineTo(x, y + 3).lineTo(x + width, y + 3).lineTo(x + width, y).stroke();
     };
 
-    barreDeSaisie(335, cadreCorrecteurY + 215, 21);
-    barreDeSaisie(335 + 25, cadreCorrecteurY + 215, 21);
+    barreDeSaisie(365, cadreCorrecteurY + cadreSaisieNoteY + 52, 21);
+    barreDeSaisie(365 + 25, cadreCorrecteurY + cadreSaisieNoteY + 52, 21);
 
     // Virgule
-    doc.font("Helvetica-Bold").fontSize(15).fillColor("#444").text(",", 335 + 53, cadreCorrecteurY + 205);
+    doc.font("Helvetica-Bold").fontSize(15).fillColor("#444").text(",", 365 + 53, cadreCorrecteurY + cadreSaisieNoteY + 42);
 
-    barreDeSaisie(335 + 65, cadreCorrecteurY + 215, 21);
-    barreDeSaisie(335 + 65 + 25, cadreCorrecteurY + 215, 21);
+    barreDeSaisie(365 + 65, cadreCorrecteurY + cadreSaisieNoteY + 52, 21);
+    barreDeSaisie(365 + 65 + 25, cadreCorrecteurY + cadreSaisieNoteY + 52, 21);
 }

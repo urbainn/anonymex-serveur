@@ -10,7 +10,7 @@ export async function visualiserGeometrieAncrage(image: sharp.Sharp, ptsAncrageS
     const ctx = canvas.getContext("2d");
 
     // Dessiner les points d'ancrage SOURCE
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
 
     for (const groupe of [ptsAncrageSource, ptsAncrageDest]) {
         const estSource = groupe === ptsAncrageSource;

@@ -3,7 +3,6 @@ import { LecturePipelineDebug } from "../LecturePipelineDebug";
 import { EtapeLecture } from "../EtapesDeTraitementDicts";
 import { sharp2canvas } from "../../../utils/debugImageUtils";
 import { CibleConcentriqueDetection } from "../../lecture/preparation/detecterCiblesConcentriques";
-import { MatVector } from "@techstark/opencv-js";
 
 type Pt = [number, number];
 
@@ -13,36 +12,14 @@ type Pt = [number, number];
  * @param detectionsCibles cibles detectées
  * @param contours tous les contours détectés
  */
-export async function visualiserGeometrieCibles(image: sharp.Sharp, detectionsCibles: (null | CibleConcentriqueDetection)[], contours: MatVector): Promise<void> {
+export async function visualiserGeometrieCibles(image: sharp.Sharp, detectionsCibles: (null | CibleConcentriqueDetection)[]): Promise<void> {
     const canvas = await sharp2canvas(image);
     const ctx = canvas.getContext("2d");
-
-    // dessiner la hiérarchie
-    ctx.strokeStyle = 'blue';
-    ctx.lineWidth = 0.5;
-
-    for (let i = 0; i < contours.size(); i++) {
-        const contour = contours.get(i);
-        if (contour.rows > 0) {
-            ctx.beginPath();
-            for (let j = 0; j < contour.rows; j++) {
-                const pointData = contour.data32S[j * 2]; // x
-                const pointDataY = contour.data32S[j * 2 + 1]; // y
-                if (j === 0) {
-                    ctx.moveTo(pointData ?? 0, pointDataY ?? 0);
-                } else {
-                    ctx.lineTo(pointData ?? 0, pointDataY ?? 0);
-                }
-            }
-            ctx.closePath();
-            ctx.stroke();
-        } contour.delete();
-    }
 
     // Dessiner les cibles détectées + géométrie
     ctx.fillStyle = 'green';
     ctx.strokeStyle = 'red';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 3;
 
     for (const groupe of detectionsCibles) {
 
@@ -51,7 +28,7 @@ export async function visualiserGeometrieCibles(image: sharp.Sharp, detectionsCi
 
         if (pt) {
             ctx.beginPath();
-            ctx.arc(pt[0], pt[1], 3, 0, 2 * Math.PI);
+            ctx.arc(pt[0], pt[1], 8, 0, 2 * Math.PI);
             ctx.fill();
 
             // cercle autour du point

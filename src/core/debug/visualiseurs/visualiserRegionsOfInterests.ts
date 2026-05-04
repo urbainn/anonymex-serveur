@@ -18,8 +18,8 @@ export async function visualiserRegionsOfInterests(
     const canvas = await sharp2canvas(image);
     const ctx = canvas.getContext("2d");
 
+    ctx.lineWidth = 4;
     ctx.strokeStyle = "red";
-    ctx.lineWidth = 1;
 
     const { formatWidthMm, formatHeightMm } = dimensionsFormats.A4;
     const imgW = canvas.width;
@@ -34,7 +34,6 @@ export async function visualiserRegionsOfInterests(
     const toMm = (v: number) => (v * 25.4) / 72;
 
     for (const groupe of groupesRois) {
-        let i = 0;
         for (const roi of groupe) {
             const xMm = toMm(roi.x) - marginsMm.left;
             const yMm = toMm(roi.y) - marginsMm.top;
@@ -46,10 +45,7 @@ export async function visualiserRegionsOfInterests(
             const wPx = wMm * pxPerMmX;
             const hPx = hMm * pxPerMmY;
 
-            ctx.strokeRect(xPx, yPx, wPx, hPx);
-            ctx.fillStyle = "red";
-            ctx.fillText(`${i}`, xPx + 2, yPx + 12);
-            i++;
+            ctx.strokeRect(xPx - 2, yPx - 2, wPx + 4, hPx + 4);
         }
     }
 

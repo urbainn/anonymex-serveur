@@ -6,7 +6,7 @@ import { etudiantsRouter } from "./etudiants";
 import { useFile } from "./useFile";
 import { documentsRouter } from "./documents";
 import { sallesRouteur } from "./salles";
-//import { parametresRouteur } from "./parametres";
+import { parametresRouteur } from "./parametres";
 
 const router = Router();
 
@@ -28,6 +28,6 @@ router.use("/roles", rolesRouteur);
 router.use("/salles", sallesRouteur);
 router.use("/etudiants", etudiantsRouter);
 router.use("/documents", documentsRouter);
-//router.use("/parametres", parametresRouter);
+router.use("/parametres", parametresRouteur);
 
 export { router as indexRouter };

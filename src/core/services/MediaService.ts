@@ -1,6 +1,6 @@
 import { Mat } from "@techstark/opencv-js";
 import sharp, { Channels } from "sharp";
-import { mkdir, unlink } from "fs/promises";
+import { mkdir, unlink, writeFile } from "fs/promises";
 
 /**
  * Enregistrer, lire, sérialiser et désérialiser les médias enregistrés dans le système (copies, ROIs, etc.)
@@ -55,6 +55,24 @@ export class MediaService {
     }
 
     /**
+     * Enregistrer un buffer dans le système de fichiers. Créé les dossiers nécessaires.
+     * @param buffer le buffer à enregistrer
+     * @param dirnames les sous-dossiers dans lesquels enregistrer le fichier (ex: "incidents/1/")
+     * @param filename le nom du fichier (ex: "scan.anonmedia")
+     */
+    static async enregistrerMedia(dirnames: string, filename: string, buffer: Buffer): Promise<void> {
+        // Créer les dossiers nécessaires
+        const dirPath = `${this.mediaDir}/${dirnames}`;
+        if (!this.dirsVerifies.has(dirPath)) {
+            await mkdir(dirPath, { recursive: true });
+            this.dirsVerifies.add(dirPath);
+        }
+
+        await writeFile(`${dirPath}/${filename}`, buffer);
+    }
+
+
+    /**
      * Supprimer un fichier média quelconque (.anonmedia, .webp, etc.)
      * @param dirnames les sous-dossiers dans lesquels se trouve le fichier (ex: "incidents/1/")
      * @param filename le nom du fichier (ex: "scan.webp")
@@ -62,7 +80,7 @@ export class MediaService {
     static async supprimerMedia(dirnames: string, filename: string): Promise<void> {
         // sécurité : vérifier que le chemin est bien un MEDIA
         if (!filename.endsWith('.anonmedia') && !filename.endsWith('.webp')) {
-            throw new Error("Tentative de suppression d'un fichier qui n'est pas un média : " + filename);
+            throw new Error("Tentative de suppression d'un fichier qui n'est pas un média reconnu : " + filename);
         }
 
         const filePath = `${this.mediaDir}/${dirnames}/${filename}`;

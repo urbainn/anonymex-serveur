@@ -5,6 +5,7 @@ interface ImageImporte {
     buffer: Buffer;
     width: number;
     height: number;
+    format?: string;
 }
 
 /**
@@ -32,13 +33,31 @@ export class ImagesImportsCache {
      */
     public static async getLogos(force = false) {
         const universite = await this.getImageImporte("logo_universite",
-            a => this.noirEtBlancTransfn(this.reduireTransfn(a, 140 * 1.7, 60 * 1.7)), force);
+            a => this.noirEtBlancTransfn(this.reduireTransfn(a, 238, 102)), force);
         const faculte = await this.getImageImporte("logo_faculte",
-            a => this.noirEtBlancTransfn(this.reduireTransfn(a, 140 * 1.7, 60 * 1.7)), force);
+            a => this.noirEtBlancTransfn(this.reduireTransfn(a, 238, 102)), force);
 
         return { universite, faculte };
     }
 
+    /**
+     * Enregistre une image sur le disque.
+     * @param nom Le nom du fichier de l'image (sans extension)
+     * @param buffer Le contenu de l'image
+     */
+    public static async enregistrerImage(nom: string, buffer: Buffer) {
+        await MediaService.enregistrerMedia("imports", nom, buffer);
+        // Invalider le cache pour que la nouvelle image soit prise en compte
+        this.cache.delete(nom);
+    }
+
+    /**
+     * Récupérer une image importée et la mettre en cache.
+     * @param nom Le nom du fichier de l'image (sans extension)
+     * @param transfn fn de transformation à appliquer à l'image (sharp) avant de la stocker dans le cache
+     * @param force forcer la relecture depuis le disque
+     * @returns 
+     */
     private static async getImageImporte(nom: string, transfn?: (s: sharp.Sharp) => sharp.Sharp, force = false): Promise<ImageImporte | null> {
         let image = this.cache.get(nom);
         if (!image || force) {
@@ -50,9 +69,9 @@ export class ImagesImportsCache {
             }
 
             const buffer = buffers[0];
-            const { width, height } = await sharp(buffer).metadata();
+            const { width, height, format } = await sharp(buffer).metadata();
 
-            image = { buffer, width, height };
+            image = { buffer, width, height, format };
             this.cache.set(nom, image);
 
         }

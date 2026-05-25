@@ -61,14 +61,13 @@ export class ImagesImportsCache {
     private static async getImageImporte(nom: string, transfn?: (s: sharp.Sharp) => sharp.Sharp, force = false): Promise<ImageImporte | null> {
         let image = this.cache.get(nom);
         if (!image || force) {
-            const buffers = await MediaService.lireMedia("imports", nom, transfn).catch(() => null);
+            const buffer = await MediaService.lireMedia("imports", nom, transfn).catch(() => null);
 
-            if (buffers === null || buffers[0] === undefined) {
+            if (buffer === null) {
                 this.cache.set(nom, null);
                 return null;
             }
 
-            const buffer = buffers[0];
             const { width, height, format } = await sharp(buffer).metadata();
 
             image = { buffer, width, height, format };

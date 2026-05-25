@@ -143,6 +143,11 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
                     await epreuve.convocations.update(codeAnonymatFinal, { note_quart: noteLue * 4 });
                 }
 
+                // Sauvegarder le scan sur le disque
+                // pas en await afin de directement passer au scan suivant sans délai d'écriture
+                const convocationPwd = MediaService.getExamScansDir(sessionId, codeEpreuve);
+                MediaService.enregistrerMat(scanPret, convocationPwd, `${codeAnonymatFinal}.webp`, 20);
+
             } catch (error) {
                 // Erreur lors de la lecture du bordereau : faire remonter l'erreur
                 if (error instanceof ErreurResultatLu && error.incident && scanPret) {
@@ -171,7 +176,8 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
                     epreuve.incidents.set(incidentId, incident);
 
                     // Enregistrer le scan sur le disque
-                    await MediaService.enregistrerMat(scanPret, 'incidents/', `${incidentId}.webp`);
+                    const incidentPwd = MediaService.getIncidentDir(sessionId);
+                    await MediaService.enregistrerMat(scanPret, incidentPwd, `${incidentId}.webp`);
 
                     logInfo('Incident', "Incident créé lors de la lecture d'un bordereau.");
 

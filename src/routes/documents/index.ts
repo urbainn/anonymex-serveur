@@ -2,7 +2,7 @@ import { Router } from "express";
 import { useFullRest } from "../useRest";
 import { getBordereau } from "./getBordereau";
 import { getCoupons } from "./getCoupons";
-import { getScanIncident } from "./getScanIncident";
+import { getScanBordereau, getScanIncident } from "./getScan";
 import { getBordereauTemp } from "./getBordereauTEMP";
 import { getNotesXLSX } from "./getNotesXLSX";
 import { getCorrespondance } from "./getCorrespondance";
@@ -20,10 +20,16 @@ documentsRouter.get("/session/:sessionId/epreuve/:codeEpreuve/coupons.pdf", (req
     return useFullRest(() => getCoupons(sessionId, codeEpreuve, codesAno, salles, res), req, res);
 });
 
-// GET /documents/incidents/:idIncident/scan.webp
-documentsRouter.get("/incidents/:idIncident/scan.webp", (req, res) => {
-    const { idIncident } = req.params;
-    return useFullRest(() => getScanIncident(idIncident, res), req, res);
+// GET /documents/scans/:sessionId/incidents/:idIncident/scan.webp
+documentsRouter.get("/scans/:sessionId/incidents/:idIncident/scan.webp", (req, res) => {
+    const { sessionId, idIncident } = req.params;
+    return useFullRest(() => getScanIncident(sessionId, idIncident, res), req, res);
+});
+
+// GET /documents/scans/:sessionId/epreuve/:codeEpreuve/:codeAnonymat/scan.webp
+documentsRouter.get("/scans/:sessionId/epreuve/:codeEpreuve/:codeAnonymat/scan.webp", (req, res) => {
+    const { sessionId, codeEpreuve, codeAnonymat } = req.params;
+    return useFullRest(() => getScanBordereau(sessionId, codeEpreuve, codeAnonymat, res), req, res);
 });
 
 // GET /documents/magacha/:sessionId/:codeEpreuve/:nbIncidents

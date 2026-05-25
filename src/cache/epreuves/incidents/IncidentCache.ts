@@ -45,7 +45,7 @@ export class IncidentCache extends DatabaseCacheBase<number /*id*/, Incident, In
 
         // Supprimer le scan de l'incident corrigé
         if (result.affectedRows > 0) {
-            await MediaService.supprimerMedia('incidents/', `${incidentId}.webp`).catch(() => {
+            await MediaService.supprimerMedia(MediaService.getIncidentDir(this.idSession), `${incidentId}.webp`).catch(() => {
                 logWarn("postIncident", `Impossible de supprimer le scan de l'incident ${incidentId}. Le fichier n'existe peut-être plus.`);
             });
         }

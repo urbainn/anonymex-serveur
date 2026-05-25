@@ -1,6 +1,9 @@
 import { DatabaseCacheBase } from "../base/DatabaseCacheBase";
 import { Serialiseur } from "../base/Serialiseur";
 import { Session, SessionData } from "./Session";
+import { rm } from "fs/promises";
+import { join } from "path";
+import { MediaService } from "../../core/services/MediaService";
 
 export class SessionCache extends DatabaseCacheBase<number /*id*/, Session, SessionData> {
 
@@ -20,6 +23,13 @@ export class SessionCache extends DatabaseCacheBase<number /*id*/, Session, Sess
 
     getComposanteCache(element: Session): number {
         return element.id;
+    }
+
+    override async delete(id: number) {
+        // Supprimer les scans associés à la session
+        await rm(join(MediaService.mediaDir, 'session-' + id.toString()), { recursive: true, force: true });        
+
+        return super.delete(id);
     }
 
     serialize(): Buffer {

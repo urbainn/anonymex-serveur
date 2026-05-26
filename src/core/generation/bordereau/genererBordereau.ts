@@ -56,7 +56,7 @@ export async function genererPageBordereau(doc: typeof PDFDocument): Promise<voi
 
     // Saisie de l'épreuve
     const epreuveY = 350;
-    doc.font("Helvetica").fontSize(12).fillColor("#222").text("Code et Nom UE : .......................................................", 0, epreuveY, { align: "center" });
+    doc.font("Helvetica").fontSize(12).fillColor("#222").text("Code et nom UE : ...........................................................................", 0, epreuveY, { align: "center" });
 
     // Cadre correcteur
     const cadreCorrecteurY = 515;

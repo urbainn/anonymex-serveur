@@ -49,8 +49,10 @@ const MOIS = {
     // Français
     "FEV": "02",
     "AVR": "04",
+    "MAI": "05",
     "AOÛ": "08",
     "AOU": "08",
+    "DÉC": "12",
 } as Record<string, string>;
 
 const customParseFormat = require('dayjs/plugin/customParseFormat');
@@ -298,10 +300,10 @@ export async function interpretationXLSX(data: Record<string, unknown>[], sessio
             for (const [codeSalle, nbEtudiants] of salles) {
 
                 // Créer les convocations sur la plage réservée
-                // 5% du nombre de convocations : Minimum 4 (ou nb. etudiants si < 4), maximum 20
+                // 5% du nombre de convocations : Minimum 5, maximum 20
                 const nbConvocsReservees = Math.min(20,
                     Math.max(
-                        Math.min(4, nbEtudiants),
+                        Math.min(5, nbEtudiants),
                         Math.round(nbEtudiants * 0.05)
                     )
                 );

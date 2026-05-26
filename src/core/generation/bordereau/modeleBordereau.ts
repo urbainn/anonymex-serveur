@@ -66,7 +66,7 @@ export class ModeleBordereau extends ModeleLectureBase {
                 notes[20 - i] = coche;
             } else if (i > 22) {
                 // Fractions
-                fractions.push(coche);
+                fractions.unshift(coche);
             }
         }
 

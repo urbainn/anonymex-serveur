@@ -1,3 +1,4 @@
+import { etudiantCache } from "../../../../cache/etudiants/EtudiantCache";
 import { sessionCache } from "../../../../cache/sessions/SessionCache";
 import { APIBoolResponse } from "../../../../contracts/common";
 import { Database } from "../../../../core/services/database/Database";
@@ -5,24 +6,13 @@ import { ErreurRequeteInvalide, ErreurServeur } from "../../../erreursApi";
 
 export async function patchConvocationSupplementaire(sessionId: string, epreuveCode: string, codeAnonymat: string, numeroEtu: unknown | undefined): Promise<APIBoolResponse> {
 
-    const idSession = parseInt(sessionId ?? '');
-    const numeroEtudiant = parseInt(numeroEtu?.toString() ?? '');
+    const idSession = parseInt(sessionId ?? '', 10);
+    const numeroEtudiant = parseInt(numeroEtu?.toString() ?? '', 10);
 
-    if (!codeAnonymat.startsWith('Z')) {
-        throw new ErreurServeur("Vous ne pouvez pas modifier ce code anonymat.");
-    }
-
-    if (isNaN(idSession) || sessionId === undefined) {
-        throw new ErreurRequeteInvalide("L'ID de la session est invalide.");
-    }
-
-    if (!epreuveCode) {
-        throw new ErreurRequeteInvalide("Le code de l'epreuve est invalide.");
-    }
-
-    if (isNaN(numeroEtudiant)) {
-        throw new ErreurRequeteInvalide("Le numéro étudiant est invalide.");
-    }
+    if (!codeAnonymat.startsWith('Z')) throw new ErreurServeur("Vous ne pouvez pas modifier ce code anonymat.");
+    if (Number.isNaN(idSession)) throw new ErreurRequeteInvalide("L'ID de la session est invalide.");
+    if (!epreuveCode) throw new ErreurRequeteInvalide("Le code de l'epreuve est invalide.");
+    if (Number.isNaN(numeroEtudiant)) throw new ErreurRequeteInvalide("Le numéro étudiant est invalide.");
 
     const session = await sessionCache.getOrFetch(idSession);
     if (!session) {
@@ -34,14 +24,20 @@ export async function patchConvocationSupplementaire(sessionId: string, epreuveC
         throw new ErreurRequeteInvalide("L'épreuve demandée n'existe pas.");
     }
 
+    const etudiant = await etudiantCache.getOrFetch(numeroEtudiant);
+    if (!etudiant) {
+        throw new ErreurRequeteInvalide("L'étudiant n'existe pas.");
+    }
+
     const nouvelleConvoc = epreuve.convocations.convocationsSupplementaires.get(codeAnonymat);
     if (!nouvelleConvoc) {
         throw new ErreurRequeteInvalide("La convocation demandée n'existe pas, ou est déjà assignée.");
     }
 
-    const resultats = await Database.query<{ code: string }>
-        ("SELECT c.code_anonymat as code FROM convocation c WHERE c.numero_etudiant = ? AND c.id_session = ? "
-            + "AND c.code_epreuve = ?;", [numeroEtudiant, idSession, epreuveCode]);
+    const resultats = await Database.query<{ code: string }>(
+        "SELECT c.code_anonymat as code FROM convocation c WHERE c.numero_etudiant = ? AND c.id_session = ? AND c.code_epreuve = ? LIMIT 1;",
+        [numeroEtudiant, idSession, epreuveCode]
+    );
 
     const ancienCode = resultats[0]?.code;
 

@@ -4,8 +4,6 @@ import { existsSync } from "fs";
 import { resolve } from "path";
 import { ErreurCNN } from "../lectureErreurs";
 
-const EMNIST_INPUT_SIZE = 28;
-
 export type EmnistImageSource = Tensor3D | Tensor4D | Buffer | Uint8Array;
 type TypesModeles = "EMNIST-Standard";
 
@@ -40,12 +38,11 @@ export class TensorFlowCNN {
      * @param modele Type de modèle à utiliser pour la prédiction.
      * @param alphabet Alphabet utilisé dans le modèle dans l'ordre des classes
      */
-    public static async predire(source: EmnistImageSource, modele: TypesModeles, alphabet: string): Promise<ResultatPrediction> {
+    public static async predire(source: Tensor4D, modele: TypesModeles, alphabet: string): Promise<ResultatPrediction> {
         const model = await this.ensureModel(modele);
-        const input = this.pretraitement(source);
 
         try {
-            const prediction = model.predict(input);
+            const prediction = model.predict(source);
             const logits = Array.isArray(prediction) ? prediction[0] : prediction;
 
             if (!(logits instanceof Tensor)) {
@@ -76,7 +73,7 @@ export class TensorFlowCNN {
                 caractere: alphabet[index] ?? '?'
             };
         } finally {
-            input.dispose();
+            source.dispose();
         }
     }
 
@@ -109,52 +106,6 @@ export class TensorFlowCNN {
         }
 
         return this.promessesChargement[modele];
-    }
-
-    /**
-     * Prétraite l'image source pour la prédiction EMNIST (rendre compatible avec le modèle).
-     * @param source 
-     * @returns 
-     */
-    private static pretraitement(source: EmnistImageSource): Tensor4D {
-        const tensor = this.toTensor3D(source);
-        const batched = tf.tidy(() => {
-            const floatImg = tensor.toFloat();
-            const grayscale = floatImg.shape[2] === 1 ? floatImg : floatImg.mean(2).expandDims(2);
-            const resized = tf.image.resizeBilinear(grayscale as Tensor3D, [EMNIST_INPUT_SIZE, EMNIST_INPUT_SIZE], true);
-            const normalized = resized.div(255);
-            const rotated = normalized.transpose([1, 0, 2]);
-            const inverted = tf.sub(1, rotated);
-
-            return inverted.expandDims(0) as Tensor4D;
-        }) as Tensor4D;
-
-        tensor.dispose();
-        return batched;
-    }
-
-    private static toTensor3D(source: EmnistImageSource): Tensor3D {
-        if (source instanceof Tensor) {
-            if (source.rank === 3) {
-                return source.clone() as Tensor3D;
-            }
-
-            if (source.rank === 4) {
-                if (source.shape[0] !== 1) {
-                    throw new ErreurCNN("Taille de batch non supportée pour le prétraitement EMNIST.");
-                }
-
-                return source.squeeze([0]) as Tensor3D;
-            }
-
-            throw new ErreurCNN("Rang de tenseur non supporté pour le prétraitement EMNIST.");
-        }
-
-        if (Buffer.isBuffer(source) || source instanceof Uint8Array) {
-            return tf.node.decodeImage(source, 1) as Tensor3D;
-        }
-
-        throw new ErreurCNN("Type de source d'image non supporté pour l'inférence EMNIST.");
     }
 
     private static getTopProbability(probabilities: number[]): { index: number; value: number } {

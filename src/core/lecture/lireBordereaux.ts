@@ -18,6 +18,7 @@ import {join} from "path";
 
 export const MARGE_CIBLES_MM = 17;
 export const DIAMETRE_CIBLES_MM = 9;
+export const dimensionsFormats = { A4: { formatWidthMm: 210, formatHeightMm: 297 } };
 
 export type CallbackLecture = (event: string, id: number, data: Record<string, unknown>) => void;
 

@@ -35,6 +35,12 @@ export async function preparerScan(scanProps: ScanData, buffer: Uint8ClampedArra
             cv.cvtColor(scan, scanBGR, cv.COLOR_RGBA2BGR);
             scan.delete();
             scan = scanBGR;
+        } else if (channels === 3) {
+            // Le buffer provient souvent en RGB; OpenCV attend BGR.
+            const scanBGR = new cv.Mat();
+            cv.cvtColor(scan, scanBGR, cv.COLOR_RGB2BGR);
+            scan.delete();
+            scan = scanBGR;
         } else if (channels === 1) {
             const scanBGR = new cv.Mat();
             cv.cvtColor(scan, scanBGR, cv.COLOR_GRAY2BGR);

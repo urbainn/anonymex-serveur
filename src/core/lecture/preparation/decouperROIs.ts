@@ -1,5 +1,5 @@
 import { Mat } from "@techstark/opencv-js";
-import { dimensionsFormats } from "../lireBordereau";
+import { dimensionsFormats } from "../lireBordereaux";
 import { OpenCvInstance } from "../../services/OpenCvInstance";
 import { LayoutPosition } from "../../generation/ModeleLectureBase";
 

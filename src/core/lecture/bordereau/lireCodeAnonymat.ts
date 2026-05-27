@@ -3,8 +3,7 @@ import { decouperROIs } from "../preparation/decouperROIs";
 import { ModeleBordereau } from "../../generation/bordereau/modeleBordereau";
 import { CvType, OpenCvInstance } from "../../services/OpenCvInstance";
 import { DIAMETRE_CIBLES_MM, MARGE_CIBLES_MM } from "../lireBordereaux";
-import { matToSharp } from "../../../utils/imgUtils";
-import { preprocessPipelines } from "../OCR/preprocessPipelines";
+import { matToBuffer } from "../../../utils/imgUtils";
 import { TesseractOCR } from "../OCR/TesseractOCR";
 import { TensorFlowCNN } from "../CNN/TensorFlowCNN";
 import { config } from "../../../config";
@@ -31,26 +30,21 @@ export async function lireCodeAnonymat(scanPret: Mat): Promise<(LectureCaseCodeA
                 return;
             }
 
-            const roiEmnistTensor = preprocessRoiEmnistOpenCv(cv, roiAnonymat);
-            if (!roiEmnistTensor) {
+            const imagesPretraitees = preprocessRoiEmnistOpenCv(cv, roiAnonymat);
+            if (!imagesPretraitees) {
                 roiAnonymat.delete();
                 codeLu.push(null);
                 return;
             }
 
+            const [roiEmnistTensor, roiEmnistMat] = imagesPretraitees;
+
             try {
 
-                const roiSharp = matToSharp(cv, roiAnonymat);
-                roiAnonymat.delete();
-
-                const roiAnonPrete = await preprocessPipelines.initial(roiSharp.clone())
-                    .resize({
-                        width: 128, height: 128, fit: "contain", background: { r: 255, g: 255, b: 255 },
-                        kernel: "lanczos3"
-                    }).png().toBuffer();
+                const roiSharp = await matToBuffer(cv, roiEmnistMat);
 
                 // Interroger l'OCR
-                const { text, confidence } = await TesseractOCR.interroger(roiAnonPrete);
+                const { text, confidence } = await TesseractOCR.interroger(roiSharp);
 
                 // Interroger la CNN
                 const prediction = await TensorFlowCNN.predire(roiEmnistTensor, 'EMNIST-Standard', config.codesAnonymat.alphabetCodeAnonymat);
@@ -62,6 +56,8 @@ export async function lireCodeAnonymat(scanPret: Mat): Promise<(LectureCaseCodeA
 
             } finally {
                 roiEmnistTensor.dispose();
+                roiEmnistMat.delete();
+                roiAnonymat.delete();
             }
 
         });
@@ -69,15 +65,17 @@ export async function lireCodeAnonymat(scanPret: Mat): Promise<(LectureCaseCodeA
     return codeLu;
 }
 
-function preprocessRoiEmnistOpenCv(cv: CvType, roiMat: Mat): tf.Tensor3D | null {
+/**
+ * Prétraitement pour la lecture des caractères manuscrits : 
+ */
+export function preprocessRoiEmnistOpenCv(cv: CvType, roiMat: Mat): [tf.Tensor4D, Mat] | null {
     if (roiMat.rows <= 0 || roiMat.cols <= 0) {
         return null;
     }
 
     const gray = new cv.Mat();
     const denoised = new cv.Mat();
-    const binaryInv = new cv.Mat();
-    const binaryLetterBlack = new cv.Mat();
+    const binaryInv = new cv.Mat(); 
     const kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(3, 3));
 
     try {
@@ -93,10 +91,9 @@ function preprocessRoiEmnistOpenCv(cv: CvType, roiMat: Mat): tf.Tensor3D | null 
         }
 
         cv.medianBlur(gray, denoised, 3);
-        cv.threshold(denoised, binaryInv, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU);
+        cv.threshold(denoised, binaryInv, 210, 255, cv.THRESH_BINARY_INV);
         cv.morphologyEx(binaryInv, binaryInv, cv.MORPH_OPEN, kernel);
         cv.morphologyEx(binaryInv, binaryInv, cv.MORPH_CLOSE, kernel);
-        cv.bitwise_not(binaryInv, binaryLetterBlack);
 
         const rowMass = new Array<number>(binaryInv.rows).fill(0);
         const colMass = new Array<number>(binaryInv.cols).fill(0);
@@ -142,22 +139,22 @@ function preprocessRoiEmnistOpenCv(cv: CvType, roiMat: Mat): tf.Tensor3D | null 
         const focused = new cv.Mat();
         if (totalMass > 0 && right > left && bottom > top) {
             const rect = new cv.Rect(left, top, right - left + 1, bottom - top + 1);
-            const roiFocused = binaryLetterBlack.roi(rect);
+            const roiFocused = binaryInv.roi(rect);
             roiFocused.copyTo(focused);
             roiFocused.delete();
         } else {
-            binaryLetterBlack.copyTo(focused);
+            binaryInv.copyTo(focused);
         }
 
         const outputSize = 28;
-        const padding = 2;
+        const padding = 4; 
         const innerSize = outputSize - (2 * padding);
 
         const scale = Math.min(innerSize / focused.cols, innerSize / focused.rows);
         const resizedW = Math.max(1, Math.round(focused.cols * scale));
         const resizedH = Math.max(1, Math.round(focused.rows * scale));
 
-        const output = new cv.Mat(outputSize, outputSize, cv.CV_8UC1, new cv.Scalar(255));
+        const output = new cv.Mat(outputSize, outputSize, cv.CV_8UC1, new cv.Scalar(0));
         const resizedGlyph = new cv.Mat();
 
         try {
@@ -169,11 +166,16 @@ function preprocessRoiEmnistOpenCv(cv: CvType, roiMat: Mat): tf.Tensor3D | null 
             resizedGlyph.copyTo(dstRoi);
             dstRoi.delete();
 
-            cv.threshold(output, output, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
             const data = Float32Array.from(output.data);
-            return tf.tensor3d(data, [outputSize, outputSize, 1]);
+            const tensor = tf.tidy(() => {
+                let t = tf.tensor3d(data, [outputSize, outputSize, 1]);
+                t = t.div(255.0);
+                t = t.transpose([1, 0, 2]);
+                return t.expandDims(0) as tf.Tensor4D;
+            }) as tf.Tensor4D;
+
+            return [tensor, output];
         } finally {
-            output.delete();
             resizedGlyph.delete();
             focused.delete();
         }
@@ -181,7 +183,6 @@ function preprocessRoiEmnistOpenCv(cv: CvType, roiMat: Mat): tf.Tensor3D | null 
         gray.delete();
         denoised.delete();
         binaryInv.delete();
-        binaryLetterBlack.delete();
         kernel.delete();
     }
 }

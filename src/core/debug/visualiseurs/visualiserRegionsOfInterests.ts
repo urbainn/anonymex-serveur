@@ -2,7 +2,7 @@ import sharp from "sharp";
 import { sharp2canvas } from "../../../utils/debugImageUtils";
 import { LecturePipelineDebug } from "../LecturePipelineDebug";
 import { EtapeLecture } from "../EtapesDeTraitementDicts";
-import { dimensionsFormats } from "../../lecture/lireBordereau";
+import { dimensionsFormats } from "../../lecture/lireBordereaux";
 import { LayoutPosition } from "../../generation/ModeleLectureBase";
 
 /**

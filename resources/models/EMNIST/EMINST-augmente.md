@@ -5,7 +5,11 @@ EMINST : https://arxiv.org/abs/1702.05373v1.
 
 ---
 
-Entraîné le : 10/03/2026, 9h12
-Précision : 0.9549
-Perte : 0.2047
-Nb. Epochs : 8
+Entraîné le : 27/05/2026, 22h01
+Précision : 0.9568
+Perte : 0.1936
+Nb. Epochs : 22
+
+---
+
+Echantillons non-EMNIST ajoutés au jeu d'entraînement : 1840

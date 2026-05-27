@@ -5,6 +5,22 @@
  * 
  * Si CUDA pas détecté, penser à exporter :
  * export LD_LIBRARY_PATH=/usr/local/cuda-12.9/lib64:$LD_LIBRARY_PATH && TF_CPP_MIN_LOG_LEVEL=0
+ * 
+ * Augmentations : +-10% translation + +-8% zoom (si aug_copies > 0).
+ * 
+ * Arguments CLI :
+ * --epochs N (default 40)
+ * --batch_size N (default 256)
+ * --val_split F (default 0.08)
+ * --max_train N (default all) : limite le nombre d'exemples d'entrainement pour tests rapides
+ * --aug_copies N (default 2) : nombre de copies augmentées par image d'origine (0 = pas d'augmentation)
+ * --label_smoothing F (default 0.1) : facteur de label smoothing (0 = pas de lissage)
+ * 
+ * Utiliser des échantillons personnalisés : 
+ * - Créer un dossier "self" dans ./datasets/EMNIST/
+ * - Mettre dedans deux sous-dossiers "success" et "failure" (pour les classes à inclure dans le train/test)
+ * - Dans chaque sous-dossier, créer des dossiers nommés 0, 1, ..., 25 correspondant aux classes EMNIST (A=0, B=1, ..., Z=25)
+ * - Mettre les images PNG/JPEG dans les dossiers de classes (ex: ./datasets/EMNIST/self/success/0/img1.png)
  */
 
 const fs = require("fs");
@@ -160,6 +176,72 @@ async function assurerArchiveExtraite() {
 	if (manquants.length > 0) {
 		throw new Error(`Extraction incomplete, fichiers manquants: ${manquants.join(", ")}`);
 	}
+}
+
+/**
+ * Charger les images personnalisées et les convertir en tensors utilisables pour l'entrainement.
+ */
+async function chargerImagesPersonnalisees(dossierRacineSelf) {
+    if (!fs.existsSync(dossierRacineSelf)) {
+        return { images: null, etiquettes: null };
+    }
+
+    const sousDossiers = ["success", "failure"];
+    const tensorsImages = [];
+    const labels = [];
+
+    for (const sousDossier of sousDossiers) {
+        const cheminDossier = path.join(dossierRacineSelf, sousDossier);
+        if (!fs.existsSync(cheminDossier)) continue;
+
+        const classes = fs.readdirSync(cheminDossier);
+        for (const classeStr of classes) {
+            const classeInt = parseInt(classeStr, 10);
+            if (isNaN(classeInt)) continue;
+
+            const cheminClasse = path.join(cheminDossier, classeStr);
+            const stat = fs.statSync(cheminClasse);
+            if (!stat.isDirectory()) continue;
+
+            const fichiers = fs.readdirSync(cheminClasse);
+            for (const fichier of fichiers) {
+                
+                const cheminFichier = path.join(cheminClasse, fichier);
+                const buffer = fs.readFileSync(cheminFichier);
+                
+                try {
+                    tf.tidy(() => {
+                        let imgTensor = tf.node.decodeImage(buffer, 1);
+                        
+						// redimesionner
+                        if (imgTensor.shape[0] !== TAILLE_IMAGE || imgTensor.shape[1] !== TAILLE_IMAGE) {
+                            imgTensor = tf.image.resizeBilinear(imgTensor, [TAILLE_IMAGE, TAILLE_IMAGE]);
+                        }
+                    
+                        imgTensor = imgTensor.toFloat().div(255);
+                        imgTensor = imgTensor.transpose([1, 0, 2]);
+						tensorsImages.push(tf.keep(imgTensor));
+                        labels.push(classeInt);
+                    });
+                } catch (err) {
+                    console.warn(`Erreur lors de la lecture de l'image ${cheminFichier}: ${err.message}`);
+                }
+            }
+        }
+    }
+
+    if (tensorsImages.length === 0) {
+        return { images: null, etiquettes: null };
+    }
+
+    return tf.tidy(() => {
+        const imagesConcat = tf.stack(tensorsImages);
+        const etiquettesTensor = tf.tensor1d(labels, "int32");
+        const etiquettesOneHot = tf.oneHot(etiquettesTensor, 26).toFloat();
+        tensorsImages.forEach(t => t.dispose());
+		
+        return { images: imagesConcat, etiquettes: etiquettesOneHot };
+    });
 }
 
 async function preparerFichier(url, cibleGz, cibleFinale) {
@@ -405,6 +487,27 @@ async function chargerDataset(options) {
 	const testLabelsIdx = lireIdxLabels(chemins.testLabels);
 
 	let { images, etiquettes } = tensorsImagesEtLabels(trainImagesIdx.images, trainLabelsIdx);
+
+	// Chargement et fusion des images personnalisees
+	const dossierSelf = path.join(DOSSIER_DATA, "self");
+	const customData = await chargerImagesPersonnalisees(dossierSelf);
+
+	if (customData.images !== null) {
+		console.log(`Ajout de ${customData.images.shape[0]} images personnalisees au dataset d'entrainement.`);
+		const combinedImages = tf.concat([images, customData.images], 0);
+		const combinedEtiquettes = tf.concat([etiquettes, customData.etiquettes], 0);
+
+		images.dispose();
+		etiquettes.dispose();
+		customData.images.dispose();
+		customData.etiquettes.dispose();
+
+		images = combinedImages;
+		etiquettes = combinedEtiquettes;
+	} else {
+		console.log("Aucune image personnalisee trouvee (ou dossier EMNIST/self inexistant). Entrainement sur EMNIST uniquement.");
+	}
+
 	const melange = melanger(images, etiquettes);
 	images.dispose();
 	etiquettes.dispose();
@@ -522,7 +625,7 @@ async function entrainer() {
 	modele.summary();
 
 	const callbacks = [
-		tf.callbacks.earlyStopping({ monitor: "val_acc", patience: 6 }),
+		tf.callbacks.earlyStopping({ monitor: "val_acc", patience: 4 }),
 		creerReduceLRCallback(modele),
 		new tf.CustomCallback({
 			onEpochEnd: async (epoch, logs) => {

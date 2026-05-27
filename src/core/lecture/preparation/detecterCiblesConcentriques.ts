@@ -1,6 +1,6 @@
 import { ScanData } from "./extraireScans";
 import { OpenCvInstance } from "../../../core/services/OpenCvInstance";
-import { dimensionsFormats } from "../lireBordereau";
+import { dimensionsFormats } from "../lireBordereaux";
 import { ErreurDetectionCiblesConcentriques } from "../lectureErreurs";
 import { StatistiquesDebug } from "../../debug/StatistiquesDebug";
 import { EtapeLecture } from "../../debug/EtapesDeTraitementDicts";

@@ -1,7 +1,7 @@
 import { Mat } from "@techstark/opencv-js";
 import { ErreurRealignement } from "../lectureErreurs";
 import { OpenCvInstance } from "../../../core/services/OpenCvInstance";
-import { dimensionsFormats } from "../lireBordereau";
+import { dimensionsFormats } from "../lireBordereaux";
 import { CibleConcentriqueDetection } from "./detecterCiblesConcentriques";
 
 type Pt = [number, number];

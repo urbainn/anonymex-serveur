@@ -13,6 +13,8 @@ import { logInfo } from "../../utils/logger";
 import { lireGrilleNote } from "./bordereau/lireGrilleNote";
 import { lireCodeAnonymat } from "./bordereau/lireCodeAnonymat";
 import { getDecalages, inverserDecalage } from "../../utils/codeAnonymatUtils";
+import sharp from "sharp";
+import {join} from "path";
 
 export const MARGE_CIBLES_MM = 17;
 export const DIAMETRE_CIBLES_MM = 9;
@@ -150,7 +152,7 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
 
             } catch (error) {
                 // Erreur lors de la lecture du bordereau : faire remonter l'erreur
-                if (error instanceof ErreurResultatLu && error.incident && scanPret) {
+                if (error instanceof ErreurResultatLu && error.incident) {
 
                     // Créer un incident
                     const incidentData: Omit<IncidentData, 'id_incident'> = {
@@ -177,24 +179,29 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
 
                     // Enregistrer le scan sur le disque
                     const incidentPwd = MediaService.getIncidentDir(sessionId);
-                    await MediaService.enregistrerMat(scanPret, incidentPwd, `${incidentId}.webp`);
+                    if (scanPret) {
+                        // Enregistrer le scan préparé sur le disque
+                        await MediaService.enregistrerMat(scanPret, incidentPwd, `${incidentId}.webp`);
+                    } else {
+                        // Enregistrer le buffer original sur le disque si le scan préparé n'est pas disponible
+                        await sharp(buffer).webp().toFile(join(incidentPwd, `${incidentId}.webp`));
+                    }
 
                     logInfo('Incident', "Incident créé lors de la lecture d'un bordereau.");
 
                     // Remonter l'incident au client
                     getDepot().callback?.('incident', 0, incident.toJSON());
 
-                } else if (error instanceof Error) {
-                    getDepot().callback?.('error', 0, { message: error.message });
-                    console.error("Erreur lors de la lecture du bordereau :", error);
                 } else {
-                    getDepot().callback?.('error', 0, { message: 'Erreur inconnue' });
-                    console.error("Erreur inconnue lors de la lecture du bordereau :", error);
+                    // Erreur non traitable (échec de lecture du document)
+                    getDepot().callback?.('error', 0, { message: error instanceof Error ? error.message : 'Erreur inconnue' });
+                    console.error("Erreur lors de la lecture du bordereau :", error);
                 }
             } finally {
                 // Libérer la mémoire du scan préparé
                 scanPret?.delete();
 
+                // Remonter la progression de lecture au client
                 numFichier++;
                 getDepot().callback?.('progress', 0, { n: numFichier, t: scan.nbPages });
             }

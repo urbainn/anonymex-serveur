@@ -68,7 +68,7 @@ interface InterpretationFiltres {
 }
 
 /**
- * Interepreter les données du tableur XLSX des convocations d'examens d'une session, et
+ * Interpréter les données du tableur XLSX des convocations d'examens d'une session, et
  * opère les mutations nécessaires dans la base de données et les caches.
  * @param data Données lues du fichier XLSX; via lectureXLSX()
  * @param session La session d'examens concernée

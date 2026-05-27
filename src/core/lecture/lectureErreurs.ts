@@ -10,7 +10,7 @@ export class ErreurConversion extends ErreurLecture { name = "Document non conve
 export class ErreurPdfIncompatible extends ErreurConversion { name = "PDF non compatible"; incident = false; }
 
 // Erreurs d'alignement/correction
-export class ErreurAlignement extends ErreurLecture { name = "Alignement impossible"; incident = false; }
+export class ErreurAlignement extends ErreurLecture { name = "Alignement impossible"; incident = true; }
 
 // Erreurs de lecture des April Tags
 export class ErreurDetectionAprilTags extends ErreurLecture { name = "Erreur de lecture"; incident = true; }

@@ -75,7 +75,6 @@ export async function genererDocCoupons(session: Session, epreuve: Epreuve, sall
 
         // Générer les coupons pour les convocations
         for (const convocation of convocs) {
-            console.log('Génération coupon pour convocation : ', convocation.codeAnonymat);
             await renduCoupon(doc, epreuve, convocation, salle);
         }
 

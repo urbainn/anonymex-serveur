@@ -6,6 +6,7 @@ import { getScanBordereau, getScanIncident } from "./getScan";
 import { getBordereauTemp } from "./getBordereauTEMP";
 import { getNotesXLSX } from "./getNotesXLSX";
 import { getCorrespondance } from "./getCorrespondance";
+import { getCreerCouponsSupplementaires } from "./getCreerCouponsSupplementaires";
 
 const documentsRouter = Router();
 
@@ -18,6 +19,13 @@ documentsRouter.get("/session/:sessionId/epreuve/:codeEpreuve/coupons.pdf", (req
     const salles = (req.query.salles as string)?.split(",") ?? [];
     const codesAno = (req.query.codes as string)?.split(",") ?? [];
     return useFullRest(() => getCoupons(sessionId, codeEpreuve, codesAno, salles, res), req, res);
+});
+
+// GET /documents/session/:sessionId/epreuve/:codeEpreuve/salle/:salle/creer-coupons-supplementaires?nbCoupons=N
+documentsRouter.get("/session/:sessionId/epreuve/:codeEpreuve/salle/:salle/creer-coupons-supplementaires", (req, res) => {
+    const { sessionId, codeEpreuve, salle } = req.params;
+    const nbCoupons = parseInt(req.query.nbCoupons as string, 10);
+    return useFullRest(() => getCreerCouponsSupplementaires(sessionId, codeEpreuve, salle, nbCoupons, res), req, res);
 });
 
 // GET /documents/scans/:sessionId/incidents/:idIncident/scan.webp

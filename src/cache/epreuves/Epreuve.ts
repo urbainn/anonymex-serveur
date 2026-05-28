@@ -47,6 +47,11 @@ export class Epreuve extends ElementEnCacheBdd<EpreuveData> {
         this.incidents = new IncidentCache(this.idSession, this.codeEpreuve);
     }
 
+    /** Le dépôt vient-il d'être complété, mais le statut n'a pas encore été mis à jour ? */
+    public get depotVientDetreComplete(): boolean {
+        return this.nbPresents !== null && this.convocations.nbDepots >= this.nbPresents && this.statut !== EpreuveStatut.DEPOT_COMPLET && this.statut !== EpreuveStatut.NOTE_EXPORTEES;
+    }
+
     /** Changer le statut de l'épreuve */
     public async changerStatut(nvStatut: EpreuveStatut): Promise<void> {
         this.statut = nvStatut;

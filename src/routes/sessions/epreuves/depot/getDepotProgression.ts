@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { ErreurRequeteInvalide } from "../../../erreursApi";
 import { DepotsManager } from "../../../../core/lecture/DepotsManager";
 import { logInfo } from "../../../../utils/logger";
+import { sessionCache } from "../../../../cache/sessions/SessionCache";
 
 /**
  * Etablit une connexion SSE pour remonter la progression de la lecture d'un dépôt.
@@ -40,7 +41,7 @@ export async function getDepotProgression(req: Request, res: Response): Promise<
     };
 
     depot.onComplete = () => {
-        depot.callback?.('ok', 0, {});
+        depot.callback?.('ok', 0, { nbDepots: sessionCache.get(sessionId)?.epreuves.get(code)?.convocations.nbDepots ?? -1 });
         res.end();
     };
 

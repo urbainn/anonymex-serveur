@@ -81,6 +81,8 @@ export async function creerGenererCouponsSupplementaires(session: Session, epreu
         await renduCoupon(doc, epreuve, convocSupp, salleCache.get(salle));
     }
 
+    epreuve.convocations.reconstruireCache();
+
     doc.end();
     return true;
 

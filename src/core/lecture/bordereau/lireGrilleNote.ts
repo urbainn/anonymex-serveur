@@ -9,7 +9,7 @@ import { DIAMETRE_CIBLES_MM, MARGE_CIBLES_MM } from "../lireBordereaux";
 const SEUIL_CASE_ACTIVE = 0.14;
 
 // difference max de taux de remplissage entre les deux cases les plus remplies pour considérer la lecture non ambiguë
-const MARGE_AMBIGUITE = 0.99; // désactivé pour l'instant
+const MARGE_AMBIGUITE = 0.0; // désactivé pour l'instant
 
 /**
  * Renvoie la note lue sur la grille de notation. En cas d'erreur de lecture, throw une ErreurGrilleNote.

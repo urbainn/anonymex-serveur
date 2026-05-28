@@ -41,10 +41,10 @@ export async function lireCodeAnonymat(scanPret: Mat): Promise<(LectureCaseCodeA
 
             try {
 
-                const roiSharp = await matToBuffer(cv, roiEmnistMat);
+                const roiBuffer = await matToBuffer(cv, roiEmnistMat);
 
                 // Interroger l'OCR
-                const { text, confidence } = await TesseractOCR.interroger(roiSharp);
+                const { text, confidence } = await TesseractOCR.interroger(roiBuffer);
 
                 // Interroger la CNN
                 const prediction = await TensorFlowCNN.predire(roiEmnistTensor, 'EMNIST-Standard', config.codesAnonymat.alphabetCodeAnonymat);
@@ -155,7 +155,9 @@ export function preprocessRoiEmnistOpenCv(cv: CvType, roiMat: Mat): [tf.Tensor4D
         const resizedH = Math.max(1, Math.round(focused.rows * scale));
 
         const output = new cv.Mat(outputSize, outputSize, cv.CV_8UC1, new cv.Scalar(0));
+        const ocrOutput = new cv.Mat(outputSize, outputSize, cv.CV_8UC1, new cv.Scalar(255));
         const resizedGlyph = new cv.Mat();
+        let returnedOcrOutput = false;
 
         try {
             cv.resize(focused, resizedGlyph, new cv.Size(resizedW, resizedH), 0, 0, cv.INTER_AREA);
@@ -166,6 +168,8 @@ export function preprocessRoiEmnistOpenCv(cv: CvType, roiMat: Mat): [tf.Tensor4D
             resizedGlyph.copyTo(dstRoi);
             dstRoi.delete();
 
+            cv.bitwise_not(output, ocrOutput);
+
             const data = Float32Array.from(output.data);
             const tensor = tf.tidy(() => {
                 let t = tf.tensor3d(data, [outputSize, outputSize, 1]);
@@ -174,10 +178,15 @@ export function preprocessRoiEmnistOpenCv(cv: CvType, roiMat: Mat): [tf.Tensor4D
                 return t.expandDims(0) as tf.Tensor4D;
             }) as tf.Tensor4D;
 
-            return [tensor, output];
+            returnedOcrOutput = true;
+            return [tensor, ocrOutput];
         } finally {
             resizedGlyph.delete();
             focused.delete();
+            output.delete();
+            if (!returnedOcrOutput) {
+                ocrOutput.delete();
+            }
         }
     } finally {
         gray.delete();

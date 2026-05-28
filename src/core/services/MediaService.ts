@@ -89,6 +89,32 @@ export class MediaService {
         await writeFile(join(dirPath, filename), buffer);
     }
 
+    /**
+     * Changer l'emplacement d'un média (ex: déplacer un scan d'incident vers le dossier final des scans d'examen)
+     * @param ancienChemin les sous-dossiers dans lesquels se trouve actuellement le fichier (ex: "incidents/1/")
+     * @param nouveauChemin les sous-dossiers dans lesquels déplacer le fichier (ex: "session-1/epreuveX/")
+     * @param ancienFilename le nom actuel du fichier (ex: "scan.webp")
+     * @param nouveauFilename le nouveau nom du fichier (ex: "Z1234.webp")
+     */
+    static async deplacerMedia(ancienChemin: string, nouveauChemin: string, ancienFilename: string, nouveauFilename: string): Promise<void> {
+        // sécurité : vérifier que le chemin est bien un MEDIA
+        if (!['.webp', '.jpg', '.jpeg', '.png'].some(ext => ancienFilename.endsWith(ext))) {
+            throw new Error("Tentative de déplacement d'un fichier qui n'est pas un média reconnu : " + ancienFilename);
+        }
+
+        const ancienPath = join(this.mediaDir, ancienChemin, ancienFilename);
+        const nouveauPath = join(this.mediaDir, nouveauChemin, nouveauFilename);
+
+        // Créer les dossiers nécessaires pour le nouveau chemin
+        const nouveauDirPath = join(this.mediaDir, nouveauChemin);
+        if (!this.dirsVerifies.has(nouveauDirPath)) {
+            await mkdir(nouveauDirPath, { recursive: true });
+            this.dirsVerifies.add(nouveauDirPath);
+        }
+
+        await writeFile(nouveauPath, await sharp(ancienPath).toBuffer());
+        await unlink(ancienPath);
+    }
 
     /**
      * Supprimer un fichier média quelconque (.webp, etc.)

@@ -36,13 +36,14 @@ export async function postConvocationPresents(sessionId: string, epreuveCode: st
         epreuve.changerStatut(EpreuveStatut.EN_ATTENTE_DE_DEPOT);
     }
 
+    epreuve.nbPresents = nbPresents; // Mettre à jour le cache
+
     // Dépôt complet si le nombre de présents saisi correspond au nombre de copies déposées
-    if (epreuve.convocations.nbDepots === nbPresents) {
+    if (epreuve.depotVientDetreComplete) {
         epreuve.changerStatut(EpreuveStatut.DEPOT_COMPLET);
     }
 
     const update = await session.epreuves.update(epreuveCode, { nb_presents: nbPresents, statut: epreuve.statut });
-    epreuve.nbPresents = nbPresents; // Mettre à jour le cache
 
     return { success: update.affectedRows > 0, statut: epreuve.statut };
 }

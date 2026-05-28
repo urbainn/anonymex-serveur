@@ -1,5 +1,7 @@
 import { sessionCache } from "../../../../cache/sessions/SessionCache";
 import { APIBoolResponse } from "../../../../contracts/common";
+import { MediaService } from "../../../../core/services/MediaService";
+import { logWarn } from "../../../../utils/logger";
 import { ErreurRequeteInvalide } from "../../../erreursApi";
 
 export async function deleteIncident(sessionId: string, codeEpreuve: string, incidentId: string): Promise<APIBoolResponse> {
@@ -31,6 +33,10 @@ export async function deleteIncident(sessionId: string, codeEpreuve: string, inc
 
     try {
         await epreuve.incidents.delete(idIncident);
+        await MediaService.supprimerMedia(MediaService.getIncidentDir(session.id), `${idIncident}.webp`).catch(() => {
+            logWarn("postIncident", `Impossible de supprimer le scan de l'incident ${idIncident}. Le fichier n'existe peut-être plus.`);
+        });
+
         return { success: true };
     } catch {
         return { success: false };

@@ -17,7 +17,7 @@ export class ConvocationCache extends DatabaseCacheBase<string /*codeAnonymat*/,
     /** Liste de toutes les salles concernées */
     salles = new Set<string>();
 
-    /** Nombre de copies déposées et reconnues */
+    /** Nombre de copies déposées et reconnues (= nombre de convocations avec une note renseignée) */
     nbDepots = 0;
 
     static serialiseur = new Serialiseur<ConvocationData>([

@@ -1,6 +1,8 @@
 import { IncidentData } from "../../../../cache/epreuves/incidents/Incident";
 import { sessionCache } from "../../../../cache/sessions/SessionCache";
+import { EpreuveStatut } from "../../../../contracts/epreuves";
 import { APIReponseCorrectionIncident } from "../../../../contracts/incidents";
+import { MediaService } from "../../../../core/services/MediaService";
 import { ErreurRequeteInvalide, ErreurServeur } from "../../../erreursApi";
 
 export async function postIncident(sessionId: string, codeEpreuve: string, incidentId: string, codeAnonymat?: string, noteQuart?: string): Promise<APIReponseCorrectionIncident> {
@@ -38,7 +40,7 @@ export async function postIncident(sessionId: string, codeEpreuve: string, incid
     }
 
     // La convocation à déjà une note assignée ? (doublon !)
-    // On valide la correction mais on créé un incident pour l'AUTRE copie avec le même numéro d'anonymat
+    // Créer un incident pour l'AUTRE copie avec le même numéro d'anonymat
     if (convocation.noteQuart !== null && convocation.noteQuart !== quartNote) {
 
         const incident: Omit<IncidentData, 'id_incident'> = {
@@ -47,7 +49,7 @@ export async function postIncident(sessionId: string, codeEpreuve: string, incid
             id_session: idSession,
             note_quart: quartNote,
             titre: "Doublon",
-            details: "Deux copies ont le même numéro d'anonymat. Créé après une correction."
+            details: "Deux scans ont le même numéro d'anonymat. [" + idIncident + "] ",
         }
 
         const nvIncidentInsert = await epreuve.incidents.insert(incident);
@@ -60,15 +62,24 @@ export async function postIncident(sessionId: string, codeEpreuve: string, incid
         const nvIncident = epreuve.incidents.fromDatabase({ ...incident, id_incident: nvIncidentId });
         epreuve.incidents.set(nvIncidentId, nvIncident);
 
-        // Remplacer la copie corrigée
-        convocation.noteQuart = quartNote;
-        await epreuve.convocations.update(convocation.codeAnonymat, { note_quart: convocation.noteQuart });
+        // Sortir l'image de scan du répertoire final vers le répertoire des incidents
+        const cheminScan = MediaService.getExamScansDir(idSession, codeEpreuve);
+        const cheminIncident = MediaService.getIncidentDir(idSession);
+        try {
+            await MediaService.deplacerMedia(cheminScan, cheminIncident, convocation.codeAnonymat + ".webp", nvIncidentId.toString() + ".webp");
+        } catch (e) {
+            console.error(e);
+            // Si le déplacement échoue, supprimer l'incident créé et retourner une erreur
+            await epreuve.incidents.delete(nvIncidentId);
+            throw new ErreurServeur("Erreur lors du déplacement du scan vers le dossier des incidents. L'incident de doublon a été supprimé.");
+        }
 
-        // Supprimer l'incident courant
-        await epreuve.incidents.delete(idIncident);
+        // Supprimer la note de la convocation incidentée
+        convocation.noteQuart = null;
+        await epreuve.convocations.update(convocation.codeAnonymat, { note_quart: null });
 
         return {
-            success: true,
+            success: false,
             incidents: [nvIncident.toJSON()]
         };
 
@@ -82,6 +93,24 @@ export async function postIncident(sessionId: string, codeEpreuve: string, incid
     // Reconstruire le cache des convocations de l'épreuve pour refléter les mises à jour
     epreuve.convocations.reconstruireCache();
 
+    // Déplacer le scan de la copie corrigée du dossier des incidents vers le dossier final des scans d'examen
+    const cheminIncident = MediaService.getIncidentDir(idSession);
+    const cheminScan = MediaService.getExamScansDir(idSession, codeEpreuve);
+    try {
+        await MediaService.deplacerMedia(cheminIncident, cheminScan, idIncident.toString() + ".webp", convocation.codeAnonymat + ".webp");
+    } catch (e) {
+        console.error(e);
+    }
+
+    // Dépot complet ? Changer le status de l'épreuve
+    epreuve.convocations.nbDepots += 1;
+    if (epreuve.depotVientDetreComplete) {
+        epreuve.changerStatut(EpreuveStatut.DEPOT_COMPLET);
+        session.epreuves.update(epreuve.codeEpreuve, { statut: EpreuveStatut.DEPOT_COMPLET });
+    
+        return { success: true, estComplet: true };
+    }    
+    
     return {
         success: true
     };

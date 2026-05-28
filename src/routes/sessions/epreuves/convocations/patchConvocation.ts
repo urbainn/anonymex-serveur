@@ -1,6 +1,7 @@
 import { APIUpdateConvocation, UpdateConvocationSchema } from "../../../../contracts/convocations";
 import { sessionCache } from "../../../../cache/sessions/SessionCache";
 import { ErreurRequeteInvalide } from "../../../erreursApi";
+import { EpreuveStatut } from "../../../../contracts/epreuves";
 
 export async function patchConvocation(sessionId: string, epreuveCode: string, codeAnonymat: string, data: Record<string, unknown>): Promise<APIUpdateConvocation> {
 
@@ -34,6 +35,21 @@ export async function patchConvocation(sessionId: string, epreuveCode: string, c
 
     if(convocation.numeroEtudiant === null) {
         throw new ErreurRequeteInvalide("Vous ne pouvez pas modifier cette convocation.");
+    }
+
+    if (dataParsees.note_quart !== undefined && (dataParsees.note_quart < 0 || dataParsees.note_quart > 80)) {
+        throw new ErreurRequeteInvalide("La note doit être un nombre entre 0 et 20. (En quart de points, entre 0 et 80).");
+    }
+
+    // Note ajoutée
+    if (dataParsees.note_quart !== undefined && convocation.noteQuart === null) {
+        epreuve.convocations.nbDepots += 1;
+
+        // Changer le status de l'épreuve si le dépôt est complet
+        if (epreuve.depotVientDetreComplete) {
+            epreuve.changerStatut(EpreuveStatut.DEPOT_COMPLET);
+            session.epreuves.update(epreuve.codeEpreuve, { statut: EpreuveStatut.DEPOT_COMPLET });
+        }
     }
 
     if (dataParsees.note_quart !== undefined) convocation.noteQuart = dataParsees.note_quart;

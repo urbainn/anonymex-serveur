@@ -15,6 +15,7 @@ import { lireCodeAnonymat } from "./bordereau/lireCodeAnonymat";
 import { getDecalages, inverserDecalage } from "../../utils/codeAnonymatUtils";
 import sharp from "sharp";
 import {join} from "path";
+import { EpreuveStatut } from "../../contracts/epreuves";
 
 export const MARGE_CIBLES_MM = 17;
 export const DIAMETRE_CIBLES_MM = 9;
@@ -83,14 +84,14 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
                         let charOcr = caseCode.ocr.caractere.trim()[0] ?? null;
                         if (charOcr === '') charOcr = null;
 
-                        if (charCnn === charOcr && caseCode.cnn.confiance >= 0.5) {
+                        if (charCnn === charOcr && caseCode.cnn.confiance >= 0.4) {
                             // CNN et OCR sont d'accord
                             codeAnonymat.push(charCnn);
-                        } else if (caseCode.cnn.confiance >= 0.8 && charCnn !== null) {
-                            // Confiance CNN > 0.8
+                        } else if (caseCode.cnn.confiance >= 0.6 && charCnn !== null) {
+                            // Confiance CNN > 0.6
                             codeAnonymat.push(charCnn);
-                        } else if (caseCode.ocr.confiance >= 80 && charOcr !== null) {
-                            // Confiance OCR > 80
+                        } else if (caseCode.ocr.confiance >= 70 && charOcr !== null) {
+                            // Confiance OCR > 70
                             codeAnonymat.push(charOcr);
                         } else {
                             codeAnonymat.push(null);
@@ -210,6 +211,12 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
 
         // Reconstruire le cache des convocations de l'épreuve pour refléter les mises à jour
         epreuve.convocations.reconstruireCache();
+
+        if (epreuve.depotVientDetreComplete) {
+            epreuve.changerStatut(EpreuveStatut.DEPOT_COMPLET);
+            session.epreuves.update(epreuve.codeEpreuve, { statut: EpreuveStatut.DEPOT_COMPLET });
+            getDepot().callback?.('complete', 0, { message: 'Dépôt complet' });
+        }
     }
 
     // Envoi du message de fin de lecture

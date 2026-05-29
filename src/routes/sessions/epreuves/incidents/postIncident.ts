@@ -43,23 +43,29 @@ export async function postIncident(sessionId: string, codeEpreuve: string, incid
     // Créer un incident pour l'AUTRE copie avec le même numéro d'anonymat
     if (convocation.noteQuart !== null && convocation.noteQuart !== quartNote) {
 
-        const incident: Omit<IncidentData, 'id_incident'> = {
+        // Changer le titre et les détails de incident
+        incident.titre = "Doublon";
+        incident.details = "Deux scans ont le même numéro d'anonymat. [" + convocation.codeAnonymat + "(note1=" + convocation.noteQuart/4 + ", note2=" + quartNote/4 + ")]";
+        await epreuve.incidents.update(idIncident, { titre: incident.titre, details: incident.details });
+        
+
+        const newincident: Omit<IncidentData, 'id_incident'> = {
             code_anonymat: codeAnonymat,
             code_epreuve: codeEpreuve,
             id_session: idSession,
             note_quart: quartNote,
             titre: "Doublon",
-            details: "Deux scans ont le même numéro d'anonymat. [" + convocation.codeAnonymat + "(note1=" + convocation.noteQuart + ", note2=" + quartNote + ")]",
+            details: "Deux scans ont le même numéro d'anonymat. [" + convocation.codeAnonymat + "(note1=" + convocation.noteQuart/4 + ", note2=" + quartNote/4 + ")]",
         }
 
-        const nvIncidentInsert = await epreuve.incidents.insert(incident);
+        const nvIncidentInsert = await epreuve.incidents.insert(newincident);
         const nvIncidentId = nvIncidentInsert.insertId;
 
         if (nvIncidentInsert.affectedRows === 0 || nvIncidentId === undefined) {
             throw new ErreurServeur("Erreur lors de la création de l'incident de doublon.");
         }
 
-        const nvIncident = epreuve.incidents.fromDatabase({ ...incident, id_incident: nvIncidentId });
+        const nvIncident = epreuve.incidents.fromDatabase({ ...newincident, id_incident: nvIncidentId });
         epreuve.incidents.set(nvIncidentId, nvIncident);
 
         // Sortir l'image de scan du répertoire final vers le répertoire des incidents

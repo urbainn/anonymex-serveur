@@ -1,7 +1,7 @@
 import { Fichier } from "../../routes/useFile";
 import { Mat } from "@techstark/opencv-js";
 import { Depot } from "./DepotsManager";
-import { ErreurResultatLu } from "./lectureErreurs";
+import { ErreurResultatLu, ErreurAnonymatDoublon } from "./lectureErreurs";
 import { TesseractOCR } from "./OCR/TesseractOCR";
 import { extraireScans } from "./preparation/extraireScans";
 import { preparerScan } from "./preparation/preparerScan";
@@ -14,8 +14,6 @@ import { OpenCvInstance } from "../services/OpenCvInstance";
 import { lireGrilleNote } from "./bordereau/lireGrilleNote";
 import { lireCodeAnonymat } from "./bordereau/lireCodeAnonymat";
 import { getDecalages, inverserDecalage } from "../../utils/codeAnonymatUtils";
-import sharp from "sharp";
-import {join} from "path";
 import { EpreuveStatut } from "../../contracts/epreuves";
 
 export const MARGE_CIBLES_MM = 17;
@@ -139,7 +137,7 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
                 }
 
                 if (convocation.noteQuart !== null && convocation.noteQuart/4 !== noteLue) {
-                    throw new ErreurResultatLu(`Code anonymat déjà lu [${codeAnonymatFinal}  note1=${convocation.noteQuart/4}, note2=${noteLue}]`);
+                    throw new ErreurAnonymatDoublon(`Code anonymat déjà lu [${codeAnonymatFinal}  note1=${convocation.noteQuart/4}, note2=${noteLue}]`, codeAnonymatFinal, noteLue ?? undefined);
                 }
 
                 // Mettre à jour la convocation avec la note lue
@@ -154,6 +152,47 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
                 MediaService.enregistrerMat(scanPret, convocationPwd, `${codeAnonymatFinal}.webp`, 20);
 
             } catch (error) {
+                if (error instanceof ErreurAnonymatDoublon) {
+                    // Traitement de la première occurence du doublon qui n'est donc pas encore un incident
+                    const anonymat = error.codeAnonymatLu;
+                    if (!anonymat) 
+                        throw error;
+                    const convocation = epreuve.convocations.get(anonymat) ?? epreuve.convocations.convocationsSupplementaires.get(anonymat);
+                    if (!convocation) {
+                        throw error;
+                    }
+                    const note=convocation.noteQuart;
+                    convocation.noteQuart = null;
+                    await epreuve.convocations.update(anonymat, { note_quart: null });
+                    getDepot().callback?.('doublon', 0, { codeAnonymat: anonymat, note1: note ? note/4 : null, note2: error.noteLue ?? null });
+                    // Créer un incident
+                    const incidentData: Omit<IncidentData, 'id_incident'> = {
+                        id_session: sessionId,
+                        code_epreuve: codeEpreuve,
+                        titre: error.name,
+                        details: error.message,
+                        code_anonymat: anonymat,
+                        note_quart: note
+                    };
+                    // Insérer l'incident en base de données et en cache
+                    const incidentInsert = await epreuve.incidents.insert(incidentData);
+                    const incidentId = incidentInsert.insertId;
+                    if (incidentInsert.affectedRows === 0 || incidentId === undefined) {
+                        getDepot().callback?.('error', 0, { message: 'Erreur lors de la création d\'un incident' });
+                        console.error("Erreur lors de la création de l'incident :", incidentInsert);
+                        return;
+                    }
+
+                    const nvIncidentData = { ...incidentData, id_incident: incidentId };
+                    const incident = epreuve.incidents.fromDatabase(nvIncidentData);
+                    epreuve.incidents.set(incidentId, incident);
+                    //déplacer le scan du dossier de l'UE vers le dossier incidents en le renommant
+                    const convocationPwd = MediaService.getExamScansDir(sessionId, codeEpreuve);
+                    const incidentPwd = MediaService.getIncidentDir(sessionId);
+                    MediaService.deplacerMedia(convocationPwd, incidentPwd, `${anonymat}.webp`, `${incidentId}.webp`);
+
+                    // On ne fait pas de return car on continue le traitement du bordereau pour la gestion du scan qui a provoqué le doublon
+                }
                 // Erreur lors de la lecture du bordereau : faire remonter l'erreur
                 if (error instanceof ErreurResultatLu && error.incident) {
 

@@ -89,6 +89,7 @@ export async function preparerScan(scanProps: ScanData, buffer: Uint8ClampedArra
             return scanPret;
         }
         catch(err){
+            console.log(err);
             throw new ErreurResultatLu(`Problème alignement`, undefined, undefined);
         }}
         finally {

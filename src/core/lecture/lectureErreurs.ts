@@ -52,3 +52,5 @@ export class ErreurNoteNonLue extends ErreurLectureGrilleNote { name = "Aucune n
 export class ErreurNoteAmbigue extends ErreurLectureGrilleNote { name = "Lecture de note ambiguë"; }
 export class ErreurNoteInvalide extends ErreurLectureGrilleNote { name = "Note lue invalide"; }
 export class ErreurNoteCaseErreur extends ErreurLectureGrilleNote { name = "Case 'erreur' cochée"; }
+// Erreur de doublon
+export class ErreurAnonymatDoublon extends ErreurResultatLu { name = "Doublon de code anonymat"; }

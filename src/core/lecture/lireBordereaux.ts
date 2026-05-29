@@ -10,6 +10,7 @@ import { IncidentData } from "../../cache/epreuves/incidents/Incident";
 import { config } from "../../config";
 import { MediaService } from "../services/MediaService";
 import { logInfo } from "../../utils/logger";
+import { OpenCvInstance } from "../services/OpenCvInstance";
 import { lireGrilleNote } from "./bordereau/lireGrilleNote";
 import { lireCodeAnonymat } from "./bordereau/lireCodeAnonymat";
 import { getDecalages, inverserDecalage } from "../../utils/codeAnonymatUtils";
@@ -137,8 +138,8 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
                     throw new ErreurResultatLu(`Code d'anonymat non reconnu.`, codeAnonymatFinal, noteLue ?? undefined);
                 }
 
-                if (convocation.noteQuart !== null && convocation.noteQuart !== noteLue) {
-                    throw new ErreurResultatLu("Code anonymat déjà lu.");
+                if (convocation.noteQuart !== null && convocation.noteQuart/4 !== noteLue) {
+                    throw new ErreurResultatLu(`Code anonymat déjà lu [${codeAnonymatFinal}  note1=${convocation.noteQuart/4}, note2=${noteLue}]`);
                 }
 
                 // Mettre à jour la convocation avec la note lue
@@ -184,9 +185,20 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
                     if (scanPret) {
                         // Enregistrer le scan préparé sur le disque
                         await MediaService.enregistrerMat(scanPret, incidentPwd, `${incidentId}.webp`);
-                    } else {
+                    } else if (buffer && buffer.length > 0) {
                         // Enregistrer le buffer original sur le disque si le scan préparé n'est pas disponible
-                        await sharp(buffer).webp().toFile(join(incidentPwd, `${incidentId}.webp`));
+                        try {
+                            const cv = await OpenCvInstance.getInstance();
+                            const cvType = scan.channels === 1 ? cv.CV_8UC1 : (scan.channels === 3 ? cv.CV_8UC3 : cv.CV_8UC4);
+                            const scanMat = new cv.Mat(scan.height, scan.width, cvType);
+                            const dataLengthAttendue = scan.width * scan.height * scan.channels;
+                            scanMat.data.set(buffer.subarray(0, dataLengthAttendue));
+                            await MediaService.enregistrerMat(scanMat, incidentPwd, `${incidentId}.webp`);
+                            scanMat.delete();
+                        } catch (cvError) {
+                            logInfo('Incident', `Impossible d'enregistrer le buffer en image: ${cvError instanceof Error ? cvError.message : 'erreur inconnue'}`);
+                            // Si l'enregistrement échoue, ne pas enregistrer de fichier pour cet incident
+                        }
                     }
 
                     logInfo('Incident', "Incident créé lors de la lecture d'un bordereau.");
@@ -194,10 +206,66 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
                     // Remonter l'incident au client
                     getDepot().callback?.('incident', 0, incident.toJSON());
 
-                } else {
+                } else if (error instanceof Error) {
+                     //getDepot().callback?.('error', 0, { message: error.message });
+                     //console.error("Erreur lors de la lecture du bordereau :", error);
+
+                    // Créer un incident
+                    const incidentData: Omit<IncidentData, 'id_incident'> = {
+                        id_session: sessionId,
+                        code_epreuve: codeEpreuve,
+                        titre: error.name,
+                        details: error.message,
+                        code_anonymat: null,
+                        note_quart: null
+                    };
+
+                    // Insérer l'incident en base de données et en cache
+                    const incidentInsert = await epreuve.incidents.insert(incidentData);
+                    const incidentId = incidentInsert.insertId;
+                    if (incidentInsert.affectedRows === 0 || incidentId === undefined) {
+                        getDepot().callback?.('error', 0, { message: 'Erreur lors de la création d\'un incident' });
+                        console.error("Erreur lors de la création de l'incident :", incidentInsert);
+                        return;
+                    }
+
+                    const nvIncidentData = { ...incidentData, id_incident: incidentId };
+                    const incident = epreuve.incidents.fromDatabase(nvIncidentData);
+                    epreuve.incidents.set(incidentId, incident);
+
+                    // Enregistrer le scan sur le disque
+                    
+                    const incidentPwd = MediaService.getIncidentDir(sessionId);
+                    // Enregistrer le scan mais pas le scanPret car il a échoué.
+                    // Convertir le buffer brut en Mat d'OpenCV (sans les transformations qui ont échoué)
+                    if (buffer && buffer.length > 0) {
+                        try {
+                            const cv = await OpenCvInstance.getInstance();
+                            const cvType = scan.channels === 1 ? cv.CV_8UC1 : (scan.channels === 3 ? cv.CV_8UC3 : cv.CV_8UC4);
+                            const scanMat = new cv.Mat(scan.height, scan.width, cvType);
+                            const dataLengthAttendue = scan.width * scan.height * scan.channels;
+                            scanMat.data.set(buffer.subarray(0, dataLengthAttendue));
+                            await MediaService.enregistrerMat(scanMat, incidentPwd, `${incidentId}.webp`);
+                            scanMat.delete();
+                        } catch (cvError) {
+                            logInfo('Incident', `Impossible d'enregistrer le buffer en image: ${cvError instanceof Error ? cvError.message : 'erreur inconnue'}`);
+                            // Si l'enregistrement échoue, ne pas enregistrer de fichier pour cet incident
+                        }
+                    }
+
+                    logInfo('Incident', "Incident créé lors de la lecture d'un bordereau.");
+
+                    // Remonter l'incident au client
+                    getDepot().callback?.('incident', 0, incident.toJSON());
+
+                 } 
+                 else {
                     // Erreur non traitable (échec de lecture du document)
+                    // On  va donc créer un incident et remonter l'erreur
+
                     getDepot().callback?.('error', 0, { message: error instanceof Error ? error.message : 'Erreur inconnue' });
                     console.error("Erreur lors de la lecture du bordereau :", error);
+
                 }
             } finally {
                 // Libérer la mémoire du scan préparé

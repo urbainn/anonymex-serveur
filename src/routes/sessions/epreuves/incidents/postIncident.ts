@@ -49,7 +49,7 @@ export async function postIncident(sessionId: string, codeEpreuve: string, incid
             id_session: idSession,
             note_quart: quartNote,
             titre: "Doublon",
-            details: "Deux scans ont le même numéro d'anonymat. [" + idIncident + "] ",
+            details: "Deux scans ont le même numéro d'anonymat. [" + convocation.codeAnonymat + "(note1=" + convocation.noteQuart + ", note2=" + quartNote + ")]",
         }
 
         const nvIncidentInsert = await epreuve.incidents.insert(incident);

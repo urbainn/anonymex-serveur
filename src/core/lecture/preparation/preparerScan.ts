@@ -5,6 +5,7 @@ import { detecterCiblesConcentriques } from "./detecterCiblesConcentriques";
 import { orientationCiblesConcentriques } from "./reorientation/orientationCiblesConcentriques";
 import { remapperCiblesConcentriques } from "./reorientation/remapperCiblesConcentriques";
 import { OpenCvInstance } from "../../services/OpenCvInstance";
+import { ErreurResultatLu } from "../lectureErreurs";
 
 /**
  * Prépare et ajuste le scan (découpage, rotation, ...).
@@ -77,15 +78,20 @@ export async function preparerScan(scanProps: ScanData, buffer: Uint8ClampedArra
         const detectionsRemap = remapperCiblesConcentriques(detectionCibles, orientationDeg, scanProps.width, scanProps.height);
 
         // Scan prêt : réaligner et corriger le scan
-        scanTransmis = true;
-        const scanPret = await realignerCorrigerScan(scan, detectionsRemap, {
-            tailleCiblesMm: 6,
-            margeCiblesMm: 7,
-            format: 'A4'
-        });
+        try{
+            scanTransmis = true;
+            const scanPret = await realignerCorrigerScan(scan, detectionsRemap, {
+                tailleCiblesMm: 6,
+                margeCiblesMm: 7,
+                format: 'A4'
+            });
 
-        return scanPret;
-    } finally {
+            return scanPret;
+        }
+        catch(err){
+            throw new ErreurResultatLu(`Problème alignement`, undefined, undefined);
+        }}
+        finally {
         if (!scanTransmis) {
             scan.delete();
         }

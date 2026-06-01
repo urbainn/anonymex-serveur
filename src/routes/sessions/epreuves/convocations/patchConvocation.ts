@@ -26,7 +26,7 @@ export async function patchConvocation(sessionId: string, epreuveCode: string, c
     }
 
     const dataParsees = UpdateConvocationSchema.parse(data);
-
+    
     const convocation = await epreuve.convocations.getOrFetch(codeAnonymat);
 
     if (!convocation) {
@@ -36,12 +36,25 @@ export async function patchConvocation(sessionId: string, epreuveCode: string, c
     if(convocation.numeroEtudiant === null) {
         throw new ErreurRequeteInvalide("Vous ne pouvez pas modifier cette convocation.");
     }
+    if (dataParsees.note_quart === undefined) {
+        // Note supprimée
+        if (convocation.noteQuart !== undefined)
+        {
+            epreuve.convocations.nbDepots -= 1;
+            // Changer le status de l'épreuve si le dépôt devient incomplet : passé de COMPLET à SAISIE_PRESENCE
+            if (epreuve.statut === EpreuveStatut.DEPOT_COMPLET) {
+                epreuve.changerStatut(EpreuveStatut.EN_ATTENTE_DE_DEPOT);
+                session.epreuves.update(epreuve.codeEpreuve, { statut: EpreuveStatut.EN_ATTENTE_DE_DEPOT });
+            }
 
+        }
+        convocation.noteQuart = null;
+    }
     if (dataParsees.note_quart !== undefined && (dataParsees.note_quart < 0 || dataParsees.note_quart > 80)) {
         throw new ErreurRequeteInvalide("La note doit être un nombre entre 0 et 20. (En quart de points, entre 0 et 80).");
     }
 
-    // Note ajoutée
+    // Note ajoutée pour une convocation qui n'en avait pas encore ? (nouveau dépôt)
     if (dataParsees.note_quart !== undefined && convocation.noteQuart === null) {
         epreuve.convocations.nbDepots += 1;
 

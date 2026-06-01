@@ -7,6 +7,7 @@ import { getBordereauTemp } from "./getBordereauTEMP";
 import { getNotesXLSX } from "./getNotesXLSX";
 import { getCorrespondance } from "./getCorrespondance";
 import { getCreerCouponsSupplementaires } from "./getCreerCouponsSupplementaires";
+import { getCouponsAvecScans } from "./getCouponsAvecScans";
 
 const documentsRouter = Router();
 
@@ -19,6 +20,13 @@ documentsRouter.get("/session/:sessionId/epreuve/:codeEpreuve/coupons.pdf", (req
     const salles = (req.query.salles as string)?.split(",") ?? [];
     const codesAno = (req.query.codes as string)?.split(",") ?? [];
     return useFullRest(() => getCoupons(sessionId, codeEpreuve, codesAno, salles, res), req, res);
+});
+
+// GET /documents/session/:sessionId/epreuve/:codeEpreuve/convocations-scans.pdf?codes=CODE1,CODE2
+documentsRouter.get("/session/:sessionId/epreuve/:codeEpreuve/convocations-scans.pdf", (req, res) => {
+    const { sessionId, codeEpreuve } = req.params;
+    const codesAno = (req.query.codes as string)?.split(",") ?? [];
+    return useFullRest(() => getCouponsAvecScans(sessionId, codeEpreuve, codesAno, res), req, res);
 });
 
 // GET /documents/session/:sessionId/epreuve/:codeEpreuve/salle/:salle/creer-coupons-supplementaires?nbCoupons=N

@@ -24,6 +24,10 @@ export async function getCoupons(sessionId: string, codeEpreuve: string, codesAn
     const epreuve = await session.epreuves.getOrFetch(codeEpreuve);
     if (epreuve === undefined) throw new ErreurRequeteInvalide("L'épreuve demandée n'existe pas.");
 
+    const filename = `${codeEpreuve}_anonymat.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+
     if (salles.length > 0 && codesAno.length > 0) {
         throw new ErreurRequeteInvalide("Les paramètres 'salles' et 'codesAno' ne peuvent pas être utilisés en même temps.");
     }

@@ -25,7 +25,7 @@ export async function renduCoupon(doc: typeof PDFDocument, epreuve: Epreuve, con
 
         for (const cote of ['right', 'left'] as ['right', 'left']) {
             doc.fill('#111').font('Helvetica-Bold').fontSize(19).text(nomEtudiantCourt, marges.gauche, 38, { align: cote, width: largeurDoc, lineBreak: false });
-            doc.font('Helvetica').fontSize(14).text(`Rang ${convocation.rang ?? 'N/A'}`, marges.gauche, 60, { align: cote, width: largeurDoc, lineBreak: false });
+            doc.font('Helvetica').fontSize(14).text(`Place ${convocation.rang ?? 'N/A'}`, marges.gauche, 60, { align: cote, width: largeurDoc, lineBreak: false });
             doc.font('Helvetica').fillColor('#555').fontSize(14).text(etudiant.numeroEtudiant.toString(), marges.gauche, 78, { align: cote, width: largeurDoc, lineBreak: false });
         }
     }
@@ -57,7 +57,7 @@ export async function renduCoupon(doc: typeof PDFDocument, epreuve: Epreuve, con
         renduProp('N° étudiant', etudiant.numeroEtudiant.toString(), marges.gauche + 20, yProps);
         yProps += 22;
         if (convocation.rang !== null) {
-            renduProp('Rang', convocation.rang.toString(), marges.gauche + 20, yProps);
+            renduProp('Place', convocation.rang.toString(), marges.gauche + 20, yProps);
         }
     }
 

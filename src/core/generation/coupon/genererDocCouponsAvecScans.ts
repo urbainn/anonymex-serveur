@@ -34,6 +34,21 @@ export async function genererDocCouponsAvecScans(
     await etudiantCache.getAll();
     await salleCache.getAll();
     const convocs = await epreuve.convocations.getAll();
+    convocs.sort((a, b) => {
+        if (!a.numeroEtudiant || !b.numeroEtudiant) return 0;
+        const etudiantA = etudiantCache.get(a.numeroEtudiant);
+        const etudiantB = etudiantCache.get(b.numeroEtudiant);
+        if (!etudiantA || !etudiantB) return 0;
+        const nomA = etudiantA.nom.toLowerCase();
+        const nomB = etudiantB.nom.toLowerCase();
+        if (nomA < nomB) return -1;
+        if (nomA > nomB) return 1;
+        const prenomA = etudiantA.prenom.toLowerCase();
+        const prenomB = etudiantB.prenom.toLowerCase();
+        if (prenomA < prenomB) return -1;
+        if (prenomA > prenomB) return 1;
+        return 0;
+    });
 
     // Récupérer les convocations demandées
     const convocationsMap = new Map<string, Convocation>();

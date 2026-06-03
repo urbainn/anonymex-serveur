@@ -31,7 +31,22 @@ export async function genererDocCoupons(session: Session, epreuve: Epreuve, sall
     await etudiantCache.getAll();
     await salleCache.getAll();
     const convocs = await epreuve.convocations.getAll();
-
+    // on trie par ordre alphabatique du nom de l'étudiant de la convocation puis du prénom
+    convocs.sort((a, b) => {
+        if (!a.numeroEtudiant || !b.numeroEtudiant) return 0;
+        const etudiantA = etudiantCache.get(a.numeroEtudiant);
+        const etudiantB = etudiantCache.get(b.numeroEtudiant);
+        if (!etudiantA || !etudiantB) return 0;
+        const nomA = etudiantA.nom.toLowerCase();
+        const nomB = etudiantB.nom.toLowerCase();
+        if (nomA < nomB) return -1;
+        if (nomA > nomB) return 1;
+        const prenomA = etudiantA.prenom.toLowerCase();
+        const prenomB = etudiantB.prenom.toLowerCase();
+        if (prenomA < prenomB) return -1;
+        if (prenomA > prenomB) return 1;
+        return 0;
+    });
     // Mapping des convocations par salle
     const convocsSalles = new Map<string, Convocation[]>();
     const convocsSupp = new Map<string, Convocation[]>();

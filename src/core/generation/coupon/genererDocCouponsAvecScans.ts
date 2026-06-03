@@ -3,6 +3,7 @@ import PDFDocument from 'pdfkit';
 import { Epreuve } from '../../../cache/epreuves/Epreuve';
 import { Session } from '../../../cache/sessions/Session';
 import { renduCoupon } from './renduCoupon';
+import { Convocation } from '../../../cache/epreuves/convocations/Convocation';
 import { etudiantCache } from '../../../cache/etudiants/EtudiantCache';
 import { salleCache } from '../../../cache/salles/SalleCache';
 import { MediaService } from '../../services/MediaService';
@@ -35,7 +36,7 @@ export async function genererDocCouponsAvecScans(
     const convocs = await epreuve.convocations.getAll();
 
     // Récupérer les convocations demandées
-    const convocationsMap = new Map<string, any>();
+    const convocationsMap = new Map<string, Convocation>();
     for (const convocation of convocs) {
         convocationsMap.set(convocation.codeAnonymat, convocation);
     }

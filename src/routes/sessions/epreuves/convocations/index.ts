@@ -7,11 +7,15 @@ import { deleteConvocations } from "./deleteConvocations";
 import { getConvocationsSupplementaires } from "./getConvocationsSupplementaires";
 import { patchConvocationSupplementaire } from "./patchConvocationSupplementaire";
 import { postConvocationsTransfert } from "./postConvocationsTransfert";
+import { postConvocation } from "./postConvocation";
 
 const convocationsRouteur = Router({ mergeParams: true });
 
 convocationsRouteur.get<{ session: string, code: string }>("/", (req, res) =>
     useRest(() => getConvocations(req.params.session, req.params.code), req, res));
+
+convocationsRouteur.post<{ session: string, code: string }>("/", (req, res) =>
+    useRest(() => postConvocation(req.params.session, req.params.code, req.body), req, res));
 
 convocationsRouteur.get<{ session: string, code: string }>("/supplementaires", (req, res) =>
     useRest(() => getConvocationsSupplementaires(req.params.session, req.params.code), req, res))

@@ -8,7 +8,7 @@ import { getDecalages, genererCodesHamming, classerCodes, appliquerDecalage } fr
 
 export interface APINewConvocationResponse {
     success: boolean;
-    convocation: any; // APIConvocation
+    convocation: Convocation; // APIConvocation
 }
 
 export async function postConvocation(

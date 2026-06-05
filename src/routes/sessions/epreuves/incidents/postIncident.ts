@@ -46,11 +46,12 @@ export async function postIncident(sessionId: string, codeEpreuve: string, incid
         // Changer le titre et les détails de incident
         incident.titre = "Doublon";
         incident.details = "Deux scans ont le même numéro d'anonymat. [" + convocation.codeAnonymat + "(note1=" + convocation.noteQuart/4 + ", note2=" + quartNote/4 + ")]";
+        incident.codeAnonymat = convocation.codeAnonymat;
         await epreuve.incidents.update(idIncident, { titre: incident.titre, details: incident.details });
         
 
         const newincident: Omit<IncidentData, 'id_incident'> = {
-            code_anonymat: codeAnonymat,
+            code_anonymat: convocation.codeAnonymat,
             code_epreuve: codeEpreuve,
             id_session: idSession,
             note_quart: quartNote,

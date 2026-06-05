@@ -1,14 +1,14 @@
 import { sessionCache } from "../../../../cache/sessions/SessionCache";
 import { etudiantCache } from "../../../../cache/etudiants/EtudiantCache";
 import { Etudiant } from "../../../../cache/etudiants/Etudiant";
-import { Convocation, ConvocationData } from "../../../../cache/epreuves/convocations/Convocation";
+import { ConvocationData } from "../../../../cache/epreuves/convocations/Convocation";
 import { ErreurRequeteInvalide, ErreurServeur } from "../../../erreursApi";
 import { config } from "../../../../config";
 import { getDecalages, genererCodesHamming, classerCodes, appliquerDecalage } from "../../../../utils/codeAnonymatUtils";
 
 export interface APINewConvocationResponse {
     success: boolean;
-    convocation: Convocation; // APIConvocation
+    convocation: any; // APIConvocation
 }
 
 export async function postConvocation(

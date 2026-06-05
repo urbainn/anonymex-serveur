@@ -74,6 +74,14 @@ export async function lireGrilleNote(matDoc: Mat): Promise<number> {
             cv.THRESH_BINARY_INV,
             31, 8
         );
+        // Ajout filet de sécurité en cas de gros paté
+        const masqueAbsolu = new cv.Mat();
+        cv.threshold(blurred, masqueAbsolu, 100, 255, cv.THRESH_BINARY_INV);
+        // On fusionne les deux (ajoute le centre des gros patés)
+        cv.bitwise_or(binaryInv, masqueAbsolu, binaryInv);
+        
+        masqueAbsolu.delete(); 
+
         cv.morphologyEx(binaryInv, binaryInv, cv.MORPH_OPEN, kernel);
         cv.morphologyEx(binaryInv, binaryInv, cv.MORPH_CLOSE, kernel);
 

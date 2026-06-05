@@ -9,7 +9,7 @@ import { DIAMETRE_CIBLES_MM, MARGE_CIBLES_MM } from "../lireBordereaux";
 const SEUIL_CASE_ACTIVE = 0.14;
 
 // difference max de taux de remplissage entre les deux cases les plus remplies pour considérer la lecture non ambiguë
-const MARGE_AMBIGUITE = 0.0; // désactivé pour l'instant
+//const MARGE_AMBIGUITE = 0.0; // désactivé pour l'instant
 
 /**
  * Renvoie la note lue sur la grille de notation. En cas d'erreur de lecture, throw une ErreurGrilleNote.
@@ -99,7 +99,7 @@ export async function lireGrilleNote(matDoc: Mat): Promise<number> {
         if (erreurScore >= SEUIL_CASE_ACTIVE) {
             throw new ErreurResultatLu("Case 'Erreur' noircie sur la grille de note.");
         }
-
+/*
         const classes = noteScores
             .map((score, index) => ({ score, index }))
             .sort((a, b) => b.score - a.score);
@@ -116,7 +116,23 @@ export async function lireGrilleNote(matDoc: Mat): Promise<number> {
         }
 
         const noteEntiere = top1.index;
+        */
+        const notesActives = noteScores
+            .map((score, index) => ({ score, index }))
+            .filter(({ score }) => score >= SEUIL_CASE_ACTIVE)
+            .sort((a, b) => b.score - a.score);
 
+        if (notesActives.length === 0 ||notesActives==undefined) {
+            throw new ErreurNoteNonLue(`Aucune case de note noircie détectée.`);
+        }
+
+        if (notesActives.length > 1) {
+            throw new ErreurResultatLu(`Lecture ambiguë : plusieurs cases de note noircies détectées.`);
+        }
+        if (notesActives[0]==null || notesActives[0]==undefined) {
+            throw new ErreurNoteNonLue(`Aucune case de note noircie détectée.`);
+        }
+        const noteEntiere = notesActives[0].index;
         const fractionsActives = fractionScores
             .map((score, index) => ({ score, index }))
             .filter(({ score }) => score >= SEUIL_CASE_ACTIVE)

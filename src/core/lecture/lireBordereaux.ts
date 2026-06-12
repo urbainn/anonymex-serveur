@@ -62,11 +62,11 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
                 const erreurs: Error[] = [];
 
                 // Lire la note
-                const noteLue = await lireGrilleNote(scanPret)
+                const noteLue = await lireGrilleNote(scanPret, { sessionId, examen: codeEpreuve, page: numFichier + 1 })
                     .catch(err => { erreurs.push(err); return null; });
 
                 // Lire le code d'anonymat
-                const codeLu = await lireCodeAnonymat(scanPret)
+                const codeLu = await lireCodeAnonymat(scanPret, { sessionId, examen: codeEpreuve, page: numFichier + 1 })
                     .catch(err => { erreurs.push(err); return null; });
 
                 // Interpréter les resultats de lecture
@@ -81,6 +81,7 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
                         // Lire le char reconnu par le CNN et l'OCR
                         const charCnn = caseCode.cnn.caractere.trim()[0] ?? null;
                         let charOcr = caseCode.ocr.caractere.trim()[0] ?? null;
+                        logInfo("Incident", `CNN: ${charCnn} (${caseCode.cnn.confiance}),  OCR: ${charOcr} (${caseCode.ocr.confiance})'}`);
                         if (charOcr === '') charOcr = null;
 
                         if (charCnn === charOcr && caseCode.cnn.confiance >= 0.4) {

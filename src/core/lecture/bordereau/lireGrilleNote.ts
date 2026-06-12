@@ -4,6 +4,7 @@ import { ErreurNoteNonLue, ErreurResultatLu } from "../lectureErreurs";
 import { OpenCvInstance } from "../../services/OpenCvInstance";
 import { decouperROIs } from "../preparation/decouperROIs";
 import { DIAMETRE_CIBLES_MM, MARGE_CIBLES_MM } from "../lireBordereaux";
+import { MediaService } from "../../services/MediaService";
 
 // Seuil de remplissage à partir duquel on considère une case comme noircie (valeur entre 0 et 1)
 const SEUIL_CASE_ACTIVE = 0.14;
@@ -15,7 +16,8 @@ const SEUIL_CASE_ACTIVE = 0.14;
  * Renvoie la note lue sur la grille de notation. En cas d'erreur de lecture, throw une ErreurGrilleNote.
  * @param matDoc
  */
-export async function lireGrilleNote(matDoc: Mat): Promise<number> {
+export async function lireGrilleNote(matDoc: Mat, debugInfo?: { sessionId: number, examen: string, page: number }): Promise<number> {
+    const DEBUG_EXPORT_ROI_NOTE = false;
 
     const positions = ModeleBordereau.getPositionsCasesNote();
     const cv = await OpenCvInstance.getInstance();
@@ -40,7 +42,21 @@ export async function lireGrilleNote(matDoc: Mat): Promise<number> {
         return total > 0 ? nonZero / total : 0;
     };
 
-    const extraireScores = async (rois: typeof positions.notes, target: number[]) => {
+    const extraireScores = async (rois: typeof positions.notes, target: number[], nomFichierPrefix: string) => {
+        if (DEBUG_EXPORT_ROI_NOTE && debugInfo) {
+            await decouperROIs(matDoc, rois, DIAMETRE_CIBLES_MM, MARGE_CIBLES_MM, "A4",
+                async (roi, index) => {
+                    try {
+                        const chemin = `session-${debugInfo.sessionId}/ROI/${debugInfo.examen}/page-${debugInfo.page}`;
+                        await MediaService.enregistrerMat(roi, chemin, `${nomFichierPrefix}-${index}.webp`, 100);
+                    } finally {
+                        roi.delete();
+                    }
+                },
+                { paddingMm: 1.0 }
+            );
+        }
+
         await decouperROIs(binaryInv, rois, DIAMETRE_CIBLES_MM, MARGE_CIBLES_MM, "A4",
             async (roi, index) => {
                 try {
@@ -50,7 +66,7 @@ export async function lireGrilleNote(matDoc: Mat): Promise<number> {
                     roi.delete();
                 }
             },
-            { paddingMm: -0.2 }
+            { paddingMm: -0.8 }
         );
     };
 
@@ -76,7 +92,7 @@ export async function lireGrilleNote(matDoc: Mat): Promise<number> {
         );
         // Ajout filet de sécurité en cas de gros paté
         const masqueAbsolu = new cv.Mat();
-        cv.threshold(blurred, masqueAbsolu, 100, 255, cv.THRESH_BINARY_INV);
+        cv.threshold(blurred, masqueAbsolu, 140, 255, cv.THRESH_BINARY_INV);
         // On fusionne les deux (ajoute le centre des gros patés)
         cv.bitwise_or(binaryInv, masqueAbsolu, binaryInv);
         
@@ -85,8 +101,27 @@ export async function lireGrilleNote(matDoc: Mat): Promise<number> {
         cv.morphologyEx(binaryInv, binaryInv, cv.MORPH_OPEN, kernel);
         cv.morphologyEx(binaryInv, binaryInv, cv.MORPH_CLOSE, kernel);
 
-        await extraireScores(positions.notes, noteScores);
-        await extraireScores(positions.fractions, fractionScores);
+        await extraireScores(positions.notes, noteScores, "note");
+        await extraireScores(positions.fractions, fractionScores, "fraction");
+
+        if (DEBUG_EXPORT_ROI_NOTE && debugInfo) {
+            await decouperROIs(
+                matDoc,
+                [positions.caseErreur],
+                DIAMETRE_CIBLES_MM,
+                MARGE_CIBLES_MM,
+                "A4",
+                async (roi) => {
+                    try {
+                        const chemin = `session-${debugInfo.sessionId}/ROI/${debugInfo.examen}/page-${debugInfo.page}`;
+                        await MediaService.enregistrerMat(roi, chemin, `erreur.webp`, 100);
+                    } finally {
+                        roi.delete();
+                    }
+                },
+                { paddingMm: 1.0 }
+            );
+        }
 
         await decouperROIs(
             binaryInv,
@@ -101,7 +136,7 @@ export async function lireGrilleNote(matDoc: Mat): Promise<number> {
                     roi.delete();
                 }
             },
-            { paddingMm: -0.2 }
+            { paddingMm: -0.8 }
         );
 
         if (erreurScore >= SEUIL_CASE_ACTIVE) {
@@ -135,7 +170,8 @@ export async function lireGrilleNote(matDoc: Mat): Promise<number> {
         }
 
         if (notesActives.length > 1) {
-            throw new ErreurResultatLu(`Lecture ambiguë : plusieurs cases de note noircies détectées.`);
+            const casesMarquees = notesActives.map(n => n.index).join(', ');
+            throw new ErreurResultatLu(`Lecture ambiguë : plusieurs cases de note noircies détectées (${casesMarquees}).`);
         }
         if (notesActives[0]==null || notesActives[0]==undefined) {
             throw new ErreurNoteNonLue(`Aucune case de note noircie détectée.`);
@@ -147,7 +183,9 @@ export async function lireGrilleNote(matDoc: Mat): Promise<number> {
             .sort((a, b) => b.score - a.score);
 
         if (fractionsActives.length > 1) {
-            throw new ErreurResultatLu("Lecture ambiguë : plusieurs cases de fraction sont noircies.");
+            const valeursFractions = [0.25, 0.5, 0.75];
+            const casesMarquees = fractionsActives.map(f => valeursFractions[f.index] ?? `index ${f.index}`).join(', ');
+            throw new ErreurResultatLu(`Lecture ambiguë : plusieurs cases de fraction sont noircies (${casesMarquees}).`);
         }
 
         const fraction = fractionsActives.length === 1

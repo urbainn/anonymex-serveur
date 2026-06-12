@@ -8,20 +8,24 @@ import { TesseractOCR } from "../OCR/TesseractOCR";
 import { TensorFlowCNN } from "../CNN/TensorFlowCNN";
 import { config } from "../../../config";
 import * as tf from "@tensorflow/tfjs-node";
+import { MediaService } from "../../services/MediaService";
 
 interface LectureCaseCodeAnonymat {
     cnn: { caractere: string, confiance: number };
     ocr: { caractere: string, confiance: number };
 }
 
-export async function lireCodeAnonymat(scanPret: Mat): Promise<(LectureCaseCodeAnonymat | null)[]> {
+export async function lireCodeAnonymat(scanPret: Mat, debugInfo?: { sessionId: number, examen: string, page: number }): Promise<(LectureCaseCodeAnonymat | null)[]> {
+    const DEBUG_EXPORT_ROI = false;
+
     const cv = await OpenCvInstance.getInstance();
     const codeLu: (LectureCaseCodeAnonymat | null)[] = [];
 
     // Découper les lettres du code d'anonymat, et les lire
     const roisCodeAno = ModeleBordereau.getPositionsCadresAnonymat();
     await decouperROIs(scanPret, roisCodeAno, DIAMETRE_CIBLES_MM, MARGE_CIBLES_MM, "A4",
-        async (roiAnonymat) => {
+        async (roiAnonymat, index) => {
+
 
             // Pré-processing de la ROI
             if (roiAnonymat.rows <= 0 || roiAnonymat.cols <= 0) {
@@ -39,6 +43,10 @@ export async function lireCodeAnonymat(scanPret: Mat): Promise<(LectureCaseCodeA
 
             const [roiEmnistTensor, roiEmnistMat] = imagesPretraitees;
 
+            if (DEBUG_EXPORT_ROI && debugInfo) {
+                const chemin = `session-${debugInfo.sessionId}/ROI/${debugInfo.examen}/page-${debugInfo.page}`;
+                await MediaService.enregistrerMat(roiEmnistMat, chemin, `caractere-${index}.webp`, 100);
+            }
             try {
 
                 const roiBuffer = await matToBuffer(cv, roiEmnistMat);
@@ -60,7 +68,7 @@ export async function lireCodeAnonymat(scanPret: Mat): Promise<(LectureCaseCodeA
                 roiAnonymat.delete();
             }
 
-        });
+        }, { paddingMm: -1.5 });
 
     return codeLu;
 }

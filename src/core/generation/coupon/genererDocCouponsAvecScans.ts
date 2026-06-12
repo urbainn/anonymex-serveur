@@ -79,11 +79,11 @@ export async function genererDocCouponsAvecScans(
         // 2. Essayer de charger et ajouter le scan
         try {
             const scanBuffer = await MediaService.lireMedia(mediaDir, `${codeAno}.webp`);
-            console.log(`[DEBUG] Scan chargé pour ${codeAno}: buffer size = ${scanBuffer.length} bytes`);
+            //console.log(`[DEBUG] Scan chargé pour ${codeAno}: buffer size = ${scanBuffer.length} bytes`);
             
             // Convertir le WebP en PNG (PDFKit ne supporte pas WebP)
             const pngBuffer = await sharp(scanBuffer).png().toBuffer();
-            console.log(`[DEBUG] WebP converti en PNG: ${pngBuffer.length} bytes`);
+            //console.log(`[DEBUG] WebP converti en PNG: ${pngBuffer.length} bytes`);
             
             // Ajouter une nouvelle page pour le scan
             doc.addPage({ size: 'A4' });

@@ -81,7 +81,7 @@ export async function lireBordereaux(fichiers: Fichier[], getDepot: () => Depot)
                         // Lire le char reconnu par le CNN et l'OCR
                         const charCnn = caseCode.cnn.caractere.trim()[0] ?? null;
                         let charOcr = caseCode.ocr.caractere.trim()[0] ?? null;
-                        logInfo("Incident", `CNN: ${charCnn} (${caseCode.cnn.confiance}),  OCR: ${charOcr} (${caseCode.ocr.confiance})'}`);
+                        //logInfo("Incident", `CNN: ${charCnn} (${caseCode.cnn.confiance}),  OCR: ${charOcr} (${caseCode.ocr.confiance})'}`);
                         if (charOcr === '') charOcr = null;
 
                         if (charCnn === charOcr && caseCode.cnn.confiance >= 0.4) {
